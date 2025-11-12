@@ -1,11 +1,13 @@
 """Tests for ConversationLogger class"""
 
-import pytest
-from pathlib import Path
-from datetime import datetime
-from streamlit_backroom import ConversationLogger
-import tempfile
 import shutil
+import tempfile
+from datetime import datetime
+from pathlib import Path
+
+import pytest
+
+from streamlit_backroom import ConversationLogger
 
 
 class TestConversationLogger:
@@ -79,7 +81,7 @@ class TestConversationLogger:
         log_file = logger.get_daily_log_file()
         assert log_file.exists()
 
-        with open(log_file, 'r', encoding='utf-8') as f:
+        with open(log_file, encoding='utf-8') as f:
             content = f.read()
 
         assert test_persona in content
@@ -95,7 +97,7 @@ class TestConversationLogger:
         logger.log_message(test_persona, test_message, timestamp=test_time)
 
         log_file = logger.get_daily_log_file()
-        with open(log_file, 'r', encoding='utf-8') as f:
+        with open(log_file, encoding='utf-8') as f:
             content = f.read()
 
         assert '[14:30:45]' in content
@@ -108,7 +110,7 @@ class TestConversationLogger:
         logger.log_message(test_persona, test_message)
 
         log_file = logger.get_daily_log_file()
-        with open(log_file, 'r', encoding='utf-8') as f:
+        with open(log_file, encoding='utf-8') as f:
             content = f.read()
 
         assert '<think>' not in content
@@ -126,7 +128,7 @@ class TestConversationLogger:
 
         # File might not exist if this is the only message
         if log_file.exists():
-            with open(log_file, 'r', encoding='utf-8') as f:
+            with open(log_file, encoding='utf-8') as f:
                 content = f.read()
             assert test_persona not in content
 
@@ -141,7 +143,7 @@ class TestConversationLogger:
         logger.log_message(persona2, message2)
 
         log_file = logger.get_daily_log_file()
-        with open(log_file, 'r', encoding='utf-8') as f:
+        with open(log_file, encoding='utf-8') as f:
             content = f.read()
 
         assert persona1 in content
@@ -157,7 +159,7 @@ class TestConversationLogger:
         logger.log_message(test_persona, test_message)
 
         log_file = logger.get_daily_log_file()
-        with open(log_file, 'r', encoding='utf-8') as f:
+        with open(log_file, encoding='utf-8') as f:
             content = f.read()
 
         assert '世界' in content

@@ -8,7 +8,6 @@ This module provides centralized configuration management with support for:
 
 import os
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass

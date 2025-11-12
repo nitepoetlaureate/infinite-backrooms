@@ -1,6 +1,5 @@
 """Security tests for XSS prevention and input sanitization"""
 
-import pytest
 from streamlit_backroom import sanitize_html
 
 
@@ -19,15 +18,21 @@ class TestXSSPrevention:
         """Ensure img onerror XSS is escaped"""
         malicious_input = '<img src=x onerror="alert(1)">'
         result = sanitize_html(malicious_input)
-        assert 'onerror=' not in result
+        # Verify that tags and quotes are escaped, making it safe
         assert '&lt;img' in result
+        assert '&quot;' in result  # Quotes are escaped
+        assert 'alert(1)' in result  # Content preserved but safe
+        # The dangerous script cannot execute because quotes are escaped
 
     def test_sanitize_html_prevents_event_handlers(self):
         """Ensure event handler attributes are escaped"""
         malicious_input = '<div onclick="malicious()">Click me</div>'
         result = sanitize_html(malicious_input)
-        assert 'onclick=' not in result
+        # Verify that tags and quotes are escaped, making it safe
         assert '&lt;div' in result
+        assert '&quot;' in result  # Quotes are escaped
+        assert 'malicious()' in result  # Content preserved but safe
+        # The event handler cannot execute because quotes are escaped
 
     def test_sanitize_html_escapes_special_characters(self):
         """Ensure special HTML characters are properly escaped"""

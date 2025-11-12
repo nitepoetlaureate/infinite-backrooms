@@ -1,10 +1,12 @@
 """Tests for log_viewer module"""
 
-import pytest
-from pathlib import Path
-from log_viewer import LogParser
-import tempfile
 import shutil
+import tempfile
+from pathlib import Path
+
+import pytest
+
+from log_viewer import LogParser
 
 
 class TestLogParser:
