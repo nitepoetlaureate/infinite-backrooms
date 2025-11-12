@@ -6,19 +6,17 @@ Interactive web interface for managing AI personas and running infinite conversa
 
 import asyncio
 import json
-import os
 import random
 import time
 import re
 import warnings
+import html
 from datetime import datetime
 from typing import List, Dict, Any, Optional, AsyncGenerator
 import aiohttp
 from dataclasses import dataclass, asdict
 from pathlib import Path
 import streamlit as st
-import threading
-from concurrent.futures import ThreadPoolExecutor
 import uuid
 
 # Suppress async cleanup warnings
@@ -45,6 +43,33 @@ class AIPersona:
     enabled: bool = True
 
 
+def sanitize_html(text: str) -> str:
+    """Sanitize text to prevent XSS attacks by escaping HTML special characters"""
+    return html.escape(text)
+
+
+# Role emoji mapping - used consistently throughout the application
+ROLE_EMOJI_MAP = {
+    "Moderator": "🎯",
+    "Note-Taker": "📝",
+    "Philosopher": "🤔",
+    "Scientist": "🔬",
+    "Creative Writer": "✍️",
+    "Debate Enthusiast": "⚖️",
+    "Optimist": "😊",
+    "Skeptic": "🤨",
+    "Historian": "📚",
+    "Futurist": "🚀",
+    "Minimalist": "⚪️",
+    "Explorer": "🧭",
+    "Mentor": "👨‍🏫",
+    "Comedian": "😄",
+    "Analyst": "📊",
+    "Dreamer": "💭",
+    "Pragmatist": "⚙️"
+}
+
+
 class ConversationLogger:
     """Handles logging conversations to daily TXT files"""
     
@@ -69,15 +94,20 @@ class ConversationLogger:
         """Log a message to today's file"""
         if timestamp is None:
             timestamp = datetime.now()
-        
+
         # Clean the message before logging
         cleaned_message = self.clean_message(message)
-        
+
         # Only log if there's content after cleaning
         if cleaned_message:
             log_file = self.get_daily_log_file()
-            with open(log_file, 'a', encoding='utf-8') as f:
-                f.write(f"[{timestamp.strftime('%H:%M:%S')}] {persona}$ {cleaned_message}\n")
+            try:
+                with open(log_file, 'a', encoding='utf-8') as f:
+                    f.write(f"[{timestamp.strftime('%H:%M:%S')}] {persona}$ {cleaned_message}\n")
+            except (IOError, PermissionError) as e:
+                # Log to stderr instead of failing silently
+                import sys
+                print(f"Warning: Failed to write to log file {log_file}: {e}", file=sys.stderr)
 
 
 class OllamaClient:
@@ -273,29 +303,9 @@ class StreamlitBackroomApp:
     
     def get_persona_avatar(self, persona: AIPersona) -> str:
         """Get avatar for persona based on role or use default"""
-        # Use single-character emojis as supported by Streamlit documentation
-        avatar_map = {
-            "Moderator": "🎯",
-            "Note-Taker": "📝", 
-            "Philosopher": "🤔",
-            "Scientist": "🔬",
-            "Creative Writer": "✍️",
-            "Debate Enthusiast": "⚖️",
-            "Optimist": "😊",
-            "Skeptic": "🤨",
-            "Historian": "📚",
-            "Futurist": "🚀",
-            "Minimalist": "⚪️",
-            "Explorer": "🧭",
-            "Mentor": "👨‍🏫",
-            "Comedian": "😄",
-            "Analyst": "📊",
-            "Dreamer": "💭",
-            "Pragmatist": "⚙️"
-        }
-        
-        if persona.role in avatar_map:
-            return avatar_map[persona.role]
+        # Use role emoji map for avatars
+        if persona.role in ROLE_EMOJI_MAP:
+            return ROLE_EMOJI_MAP[persona.role]
         else:
             # Use robot emoji as fallback for personas without defined roles
             return "🤖"
@@ -725,36 +735,20 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
                 
                 with st.chat_message("assistant", avatar=avatar):
                     # Show persona name and role with emoji
-                    role_emoji_map = {
-                        "Moderator": "🎯",
-                        "Note-Taker": "📝", 
-                        "Philosopher": "🤔",
-                        "Scientist": "🔬",
-                        "Creative Writer": "✍️",
-                        "Debate Enthusiast": "⚖️",
-                        "Optimist": "😊",
-                        "Skeptic": "🤨",
-                        "Historian": "📚",
-                        "Futurist": "🚀",
-                        "Minimalist": "⚪️",
-                        "Explorer": "🧭",
-                        "Mentor": "👨‍🏫",
-                        "Comedian": "😄",
-                        "Analyst": "📊",
-                        "Dreamer": "💭",
-                        "Pragmatist": "⚙️"
-                    }
-                    
                     # Create styled persona display with colored background
                     persona_color = persona.color if persona else "#1f77b4"
-                    persona_name_styled = f'<span style="background-color: {persona_color}; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold;">{message["persona_name"]}</span>'
-                    
+                    # Sanitize persona name to prevent XSS
+                    safe_persona_name = sanitize_html(message["persona_name"])
+                    persona_name_styled = f'<span style="background-color: {persona_color}; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold;">{safe_persona_name}</span>'
+
                     if persona and persona.role:
-                        role_emoji = role_emoji_map.get(persona.role, "")
-                        persona_display = f"{persona_name_styled} {role_emoji} _{persona.role}_"
+                        role_emoji = ROLE_EMOJI_MAP.get(persona.role, "")
+                        # Sanitize role to prevent XSS
+                        safe_role = sanitize_html(persona.role)
+                        persona_display = f"{persona_name_styled} {role_emoji} _{safe_role}_"
                     else:
                         persona_display = persona_name_styled
-                    
+
                     st.markdown(persona_display, unsafe_allow_html=True)
                     
                     # Show thinking if available (before the message)
@@ -768,17 +762,22 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
                     
                     # Show message content with @mention highlighting
                     content = message["content"]
-                    
+
                     # Check for @mentions and highlight them
                     enabled_personas = [p for p in st.session_state.personas if p.enabled]
+                    has_mentions = False
                     for p in enabled_personas:
                         mention_pattern = f"@{p.name}"
                         if mention_pattern in content:
+                            has_mentions = True
+                            # Sanitize the persona name to prevent XSS
+                            safe_mention = sanitize_html(f"@{p.name}")
                             # Highlight @mentions with the persona's color
-                            highlighted_mention = f'<span style="background-color: {p.color}; color: white; padding: 1px 4px; border-radius: 3px; font-weight: bold;">@{p.name}</span>'
-                            content = content.replace(mention_pattern, highlighted_mention)
-                    
-                    if "@" in content and any(f"@{p.name}" in message["content"] for p in enabled_personas):
+                            highlighted_mention = f'<span style="background-color: {p.color}; color: white; padding: 1px 4px; border-radius: 3px; font-weight: bold;">{safe_mention}</span>'
+                            # First escape the whole content, then replace the sanitized mention
+                            content = sanitize_html(content).replace(sanitize_html(mention_pattern), highlighted_mention)
+
+                    if has_mentions:
                         st.markdown(content, unsafe_allow_html=True)
                     else:
                         st.write(message["content"])
@@ -857,35 +856,19 @@ Your response should be conversational and engaging."""
         # Display the generating message with streaming
         with st.chat_message("assistant", avatar=avatar):
             # Show persona name and role with emoji
-            role_emoji_map = {
-                "Moderator": "🎯",
-                "Note-Taker": "📝", 
-                "Philosopher": "🤔",
-                "Scientist": "🔬",
-                "Creative Writer": "✍️",
-                "Debate Enthusiast": "⚖️",
-                "Optimist": "😊",
-                "Skeptic": "🤨",
-                "Historian": "📚",
-                "Futurist": "🚀",
-                "Minimalist": "⚪️",
-                "Explorer": "🧭",
-                "Mentor": "👨‍🏫",
-                "Comedian": "😄",
-                "Analyst": "📊",
-                "Dreamer": "💭",
-                "Pragmatist": "⚙️"
-            }
-            
             # Create styled persona display with colored background
-            persona_name_styled = f'<span style="background-color: {current_persona.color}; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold;">{current_persona.name}</span>'
-            
+            # Sanitize persona name to prevent XSS
+            safe_persona_name = sanitize_html(current_persona.name)
+            persona_name_styled = f'<span style="background-color: {current_persona.color}; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold;">{safe_persona_name}</span>'
+
             if current_persona.role:
-                role_emoji = role_emoji_map.get(current_persona.role, "")
-                persona_display = f"{persona_name_styled} {role_emoji} _{current_persona.role}_"
+                role_emoji = ROLE_EMOJI_MAP.get(current_persona.role, "")
+                # Sanitize role to prevent XSS
+                safe_role = sanitize_html(current_persona.role)
+                persona_display = f"{persona_name_styled} {role_emoji} _{safe_role}_"
             else:
                 persona_display = persona_name_styled
-            
+
             st.markdown(persona_display, unsafe_allow_html=True)
             
             # Get streaming response with thinking
@@ -1075,18 +1058,21 @@ Your response should be conversational and engaging."""
         if log_file.exists():
             st.subheader("📝 Daily Log File")
             st.info(f"Log location: `{log_file}`")
-            
-            with open(log_file, 'r', encoding='utf-8') as f:
-                log_content = f.read()
-            
-            st.text_area("Today's Log Content", value=log_content, height=300)
-            
-            st.download_button(
-                label="📥 Download Today's Log",
-                data=log_content,
-                file_name=f"streamlit_backroom_log_{datetime.now().strftime('%Y-%m-%d')}.txt",
-                mime="text/plain"
-            )
+
+            try:
+                with open(log_file, 'r', encoding='utf-8') as f:
+                    log_content = f.read()
+
+                st.text_area("Today's Log Content", value=log_content, height=300)
+
+                st.download_button(
+                    label="📥 Download Today's Log",
+                    data=log_content,
+                    file_name=f"streamlit_backroom_log_{datetime.now().strftime('%Y-%m-%d')}.txt",
+                    mime="text/plain"
+                )
+            except (IOError, PermissionError) as e:
+                st.error(f"Failed to read log file: {e}")
         else:
             st.info("No log file found for today. Start a conversation to create logs!")
 
@@ -1137,34 +1123,18 @@ Your response should be conversational and engaging."""
             # Show active personas with emojis and roles
             if enabled_personas:
                 st.subheader("🤖 Active Personas")
-                role_emoji_map = {
-                    "Moderator": "🎯",
-                    "Note-Taker": "📝", 
-                    "Philosopher": "🤔",
-                    "Scientist": "🔬",
-                    "Creative Writer": "✍️",
-                    "Debate Enthusiast": "⚖️",
-                    "Optimist": "😊",
-                    "Skeptic": "🤨",
-                    "Historian": "📚",
-                    "Futurist": "🚀",
-                    "Minimalist": "⚪",
-                    "Explorer": "🧭",
-                    "Mentor": "👨",
-                    "Comedian": "😄",
-                    "Analyst": "📊",
-                    "Dreamer": "💭",
-                    "Pragmatist": "⚙️"
-                }
-                
+
                 for persona in enabled_personas:
-                    role_emoji = role_emoji_map.get(persona.role, "🤖") if persona.role else "🤖"
-                    role_text = f" ({persona.role})" if persona.role else ""
-                    
+                    role_emoji = ROLE_EMOJI_MAP.get(persona.role, "🤖") if persona.role else "🤖"
+                    # Sanitize role to prevent XSS
+                    safe_role_text = f" ({sanitize_html(persona.role)})" if persona.role else ""
+
                     # Create styled persona display with colored background
-                    persona_name_styled = f'<span style="background-color: {persona.color}; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 0.9em;">{persona.name}</span>'
-                    persona_display = f"{role_emoji} {persona_name_styled}{role_text}"
-                    
+                    # Sanitize persona name to prevent XSS
+                    safe_persona_name = sanitize_html(persona.name)
+                    persona_name_styled = f'<span style="background-color: {persona.color}; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 0.9em;">{safe_persona_name}</span>'
+                    persona_display = f"{role_emoji} {persona_name_styled}{safe_role_text}"
+
                     st.markdown(persona_display, unsafe_allow_html=True)
             else:
                 st.info("No active personas yet. Create some in the Personas tab!")

@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.12']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install UV
+      uses: astral-sh/setup-uv@v2
+      with:
+        enable-cache: true
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        uv sync --extra dev
+
+    - name: Run linter (ruff)
+      run: |
+        uv run ruff check .
+
+    - name: Check code formatting
+      run: |
+        uv run ruff format --check .
+
+    - name: Run type checker (mypy)
+      run: |
+        uv run mypy . || true  # Don't fail on mypy errors initially
+
+    - name: Run tests
+      run: |
+        uv run pytest --cov=. --cov-report=xml --cov-report=term
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install UV
+      uses: astral-sh/setup-uv@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        uv sync --extra dev
+
+    - name: Run security checks (ruff)
+      run: |
+        uv run ruff check --select S .
+
+    - name: Check for known vulnerabilities
+      run: |
+        uv pip install safety
+        uv run safety check || true  # Don't fail on vulnerability warnings initially

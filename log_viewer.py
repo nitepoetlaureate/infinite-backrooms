@@ -9,7 +9,6 @@ import re
 from pathlib import Path
 from datetime import datetime, date
 from typing import List, Dict, Tuple, Optional
-import glob
 
 class LogParser:
     """Parser for AI conversation log files"""
@@ -88,7 +87,7 @@ class LogParser:
         # Convert timestamp to datetime for better sorting/filtering
         try:
             df['datetime'] = pd.to_datetime(df['full_timestamp'])
-        except:
+        except Exception:
             df['datetime'] = pd.NaT
         
         return df.sort_values('datetime', ascending=False).reset_index(drop=True)

@@ -1,15 +1,53 @@
 [project]
-name = "code-test"
+name = "infinite-backrooms"
 version = "0.1.0"
-description = "Add your description here"
+description = "Interactive multi-persona AI conversation platform using Ollama"
 readme = "README.md"
 requires-python = ">=3.12"
+authors = [
+    {name = "guinacio", email = "guinacio@github"}
+]
+license = {text = "MIT"}
+keywords = ["ai", "ollama", "streamlit", "conversation", "multi-persona", "chatbot"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+]
 dependencies = [
     "aiohttp>=3.8.0",
     "streamlit>=1.28.0",
     "pandas>=2.0.0",
-    "requests>=2.28.0",
-    "asyncio>=3.4.3",
-    "pathlib>=1.0.1",
-    "dataclasses>=0.8",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --cov=."
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "S", "B", "A", "C4", "T20"]
+ignore = ["S101"]  # Allow assert statements in tests
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = true
