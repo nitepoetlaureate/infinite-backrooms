@@ -16,7 +16,7 @@ from collections.abc import AsyncGenerator
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import aiohttp
 import streamlit as st
@@ -103,10 +103,19 @@ class ConversationLogger:
     def clean_message(self, message: str) -> str:
         """Remove thinking tags and content from message"""
         # Remove <think>...</think> blocks (including nested ones)
-        # Loop to handle nested tags
+        # Use greedy matching to handle nested tags properly
         cleaned = message
-        while '<think>' in cleaned.lower():
-            cleaned = re.sub(THINKING_TAG_PATTERN, '', cleaned, flags=re.DOTALL | re.IGNORECASE)
+        # Keep removing until no more thinking tags exist
+        max_iterations = 10  # Prevent infinite loops
+        iteration = 0
+        while ('<think>' in cleaned.lower() or '</think>' in cleaned.lower()) and iteration < max_iterations:
+            # Use greedy .* to match from first <think> to last </think>
+            before_len = len(cleaned)
+            cleaned = re.sub(r'<think>.*</think>', '', cleaned, flags=re.DOTALL | re.IGNORECASE)
+            # If nothing changed, try removing orphaned tags
+            if len(cleaned) == before_len:
+                cleaned = re.sub(r'</?think>', '', cleaned, flags=re.IGNORECASE)
+            iteration += 1
         # Clean up any extra whitespace
         cleaned = re.sub(WHITESPACE_PATTERN, ' ', cleaned).strip()
         return cleaned
@@ -534,7 +543,7 @@ class StreamlitBackroomApp:
                 else:
                     st.error("Please provide both name and model")
 
-    def _add_preset_personas(self, preset_list: List[Dict[str, str]], success_message: str) -> None:
+    def _add_preset_personas(self, preset_list: list[dict[str, str]], success_message: str) -> None:
         """Add multiple personas from a preset configuration
 
         Args:
@@ -849,8 +858,9 @@ Your response should be conversational and engaging."""
             else:
                 st.info("🛑 Response cancelled")
             raise
-        except Exception as e:
+        except (aiohttp.ClientError, TimeoutError, RuntimeError, OSError, ConnectionError) as e:
             st.error(f"Stream processing error: {str(e)}")
+            logging.error(f"Stream processing error: {type(e).__name__}: {e}")
             raise
 
         return thinking_content, response_content
@@ -1054,7 +1064,7 @@ Your response should be conversational and engaging."""
                 thinking_content, response_content = self._run_async_in_new_loop(
                     self._process_streaming_response(current_persona, prompt, auto_mode, status_container)
                 )
-            except Exception as e:
+            except (RuntimeError, aiohttp.ClientError, TimeoutError, asyncio.CancelledError, OSError) as e:
                 logging.error(f"Processing error: {type(e).__name__}: {e}")
                 st.error(f"Processing error: {str(e)}")
                 return

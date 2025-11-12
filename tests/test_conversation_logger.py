@@ -30,7 +30,7 @@ class TestConversationLogger:
         log_dir = Path(temp_log_dir) / "new_logs"
         assert not log_dir.exists()
 
-        logger = ConversationLogger(log_dir=str(log_dir))
+        ConversationLogger(log_dir=str(log_dir))
         assert log_dir.exists()
         assert log_dir.is_dir()
 

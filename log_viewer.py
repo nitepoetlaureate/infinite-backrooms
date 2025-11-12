@@ -3,6 +3,7 @@
 AI Conversation Log Viewer - Streamlit App
 """
 
+import logging
 import re
 from datetime import date, datetime
 from pathlib import Path
@@ -65,7 +66,7 @@ class LogParser:
                             'message_length': len(message.strip())
                         })
 
-        except Exception as e:
+        except (OSError, UnicodeDecodeError, ValueError) as e:
             st.error(f"Error parsing {file_path.name}: {str(e)}")
 
         return messages
@@ -88,7 +89,8 @@ class LogParser:
         # Convert timestamp to datetime for better sorting/filtering
         try:
             df['datetime'] = pd.to_datetime(df['full_timestamp'])
-        except Exception:
+        except (ValueError, TypeError) as e:
+            logging.warning(f"Failed to parse datetime: {e}")
             df['datetime'] = pd.NaT
 
         return df.sort_values('datetime', ascending=False).reset_index(drop=True)
