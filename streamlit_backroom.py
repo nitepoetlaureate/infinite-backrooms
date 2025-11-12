@@ -721,7 +721,7 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
 
         return base_prompt
 
-    def _run_async_in_new_loop(self, coro):
+    def _run_async_in_new_loop(self, coro: Any) -> Any:
         """Run async coroutine in a new event loop
 
         Args:
@@ -895,20 +895,14 @@ Your response should be conversational and engaging."""
             if len(st.session_state.messages) > max_history:
                 st.session_state.messages = st.session_state.messages[-max_history:]
 
-    def conversation_ui(self) -> None:
-        """Main conversation interface using native Streamlit chat elements"""
-        # Check if we have enabled personas
-        enabled_personas = [p for p in st.session_state.personas if p.enabled]
-        if not enabled_personas:
-            st.warning("⚠️ No enabled personas found. Please add and enable at least one persona.")
-            return
-        # Control buttons
+    def _render_control_buttons(self) -> None:
+        """Render conversation control buttons"""
         col1, col2, col3, col4 = st.columns(4, vertical_alignment="bottom")
 
         with col1:
             if st.button("▶️ Start Conversation", disabled=st.session_state.is_running):
                 st.session_state.is_running = True
-                st.session_state.auto_run_count = 0  # Reset counter
+                st.session_state.auto_run_count = 0
                 st.rerun()
 
         with col2:
@@ -928,21 +922,17 @@ Your response should be conversational and engaging."""
                 st.session_state.last_speaker_index = None
                 st.rerun()
 
-        # Handle manual turn if pending
+    def _handle_manual_turn(self) -> None:
+        """Execute pending manual turn"""
         if st.session_state.pending_manual_turn:
             st.session_state.pending_manual_turn = False
             self.run_single_turn(auto_mode=False)
             st.rerun()
 
-        st.divider()
-
-        # Display conversation using native chat elements
-        st.subheader("Chat")
-
-        # Chat input for manual messages (optional feature)
+    def _handle_chat_input(self) -> None:
+        """Handle user chat input"""
         if prompt := st.chat_input("Add a message to the conversation (optional)"):
             timestamp = datetime.now()
-            # Add user message to conversation
             st.session_state.messages.append({
                 "role": "user",
                 "content": prompt,
@@ -950,89 +940,95 @@ Your response should be conversational and engaging."""
                 "persona_name": "User",
                 "model": "Human"
             })
-            # Increment total message counter
             st.session_state.total_message_count += 1
-
-            # Log user message to file
             self.logger.log_message("User", prompt, timestamp)
-
             st.rerun()
 
-        # Use the same limit as max_history setting for both display and storage
+    def _display_messages(self) -> None:
+        """Display conversation messages"""
         display_limit = st.session_state.settings['max_history']
         messages_to_display = st.session_state.messages
 
-        # Show info about message limit
         if st.session_state.total_message_count > display_limit:
             st.info(f"📜 Showing last {display_limit} of {st.session_state.total_message_count} total messages (limited for performance). Full conversation history is available in **Export & Logs** tab.")
 
-        # Display messages using st.chat_message
         for message in messages_to_display:
             if message["role"] == "user":
                 with st.chat_message("user"):
                     st.write(message["content"])
                     st.caption(f"🕒 {message['timestamp'].strftime('%H:%M:%S')}")
             else:
-                # Find persona for avatar and role info
-                persona = None
-                for p in st.session_state.personas:
-                    if p.name == message["persona_name"]:
-                        persona = p
-                        break
+                self._display_assistant_message(message)
 
-                avatar = self.get_persona_avatar(persona) if persona else "🤖"
+    def _display_assistant_message(self, message: dict[str, Any]) -> None:
+        """Display a single assistant message"""
+        persona = None
+        for p in st.session_state.personas:
+            if p.name == message["persona_name"]:
+                persona = p
+                break
 
-                with st.chat_message("assistant", avatar=avatar):
-                    # Display persona name and role
-                    persona_color = persona.color if persona else DEFAULT_PERSONA_COLOR
-                    persona_role = persona.role if persona else None
-                    persona_display = self._create_persona_display_html(
-                        message["persona_name"],
-                        persona_color,
-                        persona_role
-                    )
-                    st.markdown(persona_display, unsafe_allow_html=True)
+        avatar = self.get_persona_avatar(persona) if persona else "🤖"
 
-                    # Show thinking if available
-                    if "thinking" in message and message["thinking"] and message["thinking"].strip():
-                        with st.expander("🧠 AI's Thinking Process", expanded=False):
-                            st.code(message["thinking"], language="text", wrap_lines=True)
+        with st.chat_message("assistant", avatar=avatar):
+            persona_color = persona.color if persona else DEFAULT_PERSONA_COLOR
+            persona_role = persona.role if persona else None
+            persona_display = self._create_persona_display_html(
+                message["persona_name"],
+                persona_color,
+                persona_role
+            )
+            st.markdown(persona_display, unsafe_allow_html=True)
 
-                    # Show message content with @mention highlighting
-                    enabled_personas = [p for p in st.session_state.personas if p.enabled]
-                    content, has_mentions = self._highlight_mentions(message["content"], enabled_personas)
+            if "thinking" in message and message["thinking"] and message["thinking"].strip():
+                with st.expander("🧠 AI's Thinking Process", expanded=False):
+                    st.code(message["thinking"], language="text", wrap_lines=True)
 
-                    if has_mentions:
-                        st.markdown(content, unsafe_allow_html=True)
-                    else:
-                        st.write(message["content"])
+            enabled_personas = [p for p in st.session_state.personas if p.enabled]
+            content, has_mentions = self._highlight_mentions(message["content"], enabled_personas)
 
-                    # Show timestamp and model
-                    st.caption(f"🕒 {message['timestamp'].strftime('%H:%M:%S')} • 🤖 {message['model']}")
+            if has_mentions:
+                st.markdown(content, unsafe_allow_html=True)
+            else:
+                st.write(message["content"])
 
-        # Auto-run conversation if enabled
+            st.caption(f"🕒 {message['timestamp'].strftime('%H:%M:%S')} • 🤖 {message['model']}")
+
+    def _handle_auto_run(self, enabled_personas: list[AIPersona]) -> None:
+        """Handle automatic conversation progression"""
         if st.session_state.is_running and st.session_state.settings['auto_advance']:
-            # Increment counter
             st.session_state.auto_run_count += 1
 
-            # Show auto-running status using st.status
             with st.status(f"🔄 Auto-running conversation... (Turn {st.session_state.auto_run_count})", expanded=True) as status:
                 st.write("⏸️ Click **Pause** to stop auto-running")
                 st.write(f"🎭 {len(enabled_personas)} personas active")
 
-                # Add a small delay before next turn
                 delay = random.uniform(st.session_state.settings['response_delay_min'],
                                      st.session_state.settings['response_delay_max'])
                 st.write(f"⏳ Waiting {delay:.1f} seconds...")
                 time.sleep(delay)
 
-                # Run the next turn automatically with thinking display
                 self.run_single_turn(auto_mode=True, status_container=status)
-
                 status.update(label="Turn completed", state="complete", expanded=False)
 
-            # Continue the auto-run cycle
             st.rerun()
+
+    def conversation_ui(self) -> None:
+        """Main conversation interface using native Streamlit chat elements"""
+        enabled_personas = [p for p in st.session_state.personas if p.enabled]
+        if not enabled_personas:
+            st.warning("⚠️ No enabled personas found. Please add and enable at least one persona.")
+            return
+
+        self._render_control_buttons()
+        self._handle_manual_turn()
+
+        st.divider()
+        st.subheader("Chat")
+
+        self._handle_chat_input()
+        self._display_messages()
+        self._handle_auto_run(enabled_personas)
 
     def run_single_turn(self, auto_mode: bool = False, status_container: Any = None) -> None:
         """Run a single conversation turn with streaming response and thinking display"""
