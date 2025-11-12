@@ -34,18 +34,138 @@ A Streamlit-based web application that enables you to create AI personas with di
 
 2. **Install dependencies:**
    ```bash
+   # Install runtime dependencies
    uv sync
+
+   # For development (includes pytest, ruff, mypy)
+   uv sync --extra dev
    ```
 
-3. **Start the application:**
+3. **Configure the application (optional):**
+   ```bash
+   # Copy the example configuration file
+   cp .env.example .env
+
+   # Edit .env to customize settings (see Configuration section below)
+   ```
+
+4. **Start the application:**
    ```bash
    uv run streamlit run streamlit_backroom.py
    ```
 
-4. **Verify Ollama connection:**
+5. **Verify Ollama connection:**
    - Navigate to the "Personas" tab
    - Click "Check Ollama Connection" to load available models
    - Ensure your models appear in the dropdown
+
+## Configuration
+
+The application can be customized using environment variables. Configuration is managed through the `config.py` module, which provides type-safe access to all settings.
+
+### Quick Configuration
+
+Copy `.env.example` to `.env` and customize as needed:
+
+```bash
+cp .env.example .env
+```
+
+Edit the `.env` file with your preferred settings. Changes require restarting the application to take effect.
+
+### Configuration Options
+
+All 11 configurable settings with their defaults:
+
+#### Ollama API Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Base URL for Ollama API server |
+| `OLLAMA_CONNECTION_TIMEOUT` | `10` | Connection timeout in seconds for initial API connection |
+| `OLLAMA_RESPONSE_TIMEOUT` | `300` | Response timeout in seconds (5 minutes) for AI model responses |
+
+#### Conversation Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `MAX_HISTORY` | `50` | Maximum number of messages to keep in conversation history |
+| `CONTEXT_MESSAGES` | `10` | Number of recent messages to send to AI as context (range: 1-25) |
+| `RESPONSE_DELAY_MIN` | `2` | Minimum delay in seconds between auto-generated responses |
+| `RESPONSE_DELAY_MAX` | `8` | Maximum delay in seconds between auto-generated responses |
+| `AUTO_ADVANCE` | `true` | Enable automatic conversation advancement (`true`/`false`, `1`/`0`, `yes`/`no`) |
+| `ENABLE_THINKING` | `true` | Enable AI thinking display for compatible models like deepseek-r1 |
+
+#### Logging Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `LOG_DIR` | `conversations` | Directory for conversation log files |
+| `LOG_FILE_PREFIX` | `streamlit_backroom` | Prefix for log filenames (format: `{prefix}_{YYYY-MM-DD}.txt`) |
+
+### Using config.py
+
+The application uses a centralized configuration system:
+
+```python
+from config import config
+
+# Access configuration values
+print(config.ollama.base_url)
+print(config.conversation.context_messages)
+print(config.logging.log_dir)
+```
+
+Configuration is loaded automatically when the application starts using `AppConfig.from_env()`.
+
+### Configuration Examples
+
+#### Fast Development Setup
+```bash
+# .env
+OLLAMA_RESPONSE_TIMEOUT=60
+RESPONSE_DELAY_MIN=1
+RESPONSE_DELAY_MAX=3
+CONTEXT_MESSAGES=5
+```
+
+#### Thoughtful Long Conversations
+```bash
+# .env
+CONTEXT_MESSAGES=25
+RESPONSE_DELAY_MIN=5
+RESPONSE_DELAY_MAX=15
+MAX_HISTORY=100
+```
+
+#### Remote Ollama Server
+```bash
+# .env
+OLLAMA_BASE_URL=http://ollama-server.example.com:11434
+OLLAMA_CONNECTION_TIMEOUT=30
+OLLAMA_RESPONSE_TIMEOUT=600
+```
+
+#### Testing Without Thinking Features
+```bash
+# .env
+ENABLE_THINKING=false
+AUTO_ADVANCE=false
+```
+
+#### Custom Logging Location
+```bash
+# .env
+LOG_DIR=/var/log/backrooms
+LOG_FILE_PREFIX=ai_conversation
+```
+
+### Notes
+
+- All timeout values are in seconds
+- Boolean values accept: `true`/`false`, `1`/`0`, `yes`/`no` (case-insensitive)
+- Invalid values fall back to defaults with a warning
+- Empty values or missing variables use the defaults shown above
 
 ## Application Structure
 
@@ -193,16 +313,196 @@ infinite-backrooms/
 - **aiohttp**: Async HTTP client for Ollama API
 - **pandas**: Data analysis for log viewer (log_viewer.py only)
 
+## Development
+
+### Development Setup
+
+1. **Install development dependencies:**
+   ```bash
+   # Install all dependencies including dev tools
+   uv sync --extra dev
+   ```
+
+   This installs:
+   - `pytest` - Testing framework
+   - `pytest-asyncio` - Async test support
+   - `pytest-cov` - Code coverage reporting
+   - `ruff` - Fast Python linter and formatter
+   - `mypy` - Static type checker
+
+2. **Set up your environment:**
+   ```bash
+   # Copy example configuration
+   cp .env.example .env
+
+   # Customize for development (e.g., faster response times)
+   # Edit .env as needed
+   ```
+
+### Running Tests
+
+The project uses pytest for testing with async support and coverage reporting:
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run with verbose output
+uv run pytest -v
+
+# Run with coverage report
+uv run pytest --cov=. --cov-report=html
+
+# Run specific test file
+uv run pytest tests/test_security.py
+
+# Run tests matching a pattern
+uv run pytest -k "test_ollama"
+```
+
+Test configuration is in `pyproject.toml`:
+- Tests are located in the `tests/` directory
+- Async mode is enabled automatically
+- Coverage reports are generated with `-ra -q --cov=.`
+
+Available test files:
+- `tests/test_security.py` - Security validation tests
+- `tests/test_conversation_logger.py` - Logging functionality tests
+- `tests/test_log_viewer.py` - Log viewer component tests
+
+### Code Quality
+
+#### Linting with Ruff
+
+Ruff is a fast Python linter that checks code quality and style:
+
+```bash
+# Lint all files
+uv run ruff check .
+
+# Lint with auto-fix
+uv run ruff check --fix .
+
+# Format code
+uv run ruff format .
+
+# Check formatting without changes
+uv run ruff format --check .
+```
+
+Ruff configuration in `pyproject.toml`:
+- Line length: 120 characters
+- Target: Python 3.12
+- Enabled rules: Error (E), Fatal (F), Warning (W), Import (I), Naming (N), Upgrade (UP), Security (S), Bugbear (B), and more
+- Ignored: S101 (allows assert statements in tests)
+
+#### Type Checking with Mypy
+
+Mypy provides static type checking for Python:
+
+```bash
+# Type check all files
+uv run mypy .
+
+# Type check specific file
+uv run mypy streamlit_backroom.py
+
+# Type check with verbose output
+uv run mypy --verbose .
+```
+
+Mypy configuration in `pyproject.toml`:
+- Python version: 3.12
+- Warns on unused configs and return types
+- Checks untyped definitions
+- Allows untyped function definitions (for gradual typing adoption)
+
+### Development Workflow
+
+1. **Make changes** to code files
+2. **Run linter** to check code quality:
+   ```bash
+   uv run ruff check --fix .
+   ```
+3. **Run type checker** to catch type errors:
+   ```bash
+   uv run mypy .
+   ```
+4. **Run tests** to ensure functionality:
+   ```bash
+   uv run pytest
+   ```
+5. **Format code** before committing:
+   ```bash
+   uv run ruff format .
+   ```
+
+### Pre-commit Checklist
+
+Before committing code, ensure:
+- [ ] All tests pass: `uv run pytest`
+- [ ] No linting errors: `uv run ruff check .`
+- [ ] No type errors: `uv run mypy .`
+- [ ] Code is formatted: `uv run ruff format .`
+- [ ] New tests added for new features
+- [ ] Documentation updated if needed
+
+### Running the Application in Development
+
+```bash
+# Run main application
+uv run streamlit run streamlit_backroom.py
+
+# Run log viewer
+uv run streamlit run log_viewer.py
+
+# Run with custom configuration
+OLLAMA_BASE_URL=http://custom:11434 uv run streamlit run streamlit_backroom.py
+```
+
+### Debugging Tips
+
+1. **Enable Streamlit debug mode:**
+   ```bash
+   uv run streamlit run streamlit_backroom.py --logger.level=debug
+   ```
+
+2. **Test Ollama connection:**
+   ```bash
+   curl http://localhost:11434/api/tags
+   ```
+
+3. **Check configuration loading:**
+   ```python
+   from config import config
+   print(config)  # Shows all loaded configuration values
+   ```
+
+4. **Monitor conversation logs:**
+   ```bash
+   tail -f conversations/streamlit_backroom_$(date +%Y-%m-%d).txt
+   ```
+
 ## Contributing
 
 This project uses UV for dependency management. To contribute:
 
 1. Fork the repository
 2. Create a feature branch
-3. Install dependencies: `uv sync`
+3. Install dependencies: `uv sync --extra dev`
 4. Make your changes
-5. Test with: `uv run streamlit run streamlit_backroom.py`
-6. Submit a pull request
+5. Run quality checks (see Development section above):
+   - `uv run ruff check --fix .`
+   - `uv run mypy .`
+   - `uv run pytest`
+6. Test with: `uv run streamlit run streamlit_backroom.py`
+7. Submit a pull request
+
+See the **Development** section above for detailed information on:
+- Running tests with pytest
+- Linting with ruff
+- Type checking with mypy
+- Development workflow and best practices
 
 ## License
 

@@ -20,10 +20,10 @@ class LogParser:
         """Get all available log files"""
         if not self.log_dir.exists():
             return []
-        
+
         log_files = []
-        # Look for both old backroom format and new ai_conversation format
-        patterns = ["backroom_*.txt", "ai_conversation_*.txt"]
+        # Look for all log file formats
+        patterns = ["backroom_*.txt", "streamlit_backroom_*.txt", "ai_conversation_*.txt"]
         
         for pattern in patterns:
             log_files.extend(self.log_dir.glob(pattern))

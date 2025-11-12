@@ -100,7 +100,10 @@ class ConversationLogger:
     def clean_message(self, message: str) -> str:
         """Remove thinking tags and content from message"""
         # Remove <think>...</think> blocks (including nested ones)
-        cleaned = re.sub(THINKING_TAG_PATTERN, '', message, flags=re.DOTALL | re.IGNORECASE)
+        # Loop to handle nested tags
+        cleaned = message
+        while '<think>' in cleaned.lower():
+            cleaned = re.sub(THINKING_TAG_PATTERN, '', cleaned, flags=re.DOTALL | re.IGNORECASE)
         # Clean up any extra whitespace
         cleaned = re.sub(WHITESPACE_PATTERN, ' ', cleaned).strip()
         return cleaned
