@@ -21,6 +21,16 @@ import uuid
 
 from config import config
 
+# Constants
+DEFAULT_PERSONA_COLOR = "#1f77b4"
+THINKING_TAG_PATTERN = r'<think>.*?</think>'
+WHITESPACE_PATTERN = r'\s+'
+DATE_FORMAT = "%Y-%m-%d"
+TIME_FORMAT = "%H:%M:%S"
+DATETIME_FORMAT = f"{DATE_FORMAT} {TIME_FORMAT}"
+ASYNC_CLEANUP_DELAY = 0.1  # seconds
+TCP_CONNECTOR_LIMIT = 1  # connections per request
+
 # Suppress async cleanup warnings
 warnings.filterwarnings("ignore", message="Task was destroyed but it is pending!")
 warnings.filterwarnings("ignore", message="Unclosed client session")  
@@ -41,7 +51,7 @@ class AIPersona:
     model: str
     role: str = ""  # Optional role for the persona
     system_prompt: str = ""
-    color: str = "#1f77b4"  # Default blue
+    color: str = DEFAULT_PERSONA_COLOR
     enabled: bool = True
 
 
@@ -84,15 +94,15 @@ class ConversationLogger:
 
     def get_daily_log_file(self) -> Path:
         """Get the log file for today"""
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = datetime.now().strftime(DATE_FORMAT)
         return self.log_dir / f"{self.log_file_prefix}_{today}.txt"
-    
+
     def clean_message(self, message: str) -> str:
         """Remove thinking tags and content from message"""
         # Remove <think>...</think> blocks (including nested ones)
-        cleaned = re.sub(r'<think>.*?</think>', '', message, flags=re.DOTALL | re.IGNORECASE)
+        cleaned = re.sub(THINKING_TAG_PATTERN, '', message, flags=re.DOTALL | re.IGNORECASE)
         # Clean up any extra whitespace
-        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+        cleaned = re.sub(WHITESPACE_PATTERN, ' ', cleaned).strip()
         return cleaned
     
     def log_message(self, persona: str, message: str, timestamp: Optional[datetime] = None) -> None:
@@ -108,7 +118,7 @@ class ConversationLogger:
             log_file = self.get_daily_log_file()
             try:
                 with open(log_file, 'a', encoding='utf-8') as f:
-                    f.write(f"[{timestamp.strftime('%H:%M:%S')}] {persona}$ {cleaned_message}\n")
+                    f.write(f"[{timestamp.strftime(TIME_FORMAT)}] {persona}$ {cleaned_message}\n")
             except (IOError, PermissionError) as e:
                 # Log to stderr instead of failing silently
                 import sys
@@ -159,7 +169,7 @@ class OllamaClient:
         try:
             # Create session with explicit connector settings for better cleanup
             connector = aiohttp.TCPConnector(
-                limit=1,  # Limit connections for this specific request
+                limit=TCP_CONNECTOR_LIMIT,
                 force_close=True,  # Force close connections
                 enable_cleanup_closed=True  # Enable cleanup of closed connections
             )
@@ -401,7 +411,7 @@ class StreamlitBackroomApp:
             
             with col1:
                 name = st.text_input("Persona Name", placeholder="e.g., Granite, Qwen, Gemma")
-                color = st.color_picker("Chat Color", value="#1f77b4")
+                color = st.color_picker("Chat Color", value=DEFAULT_PERSONA_COLOR)
             
             with col2:
                 if st.session_state.available_models:
@@ -745,7 +755,7 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
                 with st.chat_message("assistant", avatar=avatar):
                     # Show persona name and role with emoji
                     # Create styled persona display with colored background
-                    persona_color = persona.color if persona else "#1f77b4"
+                    persona_color = persona.color if persona else DEFAULT_PERSONA_COLOR
                     # Sanitize persona name to prevent XSS
                     safe_persona_name = sanitize_html(message["persona_name"])
                     persona_name_styled = f'<span style="background-color: {persona_color}; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold;">{safe_persona_name}</span>'
@@ -982,7 +992,7 @@ Your response should be conversational and engaging."""
                 
                 # Give a small moment for async cleanup to complete
                 try:
-                    loop.run_until_complete(asyncio.sleep(0.1))
+                    loop.run_until_complete(asyncio.sleep(ASYNC_CLEANUP_DELAY))
                 except Exception:
                     pass
                 
