@@ -8,19 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Comprehensive type hints for all functions and methods
+- Comprehensive type hints for all functions and methods (15+ functions)
 - Configuration module (`config.py`) with environment variable support
 - Environment variable configuration for Ollama API settings
 - Environment variable configuration for conversation settings
 - Environment variable configuration for logging settings
+- `.env.example` file with comprehensive configuration documentation
+- Helper methods for code reusability (`_create_persona_display_html`, `_highlight_mentions`)
+- Module-level constants for all magic numbers
 - CI/CD pipeline with GitHub Actions
-- Comprehensive test suite (50+ tests)
+- Comprehensive test suite (50+ tests across 3 test files)
 - Security tests for XSS prevention
 - Tests for ConversationLogger functionality
 - Tests for LogParser functionality
 - LICENSE file (MIT)
 - SECURITY.md with vulnerability reporting guidelines
 - CONTRIBUTING.md with development guidelines
+- CHANGELOG.md following Keep a Changelog format
 - Project metadata in pyproject.toml
 
 ### Fixed
@@ -28,16 +32,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bare except clause in log_viewer.py
 - File I/O operations now have proper error handling
 - Removed unused imports (os, threading, ThreadPoolExecutor, glob)
+- Code duplication in persona display logic (extracted to helper methods)
 
 ### Changed
 - Extracted `ROLE_EMOJI_MAP` to module-level constant (eliminated 4 duplicates)
+- Extracted magic numbers to named constants (DEFAULT_PERSONA_COLOR, THINKING_TAG_PATTERN, etc.)
 - Updated dependencies: removed stdlib modules (asyncio, pathlib, dataclasses)
 - All hardcoded configuration values now use centralized config system
-- Ollama client now uses configurable timeouts
+- Ollama client now uses configurable timeouts from config
 - ConversationLogger now uses configurable log directory and file prefix
+- Refactored `conversation_ui` to use helper methods (reduced from 173 to ~100 lines)
+- Refactored `run_single_turn` to use helper methods (reduced complexity)
+- Improved code maintainability and readability throughout
 
 ### Removed
 - Incorrect dependencies from requirements.txt and pyproject.toml
+- Hardcoded magic numbers (replaced with named constants)
+- Duplicate persona display code (consolidated into helper methods)
 
 ## [0.1.0] - 2025-01-XX
 

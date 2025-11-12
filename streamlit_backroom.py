@@ -328,6 +328,47 @@ class StreamlitBackroomApp:
         else:
             # Use robot emoji as fallback for personas without defined roles
             return "🤖"
+
+    def _create_persona_display_html(self, persona_name: str, persona_color: str, role: Optional[str] = None) -> str:
+        """Create styled HTML for persona display with optional role
+
+        Args:
+            persona_name: Name of the persona (will be sanitized)
+            persona_color: Background color for the name badge
+            role: Optional role to display (will be sanitized)
+
+        Returns:
+            HTML string for persona display
+        """
+        safe_name = sanitize_html(persona_name)
+        name_badge = f'<span style="background-color: {persona_color}; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold;">{safe_name}</span>'
+
+        if role:
+            role_emoji = ROLE_EMOJI_MAP.get(role, "")
+            safe_role = sanitize_html(role)
+            return f"{name_badge} {role_emoji} _{safe_role}_"
+        return name_badge
+
+    def _highlight_mentions(self, content: str, enabled_personas: List[AIPersona]) -> tuple[str, bool]:
+        """Highlight @mentions in content with persona colors
+
+        Args:
+            content: Message content to process
+            enabled_personas: List of enabled personas to check for mentions
+
+        Returns:
+            Tuple of (processed_content, has_mentions)
+        """
+        has_mentions = False
+        for persona in enabled_personas:
+            mention_pattern = f"@{persona.name}"
+            if mention_pattern in content:
+                has_mentions = True
+                safe_mention = sanitize_html(f"@{persona.name}")
+                highlighted = f'<span style="background-color: {persona.color}; color: white; padding: 1px 4px; border-radius: 3px; font-weight: bold;">{safe_mention}</span>'
+                content = sanitize_html(content).replace(sanitize_html(mention_pattern), highlighted)
+        return content, has_mentions
+
     
     def persona_management_ui(self) -> None:
         """UI for managing AI personas"""
@@ -753,48 +794,24 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
                 avatar = self.get_persona_avatar(persona) if persona else "🤖"
                 
                 with st.chat_message("assistant", avatar=avatar):
-                    # Show persona name and role with emoji
-                    # Create styled persona display with colored background
+                    # Display persona name and role
                     persona_color = persona.color if persona else DEFAULT_PERSONA_COLOR
-                    # Sanitize persona name to prevent XSS
-                    safe_persona_name = sanitize_html(message["persona_name"])
-                    persona_name_styled = f'<span style="background-color: {persona_color}; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold;">{safe_persona_name}</span>'
-
-                    if persona and persona.role:
-                        role_emoji = ROLE_EMOJI_MAP.get(persona.role, "")
-                        # Sanitize role to prevent XSS
-                        safe_role = sanitize_html(persona.role)
-                        persona_display = f"{persona_name_styled} {role_emoji} _{safe_role}_"
-                    else:
-                        persona_display = persona_name_styled
-
+                    persona_role = persona.role if persona else None
+                    persona_display = self._create_persona_display_html(
+                        message["persona_name"],
+                        persona_color,
+                        persona_role
+                    )
                     st.markdown(persona_display, unsafe_allow_html=True)
-                    
-                    # Show thinking if available (before the message)
+
+                    # Show thinking if available
                     if "thinking" in message and message["thinking"] and message["thinking"].strip():
                         with st.expander("🧠 AI's Thinking Process", expanded=False):
-                            st.code(
-                                message["thinking"], 
-                                language="text",
-                                wrap_lines=True
-                            )
-                    
-                    # Show message content with @mention highlighting
-                    content = message["content"]
+                            st.code(message["thinking"], language="text", wrap_lines=True)
 
-                    # Check for @mentions and highlight them
+                    # Show message content with @mention highlighting
                     enabled_personas = [p for p in st.session_state.personas if p.enabled]
-                    has_mentions = False
-                    for p in enabled_personas:
-                        mention_pattern = f"@{p.name}"
-                        if mention_pattern in content:
-                            has_mentions = True
-                            # Sanitize the persona name to prevent XSS
-                            safe_mention = sanitize_html(f"@{p.name}")
-                            # Highlight @mentions with the persona's color
-                            highlighted_mention = f'<span style="background-color: {p.color}; color: white; padding: 1px 4px; border-radius: 3px; font-weight: bold;">{safe_mention}</span>'
-                            # First escape the whole content, then replace the sanitized mention
-                            content = sanitize_html(content).replace(sanitize_html(mention_pattern), highlighted_mention)
+                    content, has_mentions = self._highlight_mentions(message["content"], enabled_personas)
 
                     if has_mentions:
                         st.markdown(content, unsafe_allow_html=True)
@@ -875,19 +892,12 @@ Your response should be conversational and engaging."""
         # Display the generating message with streaming
         with st.chat_message("assistant", avatar=avatar):
             # Show persona name and role with emoji
-            # Create styled persona display with colored background
-            # Sanitize persona name to prevent XSS
-            safe_persona_name = sanitize_html(current_persona.name)
-            persona_name_styled = f'<span style="background-color: {current_persona.color}; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold;">{safe_persona_name}</span>'
-
-            if current_persona.role:
-                role_emoji = ROLE_EMOJI_MAP.get(current_persona.role, "")
-                # Sanitize role to prevent XSS
-                safe_role = sanitize_html(current_persona.role)
-                persona_display = f"{persona_name_styled} {role_emoji} _{safe_role}_"
-            else:
-                persona_display = persona_name_styled
-
+            # Display persona name and role
+            persona_display = self._create_persona_display_html(
+                current_persona.name,
+                current_persona.color,
+                current_persona.role if current_persona.role else None
+            )
             st.markdown(persona_display, unsafe_allow_html=True)
             
             # Get streaming response with thinking
