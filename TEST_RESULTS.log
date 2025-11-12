@@ -1,0 +1,576 @@
+Wed Nov 12 23:49:55 UTC 2025
+==================================
+COMPREHENSIVE TEST VALIDATION
+==================================
+
+## PYTEST EXECUTION (Full Verbose Output)
+-------------------------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.11.14, pytest-9.0.1, pluggy-1.6.0
+rootdir: /home/user/infinite-backrooms
+configfile: pyproject.toml
+plugins: asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 30 items
+
+tests/test_conversation_logger.py ...........                            [ 36%]
+tests/test_log_viewer.py ............                                    [ 76%]
+tests/test_security.py .......                                           [100%]
+
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.11.14-final-0 _______________
+
+Name                                Stmts   Miss  Cover   Missing
+-----------------------------------------------------------------
+config.py                              37      0   100%
+log_viewer.py                         210    157    25%   24, 69-70, 92-94, 101-159, 165-197, 202-224, 229-250, 255-325, 335-429, 438
+streamlit_backroom.py                 691    578    16%   93, 117, 137-140, 147-151, 155-170, 174-269, 276-279, 283, 306-333, 337-339, 344-348, 361-368, 380-388, 393-404, 413-433, 442-470, 474-477, 481-544, 553-576, 580-605, 610-615, 619-667, 671-680, 684-722, 733-738, 742-751, 755-788, 798-866, 876-896, 900-923, 927-930, 934-945, 949-961, 965-995, 999-1014, 1018-1031, 1035-1077, 1081-1138, 1143-1210, 1214-1248, 1253-1254, 1258
+tests/__init__.py                       0      0   100%
+tests/test_conversation_logger.py     109      3    97%   131-133
+tests/test_log_viewer.py               92      0   100%
+tests/test_security.py                 42      0   100%
+-----------------------------------------------------------------
+TOTAL                                1181    738    38%
+============================== 30 passed in 2.57s ==============================
+
+
+## RUFF LINTING CHECK
+-------------------------------------------
+E501 Line too long (140 > 120)
+   --> log_viewer.py:382:120
+    |
+380 | …
+381 | …
+382 | …essages containing '{search_term}' out of {original_count} total messages")
+    |                                                         ^^^^^^^^^^^^^^^^^^^^
+383 | …
+384 | …_term}'")
+    |
+
+E402 Module level import not at top of file
+  --> streamlit_backroom.py:44:1
+   |
+43 | # Also suppress aiohttp specific warnings
+44 | import logging
+   | ^^^^^^^^^^^^^^
+45 |
+46 | logging.getLogger('aiohttp.client').setLevel(logging.ERROR)
+   |
+
+T201 `print` found
+   --> streamlit_backroom.py:140:17
+    |
+138 |                 # Log to stderr instead of failing silently
+139 |                 import sys
+140 |                 print(f"Warning: Failed to write to log file {log_file}: {e}", file=sys.stderr)
+    |                 ^^^^^
+    |
+help: Remove `print`
+
+E501 Line too long (161 > 120)
+   --> streamlit_backroom.py:172:121
+    |
+170 | …
+171 | …
+172 | …None, think: bool = True, timeout: int = 300) -> AsyncGenerator[dict[str, str], None]:
+    |                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+173 | …king"""
+174 | …
+    |
+
+E501 Line too long (153 > 120)
+   --> streamlit_backroom.py:232:121
+    |
+231 | …
+232 | …model} doesn't support thinking - switching to standard mode for future requests"}
+    |                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+233 | …
+234 | …st close this session
+    |
+
+E501 Line too long (121 > 120)
+   --> streamlit_backroom.py:239:121
+    |
+237 |                                 session = None
+238 |
+239 |                             async for chunk in self.generate_stream(model, prompt, system, think=False, timeout=timeout):
+    |                                                                                                                         ^
+240 |                                 yield chunk
+241 |                             return
+    |
+
+E501 Line too long (240 > 120)
+   --> streamlit_backroom.py:285:121
+    |
+283 | …
+284 | …
+285 | …stions, introduces new topics when needed, and helps ensure all voices are heard. Keeps conversations engaging and on-track.",
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+286 | …, identifies emerging themes, and helps track the evolution of ideas throughout the conversation.",
+287 | …ness, reality, and the nature of intelligence.",
+    |
+
+E501 Line too long (213 > 120)
+   --> streamlit_backroom.py:286:121
+    |
+284 | …
+285 | …follow-up questions, introduces new topics when needed, and helps ensure all voices are heard. Keeps conversations engaging and on-t…
+286 | …tant insights, identifies emerging themes, and helps track the evolution of ideas throughout the conversation.",
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+287 | …ce, consciousness, reality, and the nature of intelligence.",
+288 | …iscussing research, theories, and the scientific method.",
+    |
+
+E501 Line too long (162 > 120)
+   --> streamlit_backroom.py:287:121
+    |
+285 | …cussions, asks thoughtful follow-up questions, introduces new topics when needed, and helps ensure all voices are heard. Keeps conve…
+286 | …key points, captures important insights, identifies emerging themes, and helps track the evolution of ideas throughout the conversat…
+287 | …ep questions about existence, consciousness, reality, and the nature of intelligence.",
+    |                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+288 | …pirical thinking, enjoys discussing research, theories, and the scientific method.",
+289 | …g, wordplay, poetry, and exploring the creative aspects of language and ideas.",
+    |
+
+E501 Line too long (159 > 120)
+   --> streamlit_backroom.py:288:121
+    |
+286 | … key points, captures important insights, identifies emerging themes, and helps track the evolution of ideas throughout the conversa…
+287 | …eep questions about existence, consciousness, reality, and the nature of intelligence.",
+288 | …mpirical thinking, enjoys discussing research, theories, and the scientific method.",
+    |                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+289 | …ng, wordplay, poetry, and exploring the creative aspects of language and ideas.",
+290 | … presenting different perspectives, and challenging ideas constructively.",
+    |
+
+E501 Line too long (155 > 120)
+   --> streamlit_backroom.py:289:121
+    |
+287 | … deep questions about existence, consciousness, reality, and the nature of intelligence.",
+288 | … empirical thinking, enjoys discussing research, theories, and the scientific method.",
+289 | …ling, wordplay, poetry, and exploring the creative aspects of language and ideas.",
+    |                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+290 | …s, presenting different perspectives, and challenging ideas constructively.",
+291 | …e bright side of things and encourages others.",
+    |
+
+E501 Line too long (149 > 120)
+   --> streamlit_backroom.py:290:121
+    |
+288 | …ith empirical thinking, enjoys discussing research, theories, and the scientific method.",
+289 | …telling, wordplay, poetry, and exploring the creative aspects of language and ideas.",
+290 | …ates, presenting different perspectives, and challenging ideas constructively.",
+    |                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+291 | … the bright side of things and encourages others.",
+292 | … asks for evidence, and approaches claims with healthy skepticism.",
+    |
+
+E501 Line too long (137 > 120)
+   --> streamlit_backroom.py:292:121
+    |
+290 | …al debates, presenting different perspectives, and challenging ideas constructively.",
+291 | …to see the bright side of things and encourages others.",
+292 | …tions, asks for evidence, and approaches claims with healthy skepticism.",
+    |                                                           ^^^^^^^^^^^^^^^^^
+293 | …ns in human behavior, and how the past informs the present.",
+294 | … emerging technologies, future possibilities, and societal evolution.",
+    |
+
+E501 Line too long (124 > 120)
+   --> streamlit_backroom.py:293:121
+    |
+291 | …     "Optimist": "A positive, hopeful persona who tends to see the bright side of things and encourages others.",
+292 | …     "Skeptic": "A critical thinker who questions assumptions, asks for evidence, and approaches claims with healthy skepticism.",
+293 | …     "Historian": "Someone fascinated by history, patterns in human behavior, and how the past informs the present.",
+    |                                                                                                                   ^^^^
+294 | …     "Futurist": "Forward-thinking persona interested in emerging technologies, future possibilities, and societal evolution.",
+295 | …     "Minimalist": "Values simplicity, clarity, and getting to the essence of ideas without unnecessary complexity.",
+    |
+
+E501 Line too long (134 > 120)
+   --> streamlit_backroom.py:294:121
+    |
+292 | …     "Skeptic": "A critical thinker who questions assumptions, asks for evidence, and approaches claims with healthy skepticism.",
+293 | …     "Historian": "Someone fascinated by history, patterns in human behavior, and how the past informs the present.",
+294 | …     "Futurist": "Forward-thinking persona interested in emerging technologies, future possibilities, and societal evolution.",
+    |                                                                                                                   ^^^^^^^^^^^^^^
+295 | …     "Minimalist": "Values simplicity, clarity, and getting to the essence of ideas without unnecessary complexity.",
+296 | …     "Explorer": "Adventurous and curious about discovering new ideas, connections, and unexplored topics.",
+    |
+
+E501 Line too long (124 > 120)
+   --> streamlit_backroom.py:295:121
+    |
+293 |             "Historian": "Someone fascinated by history, patterns in human behavior, and how the past informs the present.",
+294 |             "Futurist": "Forward-thinking persona interested in emerging technologies, future possibilities, and societal evolution.",
+295 |             "Minimalist": "Values simplicity, clarity, and getting to the essence of ideas without unnecessary complexity.",
+    |                                                                                                                         ^^^^
+296 |             "Explorer": "Adventurous and curious about discovering new ideas, connections, and unexplored topics.",
+297 |             "Mentor": "Supportive and encouraging, enjoys helping others learn and grow through thoughtful guidance.",
+    |
+
+E501 Line too long (121 > 120)
+   --> streamlit_backroom.py:299:121
+    |
+297 |             "Mentor": "Supportive and encouraging, enjoys helping others learn and grow through thoughtful guidance.",
+298 |             "Comedian": "Brings humor and levity to conversations while still engaging meaningfully with topics.",
+299 |             "Analyst": "Systematic thinker who breaks down complex topics into components and enjoys detailed analysis.",
+    |                                                                                                                         ^
+300 |             "Dreamer": "Imaginative and idealistic, often thinking about possibilities and 'what if' scenarios.",
+301 |             "Pragmatist": "Practical and results-oriented, focuses on what works and real-world applications."
+    |
+
+E501 Line too long (162 > 120)
+   --> streamlit_backroom.py:362:121
+    |
+360 | …
+361 | …
+362 | …r: white; padding: 2px 8px; border-radius: 4px; font-weight: bold;">{safe_name}</span>'
+    |                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+363 | …
+364 | …
+    |
+
+E501 Line too long (174 > 120)
+   --> streamlit_backroom.py:386:121
+    |
+384 | …
+385 | …
+386 | …olor: white; padding: 1px 4px; border-radius: 3px; font-weight: bold;">{safe_mention}</span>'
+    |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+387 | …ttern), highlighted)
+388 | …
+    |
+
+E501 Line too long (122 > 120)
+   --> streamlit_backroom.py:519:120
+    |
+517 |                                disabled=True, height=100)
+518 |                 elif use_custom_role:
+519 |                     st.info("💡 Define a custom role to give your persona unique characteristics and conversation style.")
+    |                                                                                                                         ^^
+520 |
+521 |             system_prompt = st.text_area(
+    |
+
+E501 Line too long (121 > 120)
+   --> streamlit_backroom.py:628:121
+    |
+626 |             context_messages = st.number_input("Context Messages (sent to AI)", min_value=1, max_value=25,
+627 |                                              value=st.session_state.settings['context_messages'],
+628 |                                              help="Number of recent messages to include as context for each AI response")
+    |                                                                                                                         ^
+629 |
+630 |             response_timeout = st.number_input("Response Timeout (seconds)", min_value=30, max_value=600,
+    |
+
+E501 Line too long (142 > 120)
+   --> streamlit_backroom.py:647:121
+    |
+645 | …play",
+646 | …ttings['enable_thinking'],
+647 | …ning process before responses. Requires compatible models like deepseek-r1.")
+    |                                                         ^^^^^^^^^^^^^^^^^^^^^^
+648 | …
+649 | …
+    |
+
+E501 Line too long (130 > 120)
+   --> streamlit_backroom.py:663:120
+    |
+661 |         # Show models that don't support thinking
+662 |         if st.session_state.non_thinking_models:
+663 |             st.info(f"🤖 **Models automatically using standard mode:** {', '.join(sorted(st.session_state.non_thinking_models))}")
+    |                                                                                                                         ^^^^^^^^^^
+664 |             if st.button("🔄 Reset Model Compatibility Cache", help="Clear the cache of models that don't support thinking"):
+665 |                 st.session_state.non_thinking_models.clear()
+    |
+
+E501 Line too long (125 > 120)
+   --> streamlit_backroom.py:664:120
+    |
+662 |         if st.session_state.non_thinking_models:
+663 |             st.info(f"🤖 **Models automatically using standard mode:** {', '.join(sorted(st.session_state.non_thinking_models))}")
+664 |             if st.button("🔄 Reset Model Compatibility Cache", help="Clear the cache of models that don't support thinking"):
+    |                                                                                                                         ^^^^^
+665 |                 st.session_state.non_thinking_models.clear()
+666 |                 st.success("Model compatibility cache cleared!")
+    |
+
+E501 Line too long (195 > 120)
+   --> streamlit_backroom.py:688:121
+    |
+687 | …
+688 | …on with {len(other_names)} other AI{'s' if len(other_names) > 1 else ''} ({', '.join(other_names)})."""
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+689 | …
+690 | …
+    |
+
+E501 Line too long (250 > 120)
+   --> streamlit_backroom.py:692:120
+    |
+690 | …
+691 | …
+692 | …y using @name (e.g., @{other_names[0]}). When you see @{persona.name} in messages, that means someone is specifically addressing you!"
+    |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+693 | …
+694 | …
+    |
+
+E501 Line too long (364 > 120)
+   --> streamlit_backroom.py:701:121
+    |
+699 | …
+700 | …
+701 | … new topics when conversations stagnate\n- Encouraging quieter personas to share their thoughts\n- Summarizing different viewpoints when helpful\n- Keeping discussions constructive and inclusive\n- Use @mentions to directly engage specific personas"
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+702 | …
+703 | …n- Identifying recurring themes and patterns\n- Highlighting particularly interesting or novel ideas\n- Connecting current discussion to earlier topics\n- Asking clarifying questions to capture nuances\n- Only summarize when there's substantial content t…
+    |
+
+E501 Line too long (443 > 120)
+   --> streamlit_backroom.py:703:121
+    |
+701 | … new topics when conversations stagnate\n- Encouraging quieter personas to share their thoughts\n- Summarizing different viewpoints when helpful\n- Keeping discussions constructive and inclusive\n- Use @mentions to directly engage specific personas"
+702 | …
+703 | …n- Identifying recurring themes and patterns\n- Highlighting particularly interesting or novel ideas\n- Connecting current discussion to earlier topics\n- Asking clarifying questions to capture nuances\n- Only summarize when there's substantial content to synthesize\n- Use @mentions when attributing ideas to specific personas"
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+704 | …
+705 | …ty as {persona.name}."
+    |
+
+E501 Line too long (137 > 120)
+   --> streamlit_backroom.py:705:121
+    |
+703 | …n- Periodically summarizing key points and insights\n- Identifying recurring themes and patterns\n- Highlighting particularly intere…
+704 | …
+705 | …your conversations while staying true to your identity as {persona.name}."
+    |                                                           ^^^^^^^^^^^^^^^^^
+706 | …
+707 | … a {persona.role}. Let this role guide your perspective and conversation style."
+    |
+
+E501 Line too long (143 > 120)
+   --> streamlit_backroom.py:707:121
+    |
+705 | …r conversations while staying true to your identity as {persona.name}."
+706 | …
+707 | …{persona.role}. Let this role guide your perspective and conversation style."
+    |                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+708 | …
+709 | …
+    |
+
+E501 Line too long (206 > 120)
+   --> streamlit_backroom.py:712:121
+    |
+710 | …
+711 | …
+712 | …s, or discuss whatever comes to mind. Build on what others have said, ask questions, or introduce new topics.
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+713 | …
+714 | …lse 'PersonaName'}). This helps create more directed and engaging conversations.
+    |
+
+E501 Line too long (177 > 120)
+   --> streamlit_backroom.py:714:121
+    |
+712 | …, explore ideas, or discuss whatever comes to mind. Build on what others have said, ask questions, or introduce new topics.
+713 | …
+714 | … other_names else 'PersonaName'}). This helps create more directed and engaging conversations.
+    |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+715 | …
+716 | …rly long."""
+    |
+
+E501 Line too long (141 > 120)
+   --> streamlit_backroom.py:750:121
+    |
+748 | …
+749 | …
+750 | …del, prompt, system_prompt, think=enable_thinking, timeout=timeout_seconds):
+    |                                                         ^^^^^^^^^^^^^^^^^^^^^
+751 | …
+    |
+
+E501 Line too long (198 > 120)
+   --> streamlit_backroom.py:778:121
+    |
+776 | …
+777 | …
+778 | … can see all messages from other personas: {', '.join(other_names) if other_names else 'none currently'}.
+    |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+779 | …
+780 | …
+    |
+
+E501 Line too long (204 > 120)
+   --> streamlit_backroom.py:953:120
+    |
+952 | …
+953 | …otal messages (limited for performance). Full conversation history is available in **Export & Logs** tab.")
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+954 | …
+955 | …
+    |
+
+E501 Line too long (129 > 120)
+    --> streamlit_backroom.py:1002:120
+     |
+1000 |             st.session_state.auto_run_count += 1
+1001 |
+1002 |             with st.status(f"🔄 Auto-running conversation... (Turn {st.session_state.auto_run_count})", expanded=True) as status:
+     |                                                                                                                         ^^^^^^^^^
+1003 |                 st.write("⏸️ Click **Pause** to stop auto-running")
+1004 |                 st.write(f"🎭 {len(enabled_personas)} personas active")
+     |
+
+S311 Standard pseudo-random generators are not suitable for cryptographic purposes
+    --> streamlit_backroom.py:1006:25
+     |
+1004 |                   st.write(f"🎭 {len(enabled_personas)} personas active")
+1005 |
+1006 |                   delay = random.uniform(st.session_state.settings['response_delay_min'],
+     |  _________________________^
+1007 | |                                      st.session_state.settings['response_delay_max'])
+     | |_____________________________________________________________________________________^
+1008 |                   st.write(f"⏳ Waiting {delay:.1f} seconds...")
+1009 |                   time.sleep(delay)
+     |
+
+E501 Line too long (209 > 120)
+    --> streamlit_backroom.py:1191:121
+     |
+1189 | …
+1190 | …
+1191 | …white; padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 0.9em;">{safe_persona_name}</span>'
+     |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1192 | …
+     |
+
+E501 Line too long (167 > 120)
+    --> streamlit_backroom.py:1225:120
+     |
+1223 | …
+1224 | …
+1225 | …t AI persona in the **Personas** tab, then head to **Conversation** to begin chatting!")
+     |                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1226 | …
+1227 | …
+     |
+
+E501 Line too long (139 > 120)
+    --> streamlit_backroom.py:1237:122
+     |
+1235 | …
+1236 | …
+1237 | …reate at least one persona in the **Personas** tab to start conversations.")
+     |                                                           ^^^^^^^^^^^^^^^^^^^
+1238 | …
+1239 | …
+     |
+
+Found 40 errors.
+No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+
+
+## EXCEPTION HANDLER VERIFICATION
+-------------------------------------------
+Checking for blind exception handlers (should be 0):
+
+
+## COMPLEXITY ANALYSIS
+-------------------------------------------
+streamlit_backroom.py
+    M 172:4 OllamaClient.generate_stream - D (27)
+    M 790:4 StreamlitBackroomApp._process_streaming_response - C (20)
+    M 682:4 StreamlitBackroomApp.generate_system_prompt - C (14)
+    C 143:0 OllamaClient - C (12)
+    M 479:4 StreamlitBackroomApp._render_add_persona_form - C (12)
+    M 963:4 StreamlitBackroomApp._display_assistant_message - C (12)
+    M 1140:4 StreamlitBackroomApp.sidebar_ui - C (12)
+    M 304:4 StreamlitBackroomApp.initialize_session_state - C (11)
+    M 753:4 StreamlitBackroomApp._generate_conversation_prompt - B (10)
+    M 1079:4 StreamlitBackroomApp.export_ui - B (9)
+    M 406:4 StreamlitBackroomApp._render_persona_delete_controls - B (8)
+    M 435:4 StreamlitBackroomApp._render_persona_details - B (8)
+    C 272:0 StreamlitBackroomApp - B (6)
+    M 103:4 ConversationLogger.clean_message - A (5)
+    M 546:4 StreamlitBackroomApp._add_preset_personas - A (5)
+    M 669:4 StreamlitBackroomApp.get_next_speaker - A (5)
+    M 898:4 StreamlitBackroomApp._render_control_buttons - A (5)
+    M 1033:4 StreamlitBackroomApp.run_single_turn - A (5)
+    C 88:0 ConversationLogger - A (4)
+    M 123:4 ConversationLogger.log_message - A (4)
+    M 153:4 OllamaClient.test_connection - A (4)
+    M 391:4 StreamlitBackroomApp._render_ollama_connection_check - A (4)
+    M 617:4 StreamlitBackroomApp.settings_ui - A (4)
+    M 868:4 StreamlitBackroomApp._save_message_to_history - A (4)
+    M 947:4 StreamlitBackroomApp._display_messages - A (4)
+    M 1016:4 StreamlitBackroomApp.conversation_ui - A (4)
+    M 370:4 StreamlitBackroomApp._highlight_mentions - A (3)
+    M 472:4 StreamlitBackroomApp._render_persona_list - A (3)
+    M 578:4 StreamlitBackroomApp._render_quick_start_presets - A (3)
+    M 740:4 StreamlitBackroomApp.get_ai_response_stream - A (3)
+    M 997:4 StreamlitBackroomApp._handle_auto_run - A (3)
+    M 1212:4 StreamlitBackroomApp.run - A (3)
+    M 91:4 ConversationLogger.__init__ - A (2)
+    M 146:4 OllamaClient.__init__ - A (2)
+    M 341:4 StreamlitBackroomApp.get_persona_avatar - A (2)
+    M 350:4 StreamlitBackroomApp._create_persona_display_html - A (2)
+    M 925:4 StreamlitBackroomApp._handle_manual_turn - A (2)
+    M 932:4 StreamlitBackroomApp._handle_chat_input - A (2)
+    F 61:0 sanitize_html - A (1)
+    F 1251:0 main - A (1)
+    C 50:0 AIPersona - A (1)
+    M 98:4 ConversationLogger.get_daily_log_file - A (1)
+    M 275:4 StreamlitBackroomApp.__init__ - A (1)
+    M 281:4 StreamlitBackroomApp.get_role_templates - A (1)
+    M 335:4 StreamlitBackroomApp.check_ollama_connection - A (1)
+    M 608:4 StreamlitBackroomApp.persona_management_ui - A (1)
+    M 724:4 StreamlitBackroomApp._run_async_in_new_loop - A (1)
+
+
+## FILE STRUCTURE
+-------------------------------------------
+Python files:
+./config.py
+./log_viewer.py
+./streamlit_backroom.py
+./tests/__init__.py
+./tests/test_conversation_logger.py
+./tests/test_log_viewer.py
+./tests/test_security.py
+
+Documentation files:
+-rw-r--r-- 1 root root  19K Nov 12 23:36 BRUTAL_AUDIT.md
+-rw-r--r-- 1 root root  11K Nov 12 23:36 CHANGELOG.md
+-rw-r--r-- 1 root root 5.3K Nov 12 17:17 CONTRIBUTING.md
+-rw-r--r-- 1 root root 9.2K Nov 12 23:41 FINAL_STATUS.md
+-rw-r--r-- 1 root root 9.9K Nov 12 23:33 FIXES_PROOF.md
+-rw-r--r-- 1 root root  16K Nov 12 21:02 README.md
+-rw-r--r-- 1 root root 2.5K Nov 12 17:16 SECURITY.md
+
+
+## GIT STATUS
+-------------------------------------------
+49b57db docs: Add comprehensive final status document
+71b49d9 fix: Complete remaining refactoring and cleanup
+3bbc0df fix: COMPLETE FIXES - All critical issues resolved with proof
+03dcd1a chore: Remove .coverage from git tracking
+b5e4f0f chore: Add test coverage files to .gitignore
+941563b docs: Add brutal self-audit documenting all failures and exaggerations
+d2e3765 fix: Turn 6 - Parallel agent execution with comprehensive refactoring and validation
+7cd7207 fix: Turn 5 - Brutal honesty, test fixes, and comprehensive validation
+158f4da refactor: Extract helper methods and update documentation
+4938d3f refactor: Extract magic numbers to constants and add .env.example
+
+On branch claude/aggressive-fix-plan-011CV4Mk56mrVmun6QnMKwqh
+Your branch is up to date with 'origin/claude/aggressive-fix-plan-011CV4Mk56mrVmun6QnMKwqh'.
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	TEST_RESULTS.log
+
+nothing added to commit but untracked files present (use "git add" to track)
