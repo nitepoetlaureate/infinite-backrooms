@@ -19,6 +19,8 @@ from pathlib import Path
 import streamlit as st
 import uuid
 
+from config import config
+
 # Suppress async cleanup warnings
 warnings.filterwarnings("ignore", message="Task was destroyed but it is pending!")
 warnings.filterwarnings("ignore", message="Unclosed client session")  
@@ -72,15 +74,18 @@ ROLE_EMOJI_MAP = {
 
 class ConversationLogger:
     """Handles logging conversations to daily TXT files"""
-    
-    def __init__(self, log_dir: str = "conversations"):
+
+    def __init__(self, log_dir: Optional[str] = None):
+        if log_dir is None:
+            log_dir = config.logging.log_dir
         self.log_dir = Path(log_dir)
         self.log_dir.mkdir(exist_ok=True)
-        
+        self.log_file_prefix = config.logging.log_file_prefix
+
     def get_daily_log_file(self) -> Path:
         """Get the log file for today"""
         today = datetime.now().strftime("%Y-%m-%d")
-        return self.log_dir / f"streamlit_backroom_{today}.txt"
+        return self.log_dir / f"{self.log_file_prefix}_{today}.txt"
     
     def clean_message(self, message: str) -> str:
         """Remove thinking tags and content from message"""
@@ -90,7 +95,7 @@ class ConversationLogger:
         cleaned = re.sub(r'\s+', ' ', cleaned).strip()
         return cleaned
     
-    def log_message(self, persona: str, message: str, timestamp: datetime = None):
+    def log_message(self, persona: str, message: str, timestamp: Optional[datetime] = None) -> None:
         """Log a message to today's file"""
         if timestamp is None:
             timestamp = datetime.now()
@@ -112,17 +117,21 @@ class ConversationLogger:
 
 class OllamaClient:
     """Client for interacting with Ollama API"""
-    
-    def __init__(self, base_url: str = "http://localhost:11434"):
+
+    def __init__(self, base_url: Optional[str] = None):
+        if base_url is None:
+            base_url = config.ollama.base_url
         self.base_url = base_url
-    
+        self.connection_timeout = config.ollama.connection_timeout
+        self.response_timeout = config.ollama.response_timeout
+
     async def test_connection(self) -> tuple[bool, List[str]]:
         """Test if Ollama API is accessible and return available models"""
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
                     f"{self.base_url}/api/tags",
-                    timeout=aiohttp.ClientTimeout(total=10)
+                    timeout=aiohttp.ClientTimeout(total=self.connection_timeout)
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
@@ -235,12 +244,12 @@ class OllamaClient:
 class StreamlitBackroomApp:
     """Main Streamlit application for AI Backroom"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = ConversationLogger()
         self.ollama = OllamaClient()
         self.role_templates = self.get_role_templates()
         self.initialize_session_state()
-    
+
     def get_role_templates(self) -> Dict[str, str]:
         """Get predefined role templates"""
         return {
@@ -264,7 +273,7 @@ class StreamlitBackroomApp:
             "Pragmatist": "Practical and results-oriented, focuses on what works and real-world applications."
         }
     
-    def initialize_session_state(self):
+    def initialize_session_state(self) -> None:
         """Initialize Streamlit session state"""
         if 'personas' not in st.session_state:
             st.session_state.personas = []
@@ -278,13 +287,13 @@ class StreamlitBackroomApp:
             st.session_state.last_speaker_index = None
         if 'settings' not in st.session_state:
             st.session_state.settings = {
-                'max_history': 50,
-                'response_delay_min': 2,
-                'response_delay_max': 8,
-                'auto_advance': True,
-                'context_messages': 10,
-                'enable_thinking': True,
-                'response_timeout': 300  # 5 minutes default
+                'max_history': config.conversation.max_history,
+                'response_delay_min': config.conversation.response_delay_min,
+                'response_delay_max': config.conversation.response_delay_max,
+                'auto_advance': config.conversation.auto_advance,
+                'context_messages': config.conversation.context_messages,
+                'enable_thinking': config.conversation.enable_thinking,
+                'response_timeout': config.ollama.response_timeout
             }
         if 'auto_run_count' not in st.session_state:
             st.session_state.auto_run_count = 0
@@ -295,12 +304,12 @@ class StreamlitBackroomApp:
         if 'pending_manual_turn' not in st.session_state:
             st.session_state.pending_manual_turn = False
     
-    async def check_ollama_connection(self):
+    async def check_ollama_connection(self) -> bool:
         """Check Ollama connection and update available models"""
         connected, models = await self.ollama.test_connection()
         st.session_state.available_models = models
         return connected
-    
+
     def get_persona_avatar(self, persona: AIPersona) -> str:
         """Get avatar for persona based on role or use default"""
         # Use role emoji map for avatars
@@ -310,7 +319,7 @@ class StreamlitBackroomApp:
             # Use robot emoji as fallback for personas without defined roles
             return "🤖"
     
-    def persona_management_ui(self):
+    def persona_management_ui(self) -> None:
         """UI for managing AI personas"""
         st.header("🤖 AI Persona Management")
         
@@ -526,7 +535,7 @@ class StreamlitBackroomApp:
                 else:
                     st.warning("⚠️ Please check Ollama connection first to load available models.")
     
-    def settings_ui(self):
+    def settings_ui(self) -> None:
         """UI for application settings"""
         st.header("⚙️ Settings")
         
@@ -646,7 +655,7 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
         async for chunk in self.ollama.generate_stream(persona.model, prompt, system_prompt, think=enable_thinking, timeout=timeout_seconds):
             yield chunk
     
-    def conversation_ui(self):
+    def conversation_ui(self) -> None:
         """Main conversation interface using native Streamlit chat elements"""        
         # Check if we have enabled personas
         enabled_personas = [p for p in st.session_state.personas if p.enabled]
@@ -809,7 +818,7 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
             # Continue the auto-run cycle
             st.rerun()
     
-    def run_single_turn(self, auto_mode=False, status_container=None):
+    def run_single_turn(self, auto_mode: bool = False, status_container: Any = None) -> None:
         """Run a single conversation turn with streaming response and thinking display"""
         current_persona = self.get_next_speaker()
         if not current_persona:
@@ -1015,7 +1024,7 @@ Your response should be conversational and engaging."""
         if not auto_mode:
             st.rerun()
     
-    def export_ui(self):
+    def export_ui(self) -> None:
         """UI for exporting conversations"""
         st.header("📁 Export & Logs")
         
@@ -1076,7 +1085,7 @@ Your response should be conversational and engaging."""
         else:
             st.info("No log file found for today. Start a conversation to create logs!")
 
-    def sidebar_ui(self):
+    def sidebar_ui(self) -> None:
         """Sidebar UI for status and information"""
 
         with st.sidebar:
@@ -1153,7 +1162,7 @@ Your response should be conversational and engaging."""
                 st.markdown("• 🧠 **Thinking enabled** - View AI reasoning in expanders")
                 st.markdown("• Works best with **deepseek-r1** and compatible models")
 
-    def run(self):
+    def run(self) -> None:
         """Main Streamlit app interface"""
         st.set_page_config(
             page_title="AI Backroom",
@@ -1192,7 +1201,7 @@ Your response should be conversational and engaging."""
             self.export_ui()
 
 
-def main():
+def main() -> None:
     """Main entry point for Streamlit app"""
     app = StreamlitBackroomApp()
     app.run()
