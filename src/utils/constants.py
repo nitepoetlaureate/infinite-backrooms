@@ -59,8 +59,8 @@ ENABLE_THINKING = os.getenv("ENABLE_THINKING", "true").lower() == "true"
 # Auto-run Configuration
 # ======================
 
-AUTO_RUN_DELAY_MIN = int(os.getenv("AUTO_RUN_DELAY_MIN", "2"))
-AUTO_RUN_DELAY_MAX = int(os.getenv("AUTO_RUN_DELAY_MAX", "8"))
+AUTO_RUN_DELAY_MIN = 2
+AUTO_RUN_DELAY_MAX = 8
 AUTO_ADVANCE_DEFAULT = os.getenv("AUTO_ADVANCE_DEFAULT", "true").lower() == "true"
 
 
@@ -191,14 +191,13 @@ Technical details: {error}
 """
 }
 
-# Default fallback emoji when role not found
-DEFAULT_FALLBACK_EMOJI = "🤖"
 
 # ======================
 # UI Colors
 # ======================
 
 DEFAULT_PERSONA_COLOR = "#1f77b4"
+DEFAULT_FALLBACK_EMOJI = "🤖"
 
 
 # ======================

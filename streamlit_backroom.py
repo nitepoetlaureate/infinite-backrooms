@@ -478,8 +478,8 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
 
             response_timeout = st.number_input(
                 "Response Timeout (seconds)",
-                min_value=30,
-                max_value=600,
+                min_value=30.0,
+                max_value=600.0,
                 value=st.session_state.settings["response_timeout"],
                 help="Maximum time to wait for AI response before timing out",
             )
