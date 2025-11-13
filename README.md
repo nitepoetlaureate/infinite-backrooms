@@ -1,6 +1,20 @@
 # 🤖 Infinite AI Backroom - Interactive Multi-Persona Conversation Platform
 
+[![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
 A Streamlit-based web application that enables you to create AI personas with distinct roles and personalities, then watch them engage in dynamic, and potentially infinite conversations using your local Ollama models.
+
+**✨ New Features:**
+- 🧪 Comprehensive test suite (pytest)
+- 📚 Complete documentation (Architecture, API, Development)
+- 🔒 Security scanning (Bandit, Safety)
+- 🚀 CI/CD workflows (GitHub Actions)
+- ♿ Accessibility improvements
+- 🎯 Performance optimizations
 
 ![AI Backroom Screenshot](screenshot.png)
 
@@ -193,25 +207,133 @@ infinite-backrooms/
 - **aiohttp**: Async HTTP client for Ollama API
 - **pandas**: Data analysis for log viewer (log_viewer.py only)
 
+## Development
+
+### Running Tests
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run with coverage
+uv run pytest --cov
+
+# Run specific test file
+uv run pytest tests/test_ollama_client.py
+
+# Generate HTML coverage report
+uv run pytest --cov --cov-report=html
+open htmlcov/index.html
+```
+
+### Code Quality
+
+```bash
+# Format code
+uv run black .
+
+# Lint code
+uv run ruff check .
+
+# Type check
+uv run mypy .
+
+# Security scan
+uv run bandit -r .
+
+# All quality checks
+uv run ruff check . && uv run black --check . && uv run mypy . && uv run pytest --cov
+```
+
+### Project Structure
+
+```
+infinite-backrooms/
+├── src/                    # Modular source code
+│   ├── models/             # Data models (AIPersona)
+│   ├── services/           # Services (OllamaClient, Logger)
+│   ├── ui/                 # UI components
+│   └── utils/              # Utilities and constants
+├── tests/                  # Comprehensive test suite
+├── docs/                   # Documentation
+│   ├── ARCHITECTURE.md     # System architecture
+│   ├── API.md              # API reference
+│   └── DEVELOPMENT.md      # Development guide
+├── scripts/                # Utility scripts
+└── .github/workflows/      # CI/CD pipelines
+```
+
+## Documentation
+
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - System design and architecture
+- **[API Reference](docs/API.md)** - Complete API documentation
+- **[Development Guide](docs/DEVELOPMENT.md)** - Setup and development workflow
+- **[Contributing Guidelines](CONTRIBUTING.md)** - How to contribute
+- **[Changelog](CHANGELOG.md)** - Project history and changes
+
 ## Contributing
 
-This project uses UV for dependency management. To contribute:
+We welcome contributions! This project uses UV for dependency management.
+
+### Quick Start for Contributors
 
 1. Fork the repository
-2. Create a feature branch
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
 3. Install dependencies: `uv sync`
 4. Make your changes
-5. Test with: `uv run streamlit run streamlit_backroom.py`
-6. Submit a pull request
+5. Run tests: `uv run pytest`
+6. Format code: `uv run black .`
+7. Submit a pull request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines including:
+- Code of Conduct
+- Development workflow
+- Code standards
+- Commit message format
+- Review process
+
+## Testing
+
+This project has a comprehensive test suite with 80%+ code coverage goal:
+
+- ✅ Unit tests for all core components
+- ✅ Async tests for OllamaClient
+- ✅ Mock fixtures for testing
+- ✅ Coverage reporting
+- ✅ CI/CD integration
+
+Run `uv run pytest -v` to see all tests.
+
+## Security
+
+Security is important to us. If you discover a security vulnerability:
+
+1. **Do not** open a public issue
+2. Email the maintainers directly
+3. Provide detailed information about the vulnerability
+4. Allow time for a fix before public disclosure
+
+We run automated security scans:
+- **Bandit** for code security issues
+- **Safety** for dependency vulnerabilities
+- **CodeQL** for additional analysis
 
 ## License
 
-This project is open source. See the repository for license details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Author
 
 Created by [guinacio](https://github.com/guinacio)
 
+## Acknowledgments
+
+- Built with [Streamlit](https://streamlit.io/)
+- Powered by [Ollama](https://ollama.ai/)
+- Managed with [UV](https://github.com/astral-sh/uv)
+
 ---
 
-**Note**: This application requires a local Ollama installation with downloaded models. The AI personas will only be as capable as the underlying models you provide. 
+**Note**: This application requires a local Ollama installation with downloaded models. The AI personas will only be as capable as the underlying models you provide.
+
+**Status**: Active development 🚧 | [Report Issues](https://github.com/guinacio/infinite-backrooms/issues) | [Discussions](https://github.com/guinacio/infinite-backrooms/discussions) 
