@@ -1130,13 +1130,6 @@ Your response should be conversational and engaging."""
 
     def run(self) -> None:
         """Main Streamlit app interface."""
-        st.set_page_config(
-            page_title="AI Backroom",
-            page_icon="🤖",
-            layout="wide",
-            initial_sidebar_state="expanded",
-        )
-
         self.sidebar_ui()
 
         # Welcome message for new users
@@ -1170,6 +1163,14 @@ Your response should be conversational and engaging."""
 
 def main() -> None:
     """Main entry point for Streamlit app."""
+    # Set page config FIRST before any other Streamlit commands
+    st.set_page_config(
+        page_title="AI Backroom",
+        page_icon="🤖",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
+
     # Inject System.css for retro Mac OS aesthetic
     inject_system_css()
 
