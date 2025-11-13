@@ -7,6 +7,7 @@ Interactive web interface for managing AI personas and running infinite conversa
 import asyncio
 import html
 import json
+import logging
 import random
 import re
 import time
@@ -41,8 +42,6 @@ warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*Event loop
 warnings.filterwarnings("ignore", category=ResourceWarning, message=".*unclosed.*client.*session.*")
 
 # Also suppress aiohttp specific warnings
-import logging
-
 logging.getLogger('aiohttp.client').setLevel(logging.ERROR)
 
 
@@ -136,8 +135,7 @@ class ConversationLogger:
                     f.write(f"[{timestamp.strftime(TIME_FORMAT)}] {persona}$ {cleaned_message}\n")
             except (OSError, PermissionError) as e:
                 # Log to stderr instead of failing silently
-                import sys
-                print(f"Warning: Failed to write to log file {log_file}: {e}", file=sys.stderr)
+                logging.warning(f"Failed to write to log file {log_file}: {e}")
 
 
 class OllamaClient:
