@@ -7,10 +7,14 @@ environment variables using python-dotenv.
 import os
 from pathlib import Path
 from typing import Dict
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Try to load environment variables from .env file (optional)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # python-dotenv not installed, will use environment variables only
+    pass
 
 
 # ======================
