@@ -61,17 +61,222 @@ def inject_system_css() -> None:
         <style>
         {system_css}
 
-        /* Additional Streamlit-specific adjustments */
+        /* ===== Streamlit-specific System 7 Overrides ===== */
+
+        /* Main app background - System 7 grid pattern */
         .stApp {{
-            font-family: Chicago_12, Chicago, Monaco, monospace;
+            font-family: Chicago_12, Chicago, Monaco, monospace !important;
+            background: linear-gradient(90deg, #FFFFFF 21px, transparent 1%) center,
+                        linear-gradient(#FFFFFF 21px, transparent 1%) center, #000000 !important;
+            background-size: 22px 22px !important;
+            background-attachment: fixed !important;
+            color: #000000 !important;
         }}
 
-        .stButton>button {{
-            font-family: Chicago_12, Chicago, Monaco, monospace;
+        /* Main content area */
+        .main .block-container {{
+            background-color: #FFFFFF !important;
+            border: 2px solid #000000 !important;
+            box-shadow: 2px 2px #000000 !important;
+            padding: 2rem !important;
+            font-family: Chicago_12, Chicago, Monaco, monospace !important;
         }}
 
-        .stTextInput>div>div>input {{
-            font-family: Monaco, monospace;
+        /* Headers - Chicago font */
+        h1, h2, h3, h4, h5, h6 {{
+            font-family: Chicago, Chicago_12, monospace !important;
+            color: #000000 !important;
+        }}
+
+        /* Buttons - System 7 style */
+        .stButton > button {{
+            font-family: Chicago_12, Chicago, monospace !important;
+            font-size: 18px !important;
+            min-height: 20px !important;
+            min-width: 59px !important;
+            padding: 4px 20px !important;
+            background: #FFFFFF !important;
+            color: #000000 !important;
+            border: 3px solid #000000 !important;
+            border-radius: 8px !important;
+            box-shadow: none !important;
+            text-align: center !important;
+            cursor: pointer !important;
+        }}
+
+        .stButton > button:hover {{
+            background: #F0F0F0 !important;
+            border: 3px solid #000000 !important;
+        }}
+
+        .stButton > button:active {{
+            background: #000000 !important;
+            color: #FFFFFF !important;
+            border-radius: 8px !important;
+        }}
+
+        /* Text inputs - Monaco font with simple border */
+        .stTextInput > div > div > input,
+        .stTextArea > div > div > textarea {{
+            font-family: Monaco, monospace !important;
+            font-size: 14px !important;
+            border: 2px solid #000000 !important;
+            border-radius: 0 !important;
+            background: #FFFFFF !important;
+            color: #000000 !important;
+            padding: 4px 8px !important;
+            box-shadow: inset 1px 1px 0px #000000 !important;
+        }}
+
+        .stTextInput > div > div > input:focus,
+        .stTextArea > div > div > textarea:focus {{
+            outline: 2px solid #000000 !important;
+            outline-offset: 2px !important;
+            border-color: #000000 !important;
+            box-shadow: inset 1px 1px 0px #000000 !important;
+        }}
+
+        /* Select boxes */
+        .stSelectbox > div > div {{
+            font-family: Chicago_12, Monaco, monospace !important;
+            font-size: 14px !important;
+            border: 2px solid #000000 !important;
+            border-radius: 0 !important;
+            background: #FFFFFF !important;
+        }}
+
+        /* Tabs - System 7 style */
+        .stTabs [data-baseweb="tab-list"] {{
+            background: #FFFFFF !important;
+            border-bottom: 2px solid #000000 !important;
+            gap: 2px !important;
+        }}
+
+        .stTabs [data-baseweb="tab"] {{
+            font-family: Chicago_12, Chicago, monospace !important;
+            font-size: 14px !important;
+            background: #FFFFFF !important;
+            border: 2px solid #000000 !important;
+            border-bottom: none !important;
+            border-radius: 8px 8px 0 0 !important;
+            color: #000000 !important;
+            padding: 8px 16px !important;
+        }}
+
+        .stTabs [data-baseweb="tab"][aria-selected="true"] {{
+            background: #FFFFFF !important;
+            border-bottom: 2px solid #FFFFFF !important;
+            margin-bottom: -2px !important;
+        }}
+
+        .stTabs [data-baseweb="tab"]:hover {{
+            background: #F0F0F0 !important;
+        }}
+
+        .stTabs [data-baseweb="tab-panel"] {{
+            background: #FFFFFF !important;
+            border: 2px solid #000000 !important;
+            border-top: none !important;
+            padding: 1rem !important;
+        }}
+
+        /* Expanders */
+        .streamlit-expanderHeader {{
+            font-family: Chicago_12, Chicago, monospace !important;
+            font-size: 16px !important;
+            background: #FFFFFF !important;
+            border: 2px solid #000000 !important;
+            border-radius: 0 !important;
+            color: #000000 !important;
+        }}
+
+        .streamlit-expanderContent {{
+            border: 2px solid #000000 !important;
+            border-top: none !important;
+            background: #FFFFFF !important;
+        }}
+
+        /* Sidebar - Window style */
+        section[data-testid="stSidebar"] {{
+            background: #FFFFFF !important;
+            border-right: 2px solid #000000 !important;
+        }}
+
+        section[data-testid="stSidebar"] > div {{
+            background: #FFFFFF !important;
+        }}
+
+        /* Info boxes */
+        .stAlert {{
+            border: 2px solid #000000 !important;
+            border-radius: 0 !important;
+            box-shadow: 2px 2px #000000 !important;
+            font-family: Chicago_12, Monaco, monospace !important;
+            background: #FFFFFF !important;
+        }}
+
+        /* Code blocks */
+        code {{
+            font-family: Monaco, monospace !important;
+            background: #FFFFFF !important;
+            border: 1px solid #000000 !important;
+            color: #000000 !important;
+        }}
+
+        pre {{
+            font-family: Monaco, monospace !important;
+            background: #FFFFFF !important;
+            border: 2px solid #000000 !important;
+            color: #000000 !important;
+        }}
+
+        /* Scrollbars - System 7 style */
+        ::-webkit-scrollbar {{
+            width: 16px !important;
+            height: 16px !important;
+            background-color: #FFFFFF !important;
+        }}
+
+        ::-webkit-scrollbar-track {{
+            background: linear-gradient(45deg, #000000 25%, transparent 25%, transparent 75%, #000000 75%, #000000),
+                        linear-gradient(45deg, #000000 25%, transparent 25%, transparent 75%, #000000 75%, #000000) !important;
+            background-color: #FFFFFF !important;
+            background-size: 4px 4px !important;
+            background-position: 0 0, 2px 2px !important;
+            border-left: 2px solid #000000 !important;
+        }}
+
+        ::-webkit-scrollbar-thumb {{
+            background-color: #FFFFFF !important;
+            border: 2px solid #000000 !important;
+        }}
+
+        ::-webkit-scrollbar-button {{
+            background-color: #FFFFFF !important;
+            border: 2px solid #000000 !important;
+        }}
+
+        /* Chat messages */
+        .stChatMessage {{
+            border: 2px solid #000000 !important;
+            border-radius: 0 !important;
+            background: #FFFFFF !important;
+            box-shadow: 2px 2px #000000 !important;
+            font-family: Monaco, monospace !important;
+            margin-bottom: 8px !important;
+        }}
+
+        /* Remove Streamlit branding */
+        footer {{
+            display: none !important;
+        }}
+
+        #MainMenu {{
+            display: none !important;
+        }}
+
+        header {{
+            display: none !important;
         }}
         </style>
         """,
