@@ -194,17 +194,64 @@ Technical details: {error}
 # Default fallback emoji when role not found
 DEFAULT_FALLBACK_EMOJI = "🤖"
 
-# ======================
 # UI Colors
-# ======================
-
 DEFAULT_PERSONA_COLOR = "#1f77b4"
 
+# Auto-run settings
+AUTO_ADVANCE_DEFAULT = False
+AUTO_RUN_DELAY_MIN = 0.5
+AUTO_RUN_DELAY_MAX = 10.0
+AUTO_RUN_DELAY_DEFAULT = 2.0
 
-# ======================
+# Context settings
+MIN_CONTEXT_MESSAGES = 1
+MAX_CONTEXT_MESSAGES = 50
+DEFAULT_CONTEXT_MESSAGES = 10
+
+# Temperature settings
+MIN_TEMPERATURE = 0.0
+MAX_TEMPERATURE = 2.0
+DEFAULT_TEMPERATURE = 0.7
+
+# Response timeout
+MIN_RESPONSE_TIMEOUT = 30
+MAX_RESPONSE_TIMEOUT = 600
+DEFAULT_RESPONSE_TIMEOUT = 300
+
+# History settings
+DEFAULT_HISTORY_MESSAGES = 10
+
+# UI Colors
+DEFAULT_PERSONA_COLOR = "#1f77b4"
+
+# Auto-run settings
+AUTO_ADVANCE_DEFAULT = False
+AUTO_RUN_DELAY_MIN = 0.5
+AUTO_RUN_DELAY_MAX = 10.0
+AUTO_RUN_DELAY_DEFAULT = 2.0
+
+# Context settings
+MIN_CONTEXT_MESSAGES = 1
+MAX_CONTEXT_MESSAGES = 50
+DEFAULT_CONTEXT_MESSAGES = 10
+
+# Temperature settings
+MIN_TEMPERATURE = 0.0
+MAX_TEMPERATURE = 2.0
+DEFAULT_TEMPERATURE = 0.7
+
+# Response timeout
+MIN_RESPONSE_TIMEOUT = 30
+MAX_RESPONSE_TIMEOUT = 600
+DEFAULT_RESPONSE_TIMEOUT = 300
+
+# History settings
+DEFAULT_HISTORY_MESSAGES = 10
+
+# UI Colors
+DEFAULT_PERSONA_COLOR = "#1f77b4"
+
 # Preset Personas
-# ======================
-
 PRESET_DIVERSE_PERSONAS = [
     {
         "name": "Socrates",
