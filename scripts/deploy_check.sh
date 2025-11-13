@@ -61,13 +61,13 @@ done
 # Check 3: Dependencies installed
 echo ""
 echo "Checking Python dependencies..."
-if pip3 show streamlit > /dev/null 2>&1; then
+if uv pip show streamlit > /dev/null 2>&1; then
     check_result 0 "Streamlit is installed"
 else
     check_result 1 "Streamlit is not installed"
 fi
 
-if pip3 show aiohttp > /dev/null 2>&1; then
+if uv pip show aiohttp > /dev/null 2>&1; then
     check_result 0 "aiohttp is installed"
 else
     check_result 1 "aiohttp is not installed"
