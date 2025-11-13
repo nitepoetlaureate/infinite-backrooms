@@ -51,6 +51,34 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def inject_system_css() -> None:
+    """Inject System.css styling into the Streamlit app for retro Mac OS aesthetic."""
+    with open("static/css/system.css", "r") as f:
+        system_css = f.read()
+
+    st.markdown(
+        f"""
+        <style>
+        {system_css}
+
+        /* Additional Streamlit-specific adjustments */
+        .stApp {{
+            font-family: Chicago_12, Chicago, Monaco, monospace;
+        }}
+
+        .stButton>button {{
+            font-family: Chicago_12, Chicago, Monaco, monospace;
+        }}
+
+        .stTextInput>div>div>input {{
+            font-family: Monaco, monospace;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 class StreamlitBackroomApp:
     """Main Streamlit application for AI Backroom."""
 
@@ -1142,6 +1170,9 @@ Your response should be conversational and engaging."""
 
 def main() -> None:
     """Main entry point for Streamlit app."""
+    # Inject System.css for retro Mac OS aesthetic
+    inject_system_css()
+
     app = StreamlitBackroomApp()
     app.run()
 

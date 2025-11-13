@@ -14,3 +14,21 @@ conversations/*.txt
 
 # CLI client
 backroom.py
+
+# Editor files
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# System CSS - Keep source but ignore node_modules
+system-css-main/node_modules/
+system-css-main/.DS_Store
+
+# Logs
+*.log
