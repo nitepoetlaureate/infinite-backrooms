@@ -11,20 +11,20 @@ def get_mock_models_response() -> dict[str, Any]:
                 "name": "llama2:latest",
                 "modified_at": "2024-01-01T00:00:00Z",
                 "size": 3826793677,
-                "digest": "abc123"
+                "digest": "abc123",
             },
             {
                 "name": "mistral:latest",
                 "modified_at": "2024-01-01T00:00:00Z",
                 "size": 4109865159,
-                "digest": "def456"
+                "digest": "def456",
             },
             {
                 "name": "granite3.3:8b",
                 "modified_at": "2024-01-01T00:00:00Z",
                 "size": 5000000000,
-                "digest": "ghi789"
-            }
+                "digest": "ghi789",
+            },
         ]
     }
 
@@ -42,7 +42,7 @@ def get_mock_generate_response(text: str = "Test response") -> dict[str, Any]:
         "prompt_eval_count": 10,
         "prompt_eval_duration": 200000000,
         "eval_count": 20,
-        "eval_duration": 300000000
+        "eval_duration": 300000000,
     }
 
 
@@ -55,26 +55,24 @@ def get_mock_streaming_chunks(text: str = "Hello world") -> list[bytes]:
             "model": "llama2:latest",
             "created_at": "2024-01-01T00:00:00Z",
             "response": word + (" " if i < len(words) - 1 else ""),
-            "done": False
+            "done": False,
         }
-        chunks.append(json.dumps(chunk).encode() + b'\n')
+        chunks.append(json.dumps(chunk).encode() + b"\n")
 
     # Final done chunk
     final_chunk = {
         "model": "llama2:latest",
         "created_at": "2024-01-01T00:00:00Z",
         "response": "",
-        "done": True
+        "done": True,
     }
-    chunks.append(json.dumps(final_chunk).encode() + b'\n')
+    chunks.append(json.dumps(final_chunk).encode() + b"\n")
     return chunks
 
 
 def get_mock_error_response() -> dict[str, Any]:
     """Mock error response."""
-    return {
-        "error": "model not found"
-    }
+    return {"error": "model not found"}
 
 
 import json

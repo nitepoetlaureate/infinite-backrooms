@@ -6,6 +6,32 @@ security vulnerabilities and ensure data integrity.
 
 import re
 
+from src.utils.constants import MAX_PERSONA_NAME_LENGTH, MAX_SYSTEM_PROMPT_LENGTH
+
+# ======================
+# Pre-compiled Regex Patterns
+# ======================
+
+# Persona name pattern: letters, numbers, spaces, hyphens, underscores
+PERSONA_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9\s\-_]+$")
+
+# Model name pattern: Ollama format (name or name:tag)
+MODEL_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9\-_\.]+(?::[a-zA-Z0-9\-_\.]+)?$")
+
+# URL pattern: http/https with domain, localhost, or IP
+URL_PATTERN = re.compile(
+    r"^https?://"  # http:// or https://
+    r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|"  # domain
+    r"localhost|"  # localhost
+    r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or IP
+    r"(?::\d+)?"  # optional port
+    r"(?:/?|[/?]\S+)$",
+    re.IGNORECASE,
+)
+
+# Filename sanitization pattern: allow only safe characters
+SAFE_FILENAME_PATTERN = re.compile(r"[^a-zA-Z0-9\-_\.]")
+
 
 def validate_persona_name(name: str) -> tuple[bool, str | None]:
     """Validate persona name.
@@ -24,11 +50,11 @@ def validate_persona_name(name: str) -> tuple[bool, str | None]:
     if not name or not name.strip():
         return False, "Persona name cannot be empty"
 
-    if len(name) > 50:
-        return False, "Persona name must be 50 characters or less"
+    if len(name) > MAX_PERSONA_NAME_LENGTH:
+        return False, f"Persona name must be {MAX_PERSONA_NAME_LENGTH} characters or less"
 
     # Allow letters, numbers, spaces, hyphens, underscores
-    if not re.match(r"^[a-zA-Z0-9\s\-_]+$", name):
+    if not PERSONA_NAME_PATTERN.match(name):
         return (
             False,
             "Persona name can only contain letters, numbers, spaces, hyphens, and underscores",
@@ -55,7 +81,7 @@ def validate_model_name(model: str) -> tuple[bool, str | None]:
 
     # Ollama models follow pattern: name[:tag]
     # Example: llama2, llama2:latest, granite3.3:8b
-    if not re.match(r"^[a-zA-Z0-9\-_\.]+(?::[a-zA-Z0-9\-_\.]+)?$", model):
+    if not MODEL_NAME_PATTERN.match(model):
         return False, "Invalid model name format. Expected format: name or name:tag"
 
     return True, None
@@ -79,17 +105,7 @@ def validate_url(url: str) -> tuple[bool, str | None]:
         return False, "URL cannot be empty"
 
     # Basic URL validation - must be http or https
-    url_pattern = re.compile(
-        r"^https?://"  # http:// or https://
-        r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|"  # domain
-        r"localhost|"  # localhost
-        r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or IP
-        r"(?::\d+)?"  # optional port
-        r"(?:/?|[/?]\S+)$",
-        re.IGNORECASE,
-    )
-
-    if not url_pattern.match(url):
+    if not URL_PATTERN.match(url):
         return (
             False,
             "Invalid URL format. Must be http:// or https:// followed by a valid domain, localhost, or IP address",
@@ -116,7 +132,7 @@ def sanitize_log_filename(filename: str) -> str:
     filename = filename.replace("..", "").replace("/", "").replace("\\", "")
 
     # Allow only safe characters: alphanumeric, hyphen, underscore, period
-    filename = re.sub(r"[^a-zA-Z0-9\-_\.]", "_", filename)
+    filename = SAFE_FILENAME_PATTERN.sub("_", filename)
 
     # Ensure filename isn't empty after sanitization
     if not filename or filename == ".":
@@ -125,7 +141,9 @@ def sanitize_log_filename(filename: str) -> str:
     return filename
 
 
-def validate_system_prompt(prompt: str, max_length: int = 10000) -> tuple[bool, str | None]:
+def validate_system_prompt(
+    prompt: str, max_length: int = MAX_SYSTEM_PROMPT_LENGTH
+) -> tuple[bool, str | None]:
     """Validate system prompt length.
 
     Args:

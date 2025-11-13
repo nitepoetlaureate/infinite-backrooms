@@ -8,6 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+venv/
 
 # TXT files
 conversations/*.txt
@@ -32,4 +33,3 @@ system-css-main/.DS_Store
 
 # Logs
 *.log
-venv/

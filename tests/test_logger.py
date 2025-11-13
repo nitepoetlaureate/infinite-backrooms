@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from streamlit_backroom import ConversationLogger
+from src.services.logger import ConversationLogger
 
 
 class TestConversationLogger:
@@ -19,7 +19,7 @@ class TestConversationLogger:
         log_dir = tmp_path / "new_logs"
         assert not log_dir.exists()
 
-        logger = ConversationLogger(log_dir=str(log_dir))
+        _logger = ConversationLogger(log_dir=str(log_dir))
         assert log_dir.exists()
 
     def test_get_daily_log_file(self, conversation_logger):
@@ -59,7 +59,7 @@ class TestConversationLogger:
 
         log_file = conversation_logger.get_daily_log_file()
         content = log_file.read_text()
-        lines = content.strip().split('\n')
+        lines = content.strip().split("\n")
 
         assert len(lines) == 3
         assert "Alice" in lines[0]
@@ -68,7 +68,9 @@ class TestConversationLogger:
 
     def test_clean_message_removes_thinking_tags(self, conversation_logger):
         """Test that thinking tags are removed from messages."""
-        message_with_thinking = "Here is my thought: <think>internal reasoning</think> And my conclusion."
+        message_with_thinking = (
+            "Here is my thought: <think>internal reasoning</think> And my conclusion."
+        )
         cleaned = conversation_logger.clean_message(message_with_thinking)
 
         assert "<think>" not in cleaned
@@ -136,7 +138,7 @@ class TestConversationLogger:
         conversation_logger.log_message("TestBot", "Hello 世界 🌍 café")
 
         log_file = conversation_logger.get_daily_log_file()
-        content = log_file.read_text(encoding='utf-8')
+        content = log_file.read_text(encoding="utf-8")
 
         assert "世界" in content
         assert "🌍" in content

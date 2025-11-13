@@ -13,10 +13,12 @@ import logging
 import random
 import time
 import uuid
+from collections.abc import Coroutine
 from dataclasses import asdict
 from datetime import datetime
-from typing import Any
+from typing import Any, TypeVar
 
+import aiohttp
 import streamlit as st
 
 from src.models.persona import AIPersona
@@ -38,22 +40,84 @@ from src.utils.constants import (
     DEFAULT_PERSONA_COLOR,
     DEFAULT_RESPONSE_TIMEOUT,
     ENABLE_THINKING,
+    LOGO_IMAGE_PATH,
     MAX_CONTEXT_MESSAGES,
+    MAX_HISTORY_MESSAGES,
+    MAX_RESPONSE_DELAY,
+    MAX_RESPONSE_DELAY_MAX,
+    MAX_RESPONSE_TIMEOUT,
     MIN_CONTEXT_MESSAGES,
+    MIN_HISTORY_MESSAGES,
+    MIN_RESPONSE_DELAY,
+    MIN_RESPONSE_DELAY_MAX,
+    MIN_RESPONSE_TIMEOUT,
     PRESET_DIVERSE_PERSONAS,
     PRESET_STRUCTURED_PERSONAS,
     ROLE_TEMPLATES,
+    SYSTEM_CSS_PATH,
 )
+from src.utils.validation import validate_model_name, validate_persona_name
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Type variable for async functions
+T = TypeVar("T")
+
+
+def run_async(coro: Coroutine[Any, Any, T]) -> T:
+    """Run async function in Streamlit context.
+
+    Handles Streamlit's event loop quirks by trying asyncio.run() first,
+    and falling back to manual event loop creation if needed.
+
+    Args:
+        coro: Coroutine to run
+
+    Returns:
+        Result of the coroutine
+    """
+    try:
+        return asyncio.run(coro)
+    except RuntimeError as e:
+        # Handle "Event loop is closed" or "no running event loop" errors
+        logger.debug(f"asyncio.run() failed, creating new event loop: {e}")
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(coro)
+        finally:
+            try:
+                loop.close()
+            except Exception as close_error:
+                logger.debug(f"Error closing event loop: {close_error}")
+
 
 def inject_system_css() -> None:
     """Inject System.css styling into the Streamlit app for retro Mac OS aesthetic."""
-    with open("static/css/system.css") as f:
-        system_css = f.read()
+    try:
+        with open(SYSTEM_CSS_PATH) as f:
+            system_css = f.read()
+    except FileNotFoundError:
+        logger.warning(
+            f"System CSS file not found at {SYSTEM_CSS_PATH} - using fallback minimal styling"
+        )
+        # Provide minimal fallback styling if CSS file is missing
+        system_css = """
+        /* Minimal fallback styling */
+        .stApp {
+            font-family: monospace !important;
+        }
+        """
+    except PermissionError:
+        logger.error(
+            f"Permission denied reading {SYSTEM_CSS_PATH} - using fallback minimal styling"
+        )
+        system_css = ""
+    except Exception as e:
+        logger.error(f"Error reading {SYSTEM_CSS_PATH}: {e} - using fallback minimal styling")
+        system_css = ""
 
     st.markdown(
         f"""
@@ -289,6 +353,7 @@ class StreamlitBackroomApp:
     def __init__(self) -> None:
         """Initialize the application."""
         self.logger = ConversationLogger()
+        self.max_event_loop_retries = 3  # Maximum retries for event loop failures
         self.initialize_session_state()
 
     def initialize_session_state(self) -> None:
@@ -346,9 +411,9 @@ class StreamlitBackroomApp:
         if st.session_state.last_speaker_index is None:
             st.session_state.last_speaker_index = 0
         else:
-            st.session_state.last_speaker_index = (
-                st.session_state.last_speaker_index + 1
-            ) % len(enabled_personas)
+            st.session_state.last_speaker_index = (st.session_state.last_speaker_index + 1) % len(
+                enabled_personas
+            )
 
         return enabled_personas[st.session_state.last_speaker_index]
 
@@ -439,7 +504,7 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
             with st.status("Checking Ollama connection...", expanded=True) as status:
                 st.write("Connecting to Ollama API...")
                 try:
-                    connected = asyncio.run(self.check_ollama_connection())
+                    connected = run_async(self.check_ollama_connection())
                     if connected:
                         st.write(f"✅ Found {len(st.session_state.available_models)} models")
                         for model in st.session_state.available_models:
@@ -448,26 +513,13 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
                             label="Connection successful!", state="complete", expanded=False
                         )
                     else:
-                        st.write("❌ Connection failed")
+                        st.write("❌ Connection failed - Please ensure Ollama is running")
+                        st.write("💡 Try: `ollama serve` in your terminal")
                         status.update(label="Connection failed", state="error", expanded=False)
-                except RuntimeError:
-                    # Handle "Event loop is closed" gracefully
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    try:
-                        connected = loop.run_until_complete(self.check_ollama_connection())
-                        if connected:
-                            st.write(f"✅ Found {len(st.session_state.available_models)} models")
-                            for model in st.session_state.available_models:
-                                st.write(f"• {model}")
-                            status.update(
-                                label="Connection successful!", state="complete", expanded=False
-                            )
-                        else:
-                            st.write("❌ Connection failed")
-                            status.update(label="Connection failed", state="error", expanded=False)
-                    finally:
-                        loop.close()
+                except Exception as e:
+                    logger.error(f"Error checking Ollama connection: {str(e)}")
+                    st.error(f"❌ Connection error: {str(e)}")
+                    status.update(label="Connection check failed", state="error", expanded=True)
 
         # Display current personas
         if st.session_state.personas:
@@ -610,22 +662,33 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
             )
 
             if st.form_submit_button("➕ Add Persona"):
-                if name and model:
-                    new_persona = AIPersona(
-                        id=str(uuid.uuid4()),
-                        name=name,
-                        model=model,
-                        role=role,
-                        system_prompt=system_prompt,
-                        color=color,
-                        enabled=enabled,
-                    )
-                    st.session_state.personas.append(new_persona)
-                    role_text = f" as {role}" if role else ""
-                    st.success(f"Added persona: {name}{role_text}")
-                    st.rerun()
-                else:
+                if not name or not model:
                     st.error("Please provide both name and model")
+                else:
+                    # Validate persona name
+                    name_valid, name_error = validate_persona_name(name)
+                    if not name_valid:
+                        st.error(f"Invalid persona name: {name_error}")
+                    else:
+                        # Validate model name
+                        model_valid, model_error = validate_model_name(model)
+                        if not model_valid:
+                            st.error(f"Invalid model name: {model_error}")
+                        else:
+                            # All validations passed, create persona
+                            new_persona = AIPersona(
+                                id=str(uuid.uuid4()),
+                                name=name,
+                                model=model,
+                                role=role,
+                                system_prompt=system_prompt,
+                                color=color,
+                                enabled=enabled,
+                            )
+                            st.session_state.personas.append(new_persona)
+                            role_text = f" as {role}" if role else ""
+                            st.success(f"Added persona: {name}{role_text}")
+                            st.rerun()
 
         # Quick start presets
         st.markdown("---")
@@ -695,8 +758,8 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
             st.subheader("Conversation Settings")
             max_history = st.number_input(
                 "Max History Messages",
-                min_value=10,
-                max_value=200,
+                min_value=MIN_HISTORY_MESSAGES,
+                max_value=MAX_HISTORY_MESSAGES,
                 value=st.session_state.settings["max_history"],
             )
 
@@ -710,8 +773,8 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
 
             response_timeout = st.number_input(
                 "Response Timeout (seconds)",
-                min_value=30.0,
-                max_value=600.0,
+                min_value=MIN_RESPONSE_TIMEOUT,
+                max_value=MAX_RESPONSE_TIMEOUT,
                 value=st.session_state.settings["response_timeout"],
                 help="Maximum time to wait for AI response before timing out",
             )
@@ -720,15 +783,15 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
             with col1:
                 delay_min = st.number_input(
                     "Min Response Delay (seconds)",
-                    min_value=1,
-                    max_value=30,
+                    min_value=MIN_RESPONSE_DELAY,
+                    max_value=MAX_RESPONSE_DELAY,
                     value=st.session_state.settings["response_delay_min"],
                 )
             with col2:
                 delay_max = st.number_input(
                     "Max Response Delay (seconds)",
-                    min_value=2,
-                    max_value=60,
+                    min_value=MIN_RESPONSE_DELAY_MAX,
+                    max_value=MAX_RESPONSE_DELAY_MAX,
                     value=st.session_state.settings["response_delay_max"],
                 )
 
@@ -797,11 +860,35 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
                 st.rerun()
 
         with col4:
-            if st.button("🗑️ Clear History"):
-                st.session_state.messages = []
-                st.session_state.total_message_count = 0
-                st.session_state.last_speaker_index = None
-                st.rerun()
+            # Clear History with confirmation dialog
+            clear_confirm_key = "clear_history_confirm"
+            if clear_confirm_key not in st.session_state:
+                st.session_state[clear_confirm_key] = False
+
+            if not st.session_state[clear_confirm_key]:
+                if st.button("🗑️ Clear History", disabled=not st.session_state.messages):
+                    if st.session_state.messages:  # Only confirm if there are messages
+                        st.session_state[clear_confirm_key] = True
+                        st.rerun()
+            else:
+                # Show confirmation using columns
+                st.markdown("⚠️ **Clear all?**")
+                confirm_col1, confirm_col2 = st.columns(2)
+                with confirm_col1:
+                    if st.button("✅ Yes", key="clear_yes", type="primary"):
+                        logger.info(
+                            f"Clearing conversation history ({len(st.session_state.messages)} messages)"
+                        )
+                        st.session_state.messages = []
+                        st.session_state.total_message_count = 0
+                        st.session_state.last_speaker_index = None
+                        st.session_state[clear_confirm_key] = False
+                        st.success("✅ History cleared!")
+                        st.rerun()
+                with confirm_col2:
+                    if st.button("❌ No", key="clear_no", type="secondary"):
+                        st.session_state[clear_confirm_key] = False
+                        st.rerun()
 
         # Handle manual turn if pending
         if st.session_state.pending_manual_turn:
@@ -858,12 +945,14 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
 
                 with st.chat_message("assistant", avatar=avatar):
                     # Show persona name and role with colored background
-                    render_persona_header(persona) if persona else st.write(
-                        message["persona_name"]
-                    )
+                    render_persona_header(persona) if persona else st.write(message["persona_name"])
 
                     # Show thinking if available
-                    if "thinking" in message and message["thinking"] and message["thinking"].strip():
+                    if (
+                        "thinking" in message
+                        and message["thinking"]
+                        and message["thinking"].strip()
+                    ):
                         with st.expander("🧠 AI's Thinking Process", expanded=False):
                             st.code(message["thinking"], language="text", wrap_lines=True)
 
@@ -907,9 +996,7 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
             # Continue the auto-run cycle
             st.rerun()
 
-    def run_single_turn(
-        self, auto_mode: bool = False, status_container: Any | None = None
-    ) -> None:
+    def run_single_turn(self, auto_mode: bool = False, status_container: Any | None = None) -> None:
         """Run a single conversation turn with streaming response.
 
         Args:
@@ -967,115 +1054,16 @@ Your response should be conversational and engaging."""
             # Get streaming response using better event loop management
             thinking_content = ""
             response_content = ""
-            task = None
 
-            try:
-                # Try using asyncio.run first
-                connected = asyncio.run(self._process_stream_response(
+            # Get streaming response using standardized async pattern
+            thinking_content, response_content = run_async(
+                self._process_stream_response(
                     current_persona,
                     prompt,
                     auto_mode,
                     status_container,
-                ))
-                thinking_content, response_content = connected
-            except RuntimeError:
-                # Handle "Event loop is closed" gracefully
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-
-                async def process_stream() -> tuple[str, str]:
-                    nonlocal thinking_content, response_content
-                    thinking_placeholder = None
-                    thinking_stream_placeholder = None
-                    response_placeholder = None
-
-                    try:
-                        async for chunk in self.get_ai_response_stream(current_persona, prompt):
-                            if chunk["type"] == "error":
-                                if thinking_placeholder:
-                                    thinking_placeholder.empty()
-                                st.error(chunk["content"])
-                                return thinking_content, response_content
-
-                            elif chunk["type"] == "info":
-                                if auto_mode and status_container:
-                                    with status_container:
-                                        st.info(chunk["content"])
-                                else:
-                                    st.info(chunk["content"])
-
-                            elif chunk["type"] == "thinking":
-                                thinking_content += chunk["content"]
-
-                                if auto_mode and status_container:
-                                    if thinking_stream_placeholder is None:
-                                        with status_container:
-                                            st.write("🧠 **AI is thinking...**")
-                                            thinking_stream_placeholder = st.empty()
-
-                                    with thinking_stream_placeholder:
-                                        st.text(f"💭 {thinking_content}")
-
-                                elif not auto_mode:
-                                    if not thinking_placeholder:
-                                        st.write("🧠 **AI is thinking...**")
-                                        thinking_placeholder = st.empty()
-
-                                    with thinking_placeholder:
-                                        st.text(f"💭 {thinking_content}")
-
-                            elif chunk["type"] == "response":
-                                response_content += chunk["content"]
-
-                                if response_placeholder is None:
-                                    if not auto_mode:
-                                        st.write("💬 **AI is responding...**")
-                                    response_placeholder = st.empty()
-
-                                response_placeholder.write(response_content)
-
-                    except asyncio.CancelledError:
-                        if auto_mode and status_container:
-                            with status_container:
-                                st.info("🛑 Response cancelled")
-                        else:
-                            st.info("🛑 Response cancelled")
-                        return thinking_content, response_content
-                    except Exception as e:
-                        st.error(f"Stream processing error: {str(e)}")
-                        return thinking_content, response_content
-
-                    return thinking_content, response_content
-
-                try:
-                    task = loop.create_task(process_stream())
-                    thinking_content, response_content = loop.run_until_complete(task)
-                except KeyboardInterrupt:
-                    if task and not task.done():
-                        task.cancel()
-                        try:
-                            loop.run_until_complete(task)
-                        except asyncio.CancelledError:
-                            logger.debug("Task cancelled after KeyboardInterrupt - expected behavior")
-                except Exception as e:
-                    st.error(f"Processing error: {str(e)}")
-                finally:
-                    if task and not task.done():
-                        task.cancel()
-                        try:
-                            loop.run_until_complete(task)
-                        except asyncio.CancelledError:
-                            logger.debug("Task cancellation during final cleanup - expected behavior")
-
-                    try:
-                        loop.run_until_complete(asyncio.sleep(0.1))
-                    except Exception as e:
-                        logger.debug(f"Exception during async cleanup sleep: {e}")
-
-                    try:
-                        loop.close()
-                    except RuntimeError as e:
-                        logger.debug(f"RuntimeError closing event loop (loop may already be closed): {e}")
+                )
+            )
 
             # Show timestamp and model
             timestamp = datetime.now()
@@ -1177,14 +1165,28 @@ Your response should be conversational and engaging."""
                     response_placeholder.write(response_content)
 
         except asyncio.CancelledError:
+            logger.info("AI response generation was cancelled")
             if auto_mode and status_container:
                 with status_container:
                     st.info("🛑 Response cancelled")
             else:
                 st.info("🛑 Response cancelled")
             return thinking_content, response_content
+        except aiohttp.ClientError as e:
+            logger.error(f"Network error during stream processing: {str(e)}")
+            st.error(
+                f"❌ Network error: {str(e)}\n\nPlease check your Ollama connection and try again."
+            )
+            return thinking_content, response_content
+        except TimeoutError as e:
+            logger.error(f"Timeout during stream processing: {str(e)}")
+            st.error(
+                "❌ Request timed out. Try increasing the timeout in Settings or check your Ollama server."
+            )
+            return thinking_content, response_content
         except Exception as e:
-            st.error(f"Stream processing error: {str(e)}")
+            logger.error(f"Unexpected error during stream processing: {str(e)}")
+            st.error(f"❌ Unexpected error: {str(e)}\n\nPlease try again or check the logs.")
             return thinking_content, response_content
 
         return thinking_content, response_content
@@ -1253,7 +1255,7 @@ Your response should be conversational and engaging."""
         """Sidebar UI for status and information."""
         with st.sidebar:
             try:
-                st.image("logo.png", use_container_width=True)
+                st.image(str(LOGO_IMAGE_PATH), use_container_width=True)
             except Exception as e:
                 logger.debug(f"Logo image not found or failed to load: {e}")
                 st.write("**AI Backroom**")
@@ -1269,30 +1271,21 @@ Your response should be conversational and engaging."""
                 if st.button("🔄 Retry Connection", type="secondary"):
                     with st.spinner("Connecting to Ollama..."):
                         try:
-                            connected = asyncio.run(self.check_ollama_connection())
+                            connected = run_async(self.check_ollama_connection())
                             if connected:
                                 st.success(
                                     f"✅ Connected! Found {len(st.session_state.available_models)} models"
                                 )
+                                logger.info(
+                                    f"Successfully reconnected to Ollama ({len(st.session_state.available_models)} models)"
+                                )
                                 st.rerun()
                             else:
                                 st.error("❌ Still unable to connect to Ollama")
-                        except RuntimeError:
-                            loop = asyncio.new_event_loop()
-                            asyncio.set_event_loop(loop)
-                            try:
-                                connected = loop.run_until_complete(
-                                    self.check_ollama_connection()
-                                )
-                                if connected:
-                                    st.success(
-                                        f"✅ Connected! Found {len(st.session_state.available_models)} models"
-                                    )
-                                    st.rerun()
-                                else:
-                                    st.error("❌ Still unable to connect to Ollama")
-                            finally:
-                                loop.close()
+                                st.info("💡 Please ensure Ollama is running: `ollama serve`")
+                        except Exception as e:
+                            logger.error(f"Error retrying connection: {str(e)}")
+                            st.error(f"❌ Connection error: {str(e)}")
 
             st.divider()
             st.subheader("📊 Status")

@@ -36,34 +36,36 @@ class LogParser:
         messages = []
 
         try:
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 for line_num, line in enumerate(f, 1):
                     line = line.strip()
                     if not line:
                         continue
 
                     # Parse format: [HH:MM:SS] Persona$ Message
-                    match = re.match(r'\[(\d{2}:\d{2}:\d{2})\]\s+([^$]+)\$\s+(.*)', line)
+                    match = re.match(r"\[(\d{2}:\d{2}:\d{2})\]\s+([^$]+)\$\s+(.*)", line)
                     if match:
                         timestamp_str, persona, message = match.groups()
 
                         # Extract date from filename
-                        date_match = re.search(r'(\d{4}-\d{2}-\d{2})', file_path.name)
+                        date_match = re.search(r"(\d{4}-\d{2}-\d{2})", file_path.name)
                         if date_match:
                             date_str = date_match.group(1)
                             full_timestamp = f"{date_str} {timestamp_str}"
                         else:
                             full_timestamp = timestamp_str
 
-                        messages.append({
-                            'timestamp': timestamp_str,
-                            'full_timestamp': full_timestamp,
-                            'persona': persona.strip(),
-                            'message': message.strip(),
-                            'file': file_path.name,
-                            'line_number': line_num,
-                            'message_length': len(message.strip())
-                        })
+                        messages.append(
+                            {
+                                "timestamp": timestamp_str,
+                                "full_timestamp": full_timestamp,
+                                "persona": persona.strip(),
+                                "message": message.strip(),
+                                "file": file_path.name,
+                                "line_number": line_num,
+                                "message_length": len(message.strip()),
+                            }
+                        )
 
         except Exception as e:
             st.error(f"Error parsing {file_path.name}: {str(e)}")
@@ -87,12 +89,12 @@ class LogParser:
 
         # Convert timestamp to datetime for better sorting/filtering
         try:
-            df['datetime'] = pd.to_datetime(df['full_timestamp'])
+            df["datetime"] = pd.to_datetime(df["full_timestamp"])
         except (ValueError, pd.errors.ParserError) as e:
             st.warning(f"Could not parse some timestamps: {str(e)}")
-            df['datetime'] = pd.NaT
+            df["datetime"] = pd.NaT
 
-        return df.sort_values('datetime', ascending=False).reset_index(drop=True)
+        return df.sort_values("datetime", ascending=False).reset_index(drop=True)
 
 
 def create_sidebar_filters(df: pd.DataFrame) -> tuple[list[str], str, str, date, date]:
@@ -101,12 +103,12 @@ def create_sidebar_filters(df: pd.DataFrame) -> tuple[list[str], str, str, date,
 
     # Persona filter
     if not df.empty:
-        available_personas = sorted(df['persona'].unique())
+        available_personas = sorted(df["persona"].unique())
         selected_personas = st.sidebar.multiselect(
             "Select Personas",
             options=available_personas,
             default=available_personas,
-            help="Filter messages by AI persona"
+            help="Filter messages by AI persona",
         )
     else:
         selected_personas = []
@@ -115,7 +117,7 @@ def create_sidebar_filters(df: pd.DataFrame) -> tuple[list[str], str, str, date,
     search_term = st.sidebar.text_input(
         "Search Messages",
         placeholder="Enter keywords to search...",
-        help="Search within message content (case-insensitive)"
+        help="Search within message content (case-insensitive)",
     )
 
     # Show search debug info when search is active
@@ -126,27 +128,21 @@ def create_sidebar_filters(df: pd.DataFrame) -> tuple[list[str], str, str, date,
     search_type = st.sidebar.radio(
         "Search Type",
         options=["Contains", "Exact Match", "Regex"],
-        help="How to match the search term"
+        help="How to match the search term",
     )
 
     # Date range filter
-    if not df.empty and 'datetime' in df.columns:
-        min_date = df['datetime'].dt.date.min()
-        max_date = df['datetime'].dt.date.max()
+    if not df.empty and "datetime" in df.columns:
+        min_date = df["datetime"].dt.date.min()
+        max_date = df["datetime"].dt.date.max()
 
         if pd.notna(min_date) and pd.notna(max_date):
             start_date = st.sidebar.date_input(
-                "Start Date",
-                value=min_date,
-                min_value=min_date,
-                max_value=max_date
+                "Start Date", value=min_date, min_value=min_date, max_value=max_date
             )
 
             end_date = st.sidebar.date_input(
-                "End Date",
-                value=max_date,
-                min_value=min_date,
-                max_value=max_date
+                "End Date", value=max_date, min_value=min_date, max_value=max_date
             )
         else:
             start_date = date.today()
@@ -158,8 +154,14 @@ def create_sidebar_filters(df: pd.DataFrame) -> tuple[list[str], str, str, date,
     return selected_personas, search_term, search_type, start_date, end_date
 
 
-def apply_filters(df: pd.DataFrame, personas: list[str], search_term: str,
-                 search_type: str, start_date: date, end_date: date) -> pd.DataFrame:
+def apply_filters(
+    df: pd.DataFrame,
+    personas: list[str],
+    search_term: str,
+    search_type: str,
+    start_date: date,
+    end_date: date,
+) -> pd.DataFrame:
     """Apply all filters to the DataFrame"""
     if df.empty:
         return df
@@ -168,61 +170,96 @@ def apply_filters(df: pd.DataFrame, personas: list[str], search_term: str,
 
     # Persona filter
     if personas:
-        filtered_df = filtered_df[filtered_df['persona'].isin(personas)]
+        filtered_df = filtered_df[filtered_df["persona"].isin(personas)]
 
     # Date filter
-    if 'datetime' in filtered_df.columns:
+    if "datetime" in filtered_df.columns:
         filtered_df = filtered_df[
-            (filtered_df['datetime'].dt.date >= start_date) &
-            (filtered_df['datetime'].dt.date <= end_date)
+            (filtered_df["datetime"].dt.date >= start_date)
+            & (filtered_df["datetime"].dt.date <= end_date)
         ]
 
     # Search filter - fixed the search functionality
     if search_term:
         if search_type == "Contains":
-            mask = filtered_df['message'].str.contains(search_term, case=False, na=False)
+            mask = filtered_df["message"].str.contains(search_term, case=False, na=False)
         elif search_type == "Exact Match":
             # For exact match, we don't need regex, just direct string comparison
-            mask = filtered_df['message'].str.lower().str.contains(search_term.lower(), regex=False)
+            mask = filtered_df["message"].str.lower().str.contains(search_term.lower(), regex=False)
         elif search_type == "Regex":
             try:
                 # Validate regex pattern first to catch syntax errors early
-                pattern = re.compile(search_term, re.IGNORECASE)
-
-                # Add timeout protection for ReDoS attacks (Unix-only)
-                import platform
-                import signal
-
-                def timeout_handler(signum, frame):
-                    raise TimeoutError("Regex search timed out")
-
-                # Only use signal on Unix systems
-                if platform.system() != 'Windows':
-                    # Set 5 second timeout
-                    signal.signal(signal.SIGALRM, timeout_handler)
-                    signal.alarm(5)
-
+                # Try to use regex library with timeout support (cross-platform)
                 try:
-                    mask = filtered_df['message'].str.contains(
-                        search_term,
-                        case=False,
-                        na=False,
-                        regex=True,
-                        flags=re.IGNORECASE
-                    )
-                finally:
-                    # Cancel alarm if on Unix
-                    if platform.system() != 'Windows':
-                        signal.alarm(0)
+                    import regex
 
-            except re.error:
-                st.error("Invalid regular expression pattern. Please check your syntax.")
+                    HAS_REGEX = True
+                except ImportError:
+                    HAS_REGEX = False
+
+                # Basic pattern validation to prevent obvious ReDoS patterns
+                dangerous_patterns = [
+                    r"(\w+)+",  # Nested quantifiers
+                    r"(a+)+",  # Classic ReDoS
+                    r"(.*)*",  # Nested wildcards
+                    r"(.+)+",  # Another nested quantifier
+                ]
+
+                # Check for dangerous patterns
+                for dangerous in dangerous_patterns:
+                    if dangerous in search_term:
+                        st.warning("⚠️ Pattern may cause performance issues. Consider simplifying.")
+                        break
+
+                if HAS_REGEX:
+                    # Use regex library with timeout (works on all platforms)
+                    try:
+                        pattern = regex.compile(search_term, regex.IGNORECASE, timeout=5.0)
+                        mask = filtered_df["message"].apply(
+                            lambda x: bool(pattern.search(str(x))) if pd.notna(x) else False
+                        )
+                    except regex.error as e:
+                        st.error(f"Invalid regular expression pattern: {str(e)}")
+                        mask = pd.Series([False] * len(filtered_df))
+                    except TimeoutError:
+                        st.error(
+                            "⏱️ Regex search timed out. Pattern may cause catastrophic backtracking. Please simplify your pattern."
+                        )
+                        mask = pd.Series([False] * len(filtered_df))
+                else:
+                    # Fallback to standard re with length limit for safety
+                    st.info(
+                        "💡 Install 'regex' package for better timeout protection: pip install regex"
+                    )
+
+                    # Compile pattern to validate it
+                    pattern = re.compile(search_term, re.IGNORECASE)
+
+                    # Limit search to messages under 10000 chars to prevent ReDoS
+                    safe_df = filtered_df[filtered_df["message_length"] < 10000].copy()
+                    if len(safe_df) < len(filtered_df):
+                        st.warning(
+                            f"⚠️ Skipping {len(filtered_df) - len(safe_df)} very long messages for safety. Install 'regex' package for full protection."
+                        )
+
+                    mask = safe_df["message"].str.contains(
+                        search_term, case=False, na=False, regex=True, flags=re.IGNORECASE
+                    )
+                    # Align mask with original dataframe
+                    mask = mask.reindex(filtered_df.index, fill_value=False)
+
+            except re.error as e:
+                st.error(f"Invalid regular expression pattern: {str(e)}")
                 mask = pd.Series([False] * len(filtered_df))
             except TimeoutError:
-                st.error("Regex search timed out. Please simplify your pattern to avoid catastrophic backtracking.")
+                st.error(
+                    "⏱️ Regex search timed out. Please simplify your pattern to avoid catastrophic backtracking."
+                )
                 mask = pd.Series([False] * len(filtered_df))
-            except Exception:
-                st.error("An error occurred during regex search. Please try a different pattern.")
+            except Exception as e:
+                st.error(
+                    f"An error occurred during regex search: {str(e)}. Please try a different pattern."
+                )
                 mask = pd.Series([False] * len(filtered_df))
 
         filtered_df = filtered_df[mask]
@@ -242,19 +279,19 @@ def display_statistics(df: pd.DataFrame):
         st.metric("Total Messages", len(df))
 
     with col2:
-        unique_personas = df['persona'].nunique()
+        unique_personas = df["persona"].nunique()
         st.metric("Active Personas", unique_personas)
 
     with col3:
-        avg_length = df['message_length'].mean()
+        avg_length = df["message_length"].mean()
         st.metric("Avg Message Length", f"{avg_length:.0f} chars")
 
     with col4:
-        if 'datetime' in df.columns:
-            date_range = df['datetime'].dt.date.max() - df['datetime'].dt.date.min()
+        if "datetime" in df.columns:
+            date_range = df["datetime"].dt.date.max() - df["datetime"].dt.date.min()
             st.metric("Date Range", f"{date_range.days + 1} days")
         else:
-            st.metric("Files", df['file'].nunique())
+            st.metric("Files", df["file"].nunique())
 
 
 def display_persona_breakdown(df: pd.DataFrame):
@@ -264,13 +301,12 @@ def display_persona_breakdown(df: pd.DataFrame):
 
     st.subheader("📊 Persona Activity")
 
-    persona_stats = df.groupby('persona').agg({
-        'message': 'count',
-        'message_length': ['mean', 'sum']
-    }).round(1)
+    persona_stats = (
+        df.groupby("persona").agg({"message": "count", "message_length": ["mean", "sum"]}).round(1)
+    )
 
-    persona_stats.columns = ['Message Count', 'Avg Length', 'Total Chars']
-    persona_stats = persona_stats.sort_values('Message Count', ascending=False)
+    persona_stats.columns = ["Message Count", "Avg Length", "Total Chars"]
+    persona_stats = persona_stats.sort_values("Message Count", ascending=False)
 
     col1, col2 = st.columns([1, 1])
 
@@ -279,8 +315,8 @@ def display_persona_breakdown(df: pd.DataFrame):
 
     with col2:
         # Create a simple bar chart
-        chart_data = persona_stats['Message Count'].reset_index()
-        st.bar_chart(chart_data.set_index('persona'))
+        chart_data = persona_stats["Message Count"].reset_index()
+        st.bar_chart(chart_data.set_index("persona"))
 
 
 def display_messages(df: pd.DataFrame):
@@ -296,9 +332,7 @@ def display_messages(df: pd.DataFrame):
 
     with col1:
         display_format = st.radio(
-            "Display Format",
-            options=["Chat View", "Table View", "Raw Text"],
-            horizontal=True
+            "Display Format", options=["Chat View", "Table View", "Raw Text"], horizontal=True
         )
 
     # Sort options for Chat View
@@ -306,17 +340,19 @@ def display_messages(df: pd.DataFrame):
     if display_format == "Chat View":
         with col2:
             sort_order = st.selectbox(
-                "Sort Order",
-                options=["newest", "oldest"],
-                help="Sort messages by timestamp"
+                "Sort Order", options=["newest", "oldest"], help="Sort messages by timestamp"
             )
 
     # Apply sorting for Chat View
     if display_format == "Chat View":
         if sort_order == "newest":
-            display_df = df.sort_values('datetime', ascending=False) if 'datetime' in df.columns else df
+            display_df = (
+                df.sort_values("datetime", ascending=False) if "datetime" in df.columns else df
+            )
         else:  # oldest
-            display_df = df.sort_values('datetime', ascending=True) if 'datetime' in df.columns else df
+            display_df = (
+                df.sort_values("datetime", ascending=True) if "datetime" in df.columns else df
+            )
     else:
         display_df = df
 
@@ -330,7 +366,7 @@ def display_messages(df: pd.DataFrame):
                     st.caption(f"{row['timestamp']}")
 
                 with col2:
-                    st.write(row['message'])
+                    st.write(row["message"])
 
                 st.divider()
 
@@ -338,16 +374,12 @@ def display_messages(df: pd.DataFrame):
         # Select columns to display
         display_cols = st.multiselect(
             "Select columns to display",
-            options=['timestamp', 'persona', 'message', 'file', 'message_length'],
-            default=['timestamp', 'persona', 'message']
+            options=["timestamp", "persona", "message", "file", "message_length"],
+            default=["timestamp", "persona", "message"],
         )
 
         if display_cols:
-            st.dataframe(
-                display_df[display_cols],
-                use_container_width=True,
-                hide_index=True
-            )
+            st.dataframe(display_df[display_cols], use_container_width=True, hide_index=True)
 
     elif display_format == "Raw Text":
         # Show raw text format
@@ -356,20 +388,13 @@ def display_messages(df: pd.DataFrame):
             raw_text += f"[{row['timestamp']}] {row['persona']}$ {row['message']}\n"
 
         st.text_area(
-            "Raw Log Format",
-            value=raw_text,
-            height=400,
-            help="Copy-pasteable raw log format"
+            "Raw Log Format", value=raw_text, height=400, help="Copy-pasteable raw log format"
         )
 
 
 def main():
     """Main Streamlit app"""
-    st.set_page_config(
-        page_title="AI Conversation Log Viewer",
-        page_icon="🤖",
-        layout="wide"
-    )
+    st.set_page_config(page_title="AI Conversation Log Viewer", page_icon="🤖", layout="wide")
 
     st.title("🤖 AI Conversation Log Viewer")
     st.markdown("View and analyze AI conversation logs with filtering and search capabilities")
@@ -390,7 +415,7 @@ def main():
         "Select log files to analyze",
         options=available_files,
         default=available_files[:3],  # Default to 3 most recent
-        format_func=lambda x: x.name
+        format_func=lambda x: x.name,
     )
 
     if not selected_files:
@@ -412,7 +437,9 @@ def main():
         original_count = len(df)
         filtered_count = len(filtered_df)
         if filtered_count != original_count:
-            st.info(f"🔍 Search results: Found {filtered_count} messages containing '{search_term}' out of {original_count} total messages")
+            st.info(
+                f"🔍 Search results: Found {filtered_count} messages containing '{search_term}' out of {original_count} total messages"
+            )
         elif filtered_count == 0:
             st.warning(f"🔍 No messages found containing '{search_term}'")
 
@@ -432,10 +459,7 @@ def main():
         st.sidebar.markdown("---")
         st.sidebar.header("💾 Export")
 
-        export_format = st.sidebar.selectbox(
-            "Export Format",
-            options=["CSV", "JSON", "TXT"]
-        )
+        export_format = st.sidebar.selectbox("Export Format", options=["CSV", "JSON", "TXT"])
 
         if st.sidebar.button("Download Filtered Data"):
             if export_format == "CSV":
@@ -444,15 +468,15 @@ def main():
                     label="📥 Download CSV",
                     data=csv,
                     file_name=f"ai_conversations_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
+                    mime="text/csv",
                 )
             elif export_format == "JSON":
-                json_data = filtered_df.to_json(orient='records', indent=2)
+                json_data = filtered_df.to_json(orient="records", indent=2)
                 st.sidebar.download_button(
                     label="📥 Download JSON",
                     data=json_data,
                     file_name=f"ai_conversations_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                    mime="application/json"
+                    mime="application/json",
                 )
             elif export_format == "TXT":
                 txt_data = ""
@@ -463,7 +487,7 @@ def main():
                     label="📥 Download TXT",
                     data=txt_data,
                     file_name=f"ai_conversations_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                    mime="text/plain"
+                    mime="text/plain",
                 )
 
 

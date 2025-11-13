@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import aiohttp
 import pytest
 
-from streamlit_backroom import OllamaClient
+from src.services.ollama_client import OllamaClient
 from tests.fixtures.mock_responses import (
     get_mock_models_response,
 )
@@ -31,7 +31,7 @@ class TestOllamaClient:
         """Test successful connection to Ollama."""
         mock_response_data = get_mock_models_response()
 
-        with patch('aiohttp.ClientSession') as mock_session_class:
+        with patch("aiohttp.ClientSession") as mock_session_class:
             # Create mock response
             mock_response = AsyncMock()
             mock_response.status = 200
@@ -60,7 +60,7 @@ class TestOllamaClient:
     @pytest.mark.asyncio
     async def test_connection_failure_network_error(self):
         """Test connection failure due to network error."""
-        with patch('aiohttp.ClientSession') as mock_session_class:
+        with patch("aiohttp.ClientSession") as mock_session_class:
             mock_session = AsyncMock()
             mock_session.get = Mock(side_effect=aiohttp.ClientError("Connection failed"))
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
@@ -78,7 +78,7 @@ class TestOllamaClient:
     @pytest.mark.asyncio
     async def test_connection_failure_timeout(self):
         """Test connection failure due to timeout."""
-        with patch('aiohttp.ClientSession') as mock_session_class:
+        with patch("aiohttp.ClientSession") as mock_session_class:
             mock_session = AsyncMock()
             mock_session.get = Mock(side_effect=TimeoutError())
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
@@ -96,7 +96,7 @@ class TestOllamaClient:
     @pytest.mark.asyncio
     async def test_connection_failure_http_error(self):
         """Test connection failure with non-200 status code."""
-        with patch('aiohttp.ClientSession') as mock_session_class:
+        with patch("aiohttp.ClientSession") as mock_session_class:
             mock_response = AsyncMock()
             mock_response.status = 500
             mock_response.__aenter__ = AsyncMock(return_value=mock_response)
@@ -119,7 +119,7 @@ class TestOllamaClient:
     @pytest.mark.asyncio
     async def test_connection_empty_models_list(self):
         """Test connection with empty models list."""
-        with patch('aiohttp.ClientSession') as mock_session_class:
+        with patch("aiohttp.ClientSession") as mock_session_class:
             mock_response = AsyncMock()
             mock_response.status = 200
             mock_response.json = AsyncMock(return_value={"models": []})
@@ -147,12 +147,12 @@ class TestOllamaClient:
 
         # Create mock streaming response
         mock_chunks = [
-            json.dumps({"response": "Hello", "done": False}).encode() + b'\n',
-            json.dumps({"response": " world", "done": False}).encode() + b'\n',
-            json.dumps({"response": "", "done": True}).encode() + b'\n'
+            json.dumps({"response": "Hello", "done": False}).encode() + b"\n",
+            json.dumps({"response": " world", "done": False}).encode() + b"\n",
+            json.dumps({"response": "", "done": True}).encode() + b"\n",
         ]
 
-        with patch('aiohttp.ClientSession') as mock_session_class:
+        with patch("aiohttp.ClientSession") as mock_session_class:
             # Create async iterator for content
             async def mock_iter():
                 for chunk in mock_chunks:
@@ -178,9 +178,7 @@ class TestOllamaClient:
             chunks = []
             try:
                 async for chunk in client.generate_stream(
-                    model="llama2:latest",
-                    prompt="Test prompt",
-                    context=[]
+                    model="llama2:latest", prompt="Test prompt", context=[]
                 ):
                     chunks.append(chunk)
             except Exception:
@@ -196,7 +194,7 @@ class TestOllamaClient:
         # This test verifies the function signature accepts system_prompt
         client = OllamaClient()
 
-        with patch('aiohttp.ClientSession') as mock_session_class:
+        with patch("aiohttp.ClientSession") as mock_session_class:
             mock_session = AsyncMock()
             mock_session.post = Mock(side_effect=Exception("Expected test exception"))
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
@@ -210,7 +208,7 @@ class TestOllamaClient:
                     model="llama2:latest",
                     prompt="Test",
                     context=[],
-                    system_prompt="You are a test assistant"
+                    system_prompt="You are a test assistant",
                 ):
                     pass
             except Exception:
@@ -226,7 +224,7 @@ class TestOllamaClient:
             "http://localhost:11434",
             "http://192.168.1.100:11434",
             "https://remote-server.com:8080",
-            "http://ollama:11434"
+            "http://ollama:11434",
         ]
 
         for url in urls:
@@ -236,7 +234,7 @@ class TestOllamaClient:
     @pytest.mark.asyncio
     async def test_concurrent_connections(self):
         """Test multiple concurrent connection attempts."""
-        with patch('aiohttp.ClientSession') as mock_session_class:
+        with patch("aiohttp.ClientSession") as mock_session_class:
             mock_response = AsyncMock()
             mock_response.status = 200
             mock_response.json = AsyncMock(return_value=get_mock_models_response())
@@ -255,9 +253,7 @@ class TestOllamaClient:
             # Test multiple concurrent calls
             async with client:
                 results = await asyncio.gather(
-                    client.test_connection(),
-                    client.test_connection(),
-                    client.test_connection()
+                    client.test_connection(), client.test_connection(), client.test_connection()
                 )
 
             assert len(results) == 3

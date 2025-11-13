@@ -9,10 +9,12 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-# Add parent directory to path so we can import from streamlit_backroom
+# Add parent directory to path so we can import from src
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from streamlit_backroom import AIPersona, ConversationLogger, OllamaClient
+from src.models.persona import AIPersona
+from src.services.logger import ConversationLogger
+from src.services.ollama_client import OllamaClient
 from tests.fixtures.mock_responses import (
     get_mock_generate_response,
     get_mock_models_response,
@@ -30,7 +32,7 @@ def sample_persona():
         role="analyst",
         system_prompt="You are a test analyst.",
         color="#FF5733",
-        enabled=True
+        enabled=True,
     )
 
 
@@ -45,7 +47,7 @@ def sample_personas():
             role="creative",
             system_prompt="You are creative.",
             color="#FF5733",
-            enabled=True
+            enabled=True,
         ),
         AIPersona(
             id="bob-002",
@@ -54,7 +56,7 @@ def sample_personas():
             role="critic",
             system_prompt="You are critical.",
             color="#33C3FF",
-            enabled=True
+            enabled=True,
         ),
         AIPersona(
             id="charlie-003",
@@ -63,7 +65,7 @@ def sample_personas():
             role="mediator",
             system_prompt="You mediate discussions.",
             color="#33FF57",
-            enabled=True
+            enabled=True,
         ),
     ]
 
@@ -126,18 +128,18 @@ def sample_conversation_history():
         {
             "speaker": "Alice",
             "message": "Hello everyone! Let's discuss AI.",
-            "timestamp": "10:00:00"
+            "timestamp": "10:00:00",
         },
         {
             "speaker": "Bob",
             "message": "@Alice I think AI has great potential.",
-            "timestamp": "10:01:00"
+            "timestamp": "10:01:00",
         },
         {
             "speaker": "Charlie",
             "message": "I agree with both perspectives.",
-            "timestamp": "10:02:00"
-        }
+            "timestamp": "10:02:00",
+        },
     ]
 
 
@@ -151,7 +153,7 @@ def mock_streamlit_session_state():
         "initialized": False,
         "turn_count": 0,
         "ollama_url": "http://localhost:11434",
-        "available_models": []
+        "available_models": [],
     }
 
 

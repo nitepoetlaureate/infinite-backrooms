@@ -10,13 +10,47 @@ import asyncio
 import json
 import logging
 import uuid
+from collections.abc import Coroutine
 from dataclasses import asdict
 from datetime import datetime
+from typing import Any, TypeVar
 
 import streamlit as st
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
+# Type variable for async functions
+T = TypeVar("T")
+
+
+def run_async(coro: Coroutine[Any, Any, T]) -> T:
+    """Run async function in Streamlit context.
+
+    Handles Streamlit's event loop quirks by trying asyncio.run() first,
+    and falling back to manual event loop creation if needed.
+
+    Args:
+        coro: Coroutine to run
+
+    Returns:
+        Result of the coroutine
+    """
+    try:
+        return asyncio.run(coro)
+    except RuntimeError as e:
+        # Handle "Event loop is closed" or "no running event loop" errors
+        logger.debug(f"asyncio.run() failed, creating new event loop: {e}")
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(coro)
+        finally:
+            try:
+                loop.close()
+            except Exception as close_error:
+                logger.debug(f"Error closing event loop: {close_error}")
+
 
 from src.models.persona import AIPersona
 from src.services.logger import ConversationLogger
@@ -205,36 +239,15 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
         if st.button("🔄 Check Ollama Connection"):
             with st.status("Checking Ollama connection...", expanded=True) as status:
                 st.write("Connecting to Ollama API...")
-                try:
-                    connected = asyncio.run(self.check_ollama_connection())
-                    if connected:
-                        st.write(f"✅ Found {len(st.session_state.available_models)} models")
-                        for model in st.session_state.available_models:
-                            st.write(f"• {model}")
-                        status.update(
-                            label="Connection successful!", state="complete", expanded=False
-                        )
-                    else:
-                        st.write("❌ Connection failed")
-                        status.update(label="Connection failed", state="error", expanded=False)
-                except RuntimeError:
-                    # Handle "Event loop is closed" gracefully
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    try:
-                        connected = loop.run_until_complete(self.check_ollama_connection())
-                        if connected:
-                            st.write(f"✅ Found {len(st.session_state.available_models)} models")
-                            for model in st.session_state.available_models:
-                                st.write(f"• {model}")
-                            status.update(
-                                label="Connection successful!", state="complete", expanded=False
-                            )
-                        else:
-                            st.write("❌ Connection failed")
-                            status.update(label="Connection failed", state="error", expanded=False)
-                    finally:
-                        loop.close()
+                connected = run_async(self.check_ollama_connection())
+                if connected:
+                    st.write(f"✅ Found {len(st.session_state.available_models)} models")
+                    for model in st.session_state.available_models:
+                        st.write(f"• {model}")
+                    status.update(label="Connection successful!", state="complete", expanded=False)
+                else:
+                    st.write("❌ Connection failed")
+                    status.update(label="Connection failed", state="error", expanded=False)
 
         # Display current personas
         if st.session_state.personas:
@@ -620,29 +633,14 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
                 st.error("❌ Ollama Disconnected")
                 if st.button("🔄 Retry Connection", type="secondary"):
                     with st.spinner("Connecting to Ollama..."):
-                        try:
-                            connected = asyncio.run(self.check_ollama_connection())
-                            if connected:
-                                st.success(
-                                    f"✅ Connected! Found {len(st.session_state.available_models)} models"
-                                )
-                                st.rerun()
-                            else:
-                                st.error("❌ Still unable to connect to Ollama")
-                        except RuntimeError:
-                            loop = asyncio.new_event_loop()
-                            asyncio.set_event_loop(loop)
-                            try:
-                                connected = loop.run_until_complete(self.check_ollama_connection())
-                                if connected:
-                                    st.success(
-                                        f"✅ Connected! Found {len(st.session_state.available_models)} models"
-                                    )
-                                    st.rerun()
-                                else:
-                                    st.error("❌ Still unable to connect to Ollama")
-                            finally:
-                                loop.close()
+                        connected = run_async(self.check_ollama_connection())
+                        if connected:
+                            st.success(
+                                f"✅ Connected! Found {len(st.session_state.available_models)} models"
+                            )
+                            st.rerun()
+                        else:
+                            st.error("❌ Still unable to connect to Ollama")
 
             st.divider()
             st.subheader("📊 Status")

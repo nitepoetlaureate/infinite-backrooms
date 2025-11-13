@@ -83,7 +83,7 @@ class ConversationLogger:
             return []
 
         messages = []
-        with open(log_file_path, "r", encoding="utf-8") as f:
+        with open(log_file_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:

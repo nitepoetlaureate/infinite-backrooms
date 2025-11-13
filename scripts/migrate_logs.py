@@ -156,20 +156,12 @@ def check_conflicts(log_dir: Path, files_to_migrate: list[tuple[Path, str]]) -> 
         new_path = log_dir / new_filename
 
         if new_path.exists():
-            conflicts.append(
-                f"Conflict: {old_path.name} → {new_filename} (target already exists)"
-            )
+            conflicts.append(f"Conflict: {old_path.name} → {new_filename} (target already exists)")
 
     return conflicts
 
 
-def show_summary(
-    total_files: int,
-    migrated: int,
-    skipped: int,
-    failed: int,
-    dry_run: bool = False
-):
+def show_summary(total_files: int, migrated: int, skipped: int, failed: int, dry_run: bool = False):
     """
     Show migration summary.
 
@@ -211,28 +203,21 @@ Examples:
 
   # Verbose output
   python scripts/migrate_logs.py --verbose
-        """
+        """,
     )
 
     parser.add_argument(
         "--log-dir",
         type=Path,
         default=Path("conversations"),
-        help="Directory containing log files (default: conversations/)"
+        help="Directory containing log files (default: conversations/)",
     )
 
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Show what would be migrated without making changes"
+        "--dry-run", action="store_true", help="Show what would be migrated without making changes"
     )
 
-    parser.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="Show detailed output"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed output")
 
     args = parser.parse_args()
 
@@ -248,7 +233,9 @@ Examples:
     files_to_migrate = find_old_log_files(args.log_dir, args.verbose)
 
     if not files_to_migrate:
-        print("✅ No old log files found. All files are already using the current naming convention.")
+        print(
+            "✅ No old log files found. All files are already using the current naming convention."
+        )
         return 0
 
     print(f"Found {len(files_to_migrate)} file(s) to migrate\n")

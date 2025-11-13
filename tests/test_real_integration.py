@@ -12,7 +12,10 @@ import pytest
 
 # Import the actual application modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from streamlit_backroom import AIPersona, ConversationLogger, OllamaClient, StreamlitBackroomApp
+from src.models.persona import AIPersona
+from src.services.logger import ConversationLogger
+from src.services.ollama_client import OllamaClient
+from streamlit_backroom import StreamlitBackroomApp
 
 
 @pytest.fixture(scope="session")
@@ -24,6 +27,7 @@ def init_streamlit_session():
     try:
         # Try to get the script run context using the current API
         from streamlit.runtime.scriptrunner import get_script_run_ctx
+
         ctx = get_script_run_ctx()
         has_context = ctx is not None
     except (AttributeError, ImportError):
@@ -32,13 +36,14 @@ def init_streamlit_session():
 
     if not has_context:
         # Create a mock session state
-        if not hasattr(st, 'session_state'):
+        if not hasattr(st, "session_state"):
+
             class MockSessionState(dict):
                 def __getattr__(self, key):
                     try:
                         return self[key]
-                    except KeyError:
-                        raise AttributeError(f"st.session_state has no attribute '{key}'")
+                    except KeyError as err:
+                        raise AttributeError(f"st.session_state has no attribute '{key}'") from err
 
                 def __setattr__(self, key, value):
                     self[key] = value
@@ -57,7 +62,7 @@ def init_streamlit_session():
                 "response_delay_max": 8,
                 "auto_advance": True,
                 "enable_thinking": True,
-                "response_timeout": 300
+                "response_timeout": 300,
             }
 
     yield st.session_state
@@ -79,7 +84,9 @@ class TestRealOllamaIntegration:
 
         assert success is True, f"Failed to connect to Ollama: {models}"
         assert len(models) >= 1, "No models available"
-        assert "granite3.3:8b" in models or "llama3:8b" in models or "phi3:mini" in models, "Expected models not found"
+        assert (
+            "granite3.3:8b" in models or "llama3:8b" in models or "phi3:mini" in models
+        ), "Expected models not found"
 
     @pytest.mark.asyncio
     async def test_real_model_response(self, real_client):
@@ -89,7 +96,9 @@ class TestRealOllamaIntegration:
         # Collect actual response chunks
         chunks = []
         async with real_client:
-            async for chunk in real_client.generate_stream(model, "What is 2+2? Answer in one word."):
+            async for chunk in real_client.generate_stream(
+                model, "What is 2+2? Answer in one word."
+            ):
                 chunks.append(chunk)
                 if chunk.get("done"):
                     break
@@ -104,7 +113,9 @@ class TestRealOllamaIntegration:
 
         assert len(response_text.strip()) > 0, "Empty response received"
         # Should contain a number or word indicating the answer
-        assert any(word in response_text.lower() for word in ["4", "four", "answer"]), f"Unexpected response: {response_text}"
+        assert any(
+            word in response_text.lower() for word in ["4", "four", "answer"]
+        ), f"Unexpected response: {response_text}"
 
     @pytest.mark.asyncio
     async def test_real_concurrent_requests(self, real_client):
@@ -124,9 +135,7 @@ class TestRealOllamaIntegration:
         start_time = time.time()
         async with real_client:
             results = await asyncio.gather(
-                get_response(prompts[0]),
-                get_response(prompts[1]),
-                get_response(prompts[2])
+                get_response(prompts[0]), get_response(prompts[1]), get_response(prompts[2])
             )
         end_time = time.time()
 
@@ -135,7 +144,9 @@ class TestRealOllamaIntegration:
             assert len(result.strip()) > 0, f"Empty response for prompt {i}: {prompts[i]}"
 
         # Should complete reasonably fast (under 30 seconds for 3 small requests)
-        assert end_time - start_time < 30, f"Concurrent requests took too long: {end_time - start_time}s"
+        assert (
+            end_time - start_time < 30
+        ), f"Concurrent requests took too long: {end_time - start_time}s"
 
 
 class TestRealConversationFlow:
@@ -168,7 +179,7 @@ class TestRealConversationFlow:
                 model="phi3:mini",  # Use small model for speed
                 role="Mathematician",
                 enabled=True,
-                color="#FF6B6B"
+                color="#FF6B6B",
             ),
             AIPersona(
                 id="test_2",
@@ -176,8 +187,8 @@ class TestRealConversationFlow:
                 model="phi3:mini",
                 role="Scientist",
                 enabled=True,
-                color="#4ECDC4"
-            )
+                color="#4ECDC4",
+            ),
         ]
 
     def test_real_persona_creation_and_selection(self, real_app, test_personas):
@@ -211,18 +222,14 @@ class TestRealConversationFlow:
 
         # Log a real message
         test_message = "This is a test message for logging"
-        real_app.conversation_logger.log_message(
-            alice.name,
-            test_message,
-            datetime.now()
-        )
+        real_app.conversation_logger.log_message(alice.name, test_message, datetime.now())
 
         # Verify log file was created
         log_files = list(Path(temp_log_dir).glob("*.txt"))
         assert len(log_files) >= 1, "No log file created"
 
         # Verify content
-        log_content = log_files[0].read_text(encoding='utf-8')
+        log_content = log_files[0].read_text(encoding="utf-8")
         assert alice.name in log_content, "Persona name not in log"
         assert test_message in log_content, "Test message not in log"
 
@@ -251,7 +258,7 @@ class TestRealFileOperations:
         messages = [
             ("Alice", "Hello world", datetime.now()),
             ("Bob", "Hi there", datetime.now()),
-            ("Alice", "How are you?", datetime.now())
+            ("Alice", "How are you?", datetime.now()),
         ]
 
         for persona, message, timestamp in messages:
@@ -261,7 +268,7 @@ class TestRealFileOperations:
         assert expected_path.exists(), "Log file not created"
 
         # Verify content
-        content = expected_path.read_text(encoding='utf-8')
+        content = expected_path.read_text(encoding="utf-8")
         assert "Alice" in content, "Alice not in log"
         assert "Bob" in content, "Bob not in log"
         assert "Hello world" in content, "First message not in log"
@@ -336,10 +343,7 @@ class TestRealSystemPerformance:
         # Run 3 conversations concurrently
         start_time = time.time()
         results = await asyncio.gather(
-            run_conversation(1),
-            run_conversation(2),
-            run_conversation(3),
-            return_exceptions=True
+            run_conversation(1), run_conversation(2), run_conversation(3), return_exceptions=True
         )
         end_time = time.time()
 
@@ -354,7 +358,9 @@ class TestRealSystemPerformance:
                 assert len(result) >= 1, f"Conversation {i+1} had no responses"
 
         # Should complete in reasonable time
-        assert end_time - start_time < 120, f"Concurrent conversations took too long: {end_time - start_time}s"
+        assert (
+            end_time - start_time < 120
+        ), f"Concurrent conversations took too long: {end_time - start_time}s"
 
     def test_memory_usage_stability(self):
         """Test memory usage stability over extended operation."""
@@ -365,12 +371,14 @@ class TestRealSystemPerformance:
             # Create temporary objects
             temp_data = []
             for j in range(100):
-                temp_data.append({
-                    "id": f"{i}_{j}",
-                    "content": "Test content " * 10,
-                    "timestamp": datetime.now(),
-                    "metadata": {"iteration": i, "sub_iteration": j}
-                })
+                temp_data.append(
+                    {
+                        "id": f"{i}_{j}",
+                        "content": "Test content " * 10,
+                        "timestamp": datetime.now(),
+                        "metadata": {"iteration": i, "sub_iteration": j},
+                    }
+                )
 
             # Simulate some processing
             processed = [item for item in temp_data if item["metadata"]["iteration"] % 2 == 0]
@@ -415,11 +423,12 @@ class TestEndToEndRealSystem:
 
         # Initialize with real settings
         import streamlit as st
+
         app.initialize_session_state()
         st.session_state.settings = {
             "context_messages": 5,
             "enable_thinking": False,
-            "response_timeout": 90
+            "response_timeout": 90,
         }
 
         return app, client, logger
@@ -441,11 +450,12 @@ class TestEndToEndRealSystem:
                 model="phi3:mini",
                 role="Assistant",
                 enabled=True,
-                color="#FF6B6B"
+                color="#FF6B6B",
             )
         ]
 
         import streamlit as st
+
         st.session_state.personas = personas
         st.session_state.messages = []
 
@@ -463,8 +473,7 @@ class TestEndToEndRealSystem:
         response_text = ""
         try:
             async for chunk in app.get_ai_response_stream(
-                speaker,
-                "Say hello in exactly one word."
+                speaker, "Say hello in exactly one word."
             ):
                 if chunk.get("response"):
                     response_text += chunk.get("response")
@@ -481,7 +490,7 @@ class TestEndToEndRealSystem:
         assert len(log_files) >= 1, "No log files created"
 
         # Verify log content
-        log_content = log_files[0].read_text(encoding='utf-8')
+        log_content = log_files[0].read_text(encoding="utf-8")
         assert speaker.name in log_content, "Speaker not in log"
         assert response_text.strip() in log_content, "Response not in log"
 
@@ -506,7 +515,7 @@ class TestEndToEndRealSystem:
             # Verify logging survived edge cases
             log_files = list(Path(logger.log_dir).glob("*.txt"))
             if log_files:
-                content = log_files[0].read_text(encoding='utf-8')
+                content = log_files[0].read_text(encoding="utf-8")
                 assert len(content) > 0, "Log file empty after edge cases"
 
         except Exception as e:
@@ -522,11 +531,12 @@ class TestEndToEndRealSystem:
                     model="nonexistent:model",
                     role="Test",
                     enabled=True,
-                    color="#FF0000"
+                    color="#FF0000",
                 )
             ]
 
             import streamlit as st
+
             st.session_state.personas = personas
 
             # Should handle gracefully

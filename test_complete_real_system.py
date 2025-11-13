@@ -20,7 +20,8 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 from log_viewer import LogParser
-from streamlit_backroom import AIPersona, ConversationLogger
+from src.models.persona import AIPersona
+from src.services.logger import ConversationLogger
 
 
 class RealSystemTester:
@@ -38,18 +39,15 @@ class RealSystemTester:
         if message:
             print(f"    {message}")
 
-        self.test_results.append({
-            "name": test_name,
-            "success": success,
-            "message": message,
-            "timestamp": datetime.now()
-        })
+        self.test_results.append(
+            {"name": test_name, "success": success, "message": message, "timestamp": datetime.now()}
+        )
 
     async def test_ollama_connection(self):
         """Test real Ollama API connection."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🔌 TESTING OLLAMA API CONNECTION")
-        print("="*60)
+        print("=" * 60)
 
         try:
             async with aiohttp.ClientSession() as session:
@@ -61,17 +59,20 @@ class RealSystemTester:
                         self.log_test(
                             "Ollama Connection",
                             True,
-                            f"Connected successfully. Models: {len(models)} available"
+                            f"Connected successfully. Models: {len(models)} available",
                         )
 
                         # Check for expected models
                         model_string = " ".join(models)
-                        has_small_model = any(model in model_string for model in ["phi3:mini", "llama3:8b", "granite3.3:8b"])
+                        has_small_model = any(
+                            model in model_string
+                            for model in ["phi3:mini", "llama3:8b", "granite3.3:8b"]
+                        )
 
                         self.log_test(
                             "Required Models Available",
                             has_small_model,
-                            f"Has suitable models: {has_small_model}"
+                            f"Has suitable models: {has_small_model}",
                         )
 
                         return models
@@ -79,7 +80,7 @@ class RealSystemTester:
                         self.log_test(
                             "Ollama Connection",
                             False,
-                            f"HTTP {response.status}: {await response.text()}"
+                            f"HTTP {response.status}: {await response.text()}",
                         )
                         return []
         except Exception as e:
@@ -88,9 +89,9 @@ class RealSystemTester:
 
     async def test_real_ai_responses(self, models):
         """Test actual AI model responses."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🤖 TESTING REAL AI MODEL RESPONSES")
-        print("="*60)
+        print("=" * 60)
 
         if not models:
             self.log_test("AI Response Test", False, "No models available")
@@ -115,38 +116,34 @@ class RealSystemTester:
                 "name": "Simple Math",
                 "prompt": "What is 2+2? Answer with just the number.",
                 "expected": ["4", "four"],
-                "timeout": 30
+                "timeout": 30,
             },
             {
                 "name": "Simple Question",
                 "prompt": "What color is the sky? Answer in one word.",
                 "expected": ["blue"],
-                "timeout": 30
+                "timeout": 30,
             },
             {
                 "name": "Greeting",
                 "prompt": "Say hello in one word.",
                 "expected": ["hello", "hi"],
-                "timeout": 30
-            }
+                "timeout": 30,
+            },
         ]
 
         async with aiohttp.ClientSession() as session:
             for i, test_case in enumerate(test_cases):
                 print(f"\nTest {i+1}: {test_case['name']}")
 
-                payload = {
-                    "model": test_model,
-                    "prompt": test_case["prompt"],
-                    "stream": False
-                }
+                payload = {"model": test_model, "prompt": test_case["prompt"], "stream": False}
 
                 try:
                     start_time = time.time()
                     async with session.post(
                         f"{self.ollama_url}/api/generate",
                         json=payload,
-                        timeout=aiohttp.ClientTimeout(total=test_case["timeout"])
+                        timeout=aiohttp.ClientTimeout(total=test_case["timeout"]),
                     ) as response:
                         end_time = time.time()
 
@@ -159,19 +156,21 @@ class RealSystemTester:
                             print(f"  Time: {response_time:.2f}s")
 
                             # Check if expected content is in response
-                            success = any(expected in ai_response for expected in test_case["expected"])
+                            success = any(
+                                expected in ai_response for expected in test_case["expected"]
+                            )
 
                             self.log_test(
                                 f"AI Response: {test_case['name']}",
                                 success,
-                                f"'{ai_response}' ({response_time:.2f}s)"
+                                f"'{ai_response}' ({response_time:.2f}s)",
                             )
 
                             if response_time > 20:
                                 self.log_test(
                                     f"Response Time Warning: {test_case['name']}",
                                     False,
-                                    f"Slow response: {response_time:.2f}s"
+                                    f"Slow response: {response_time:.2f}s",
                                 )
 
                         else:
@@ -179,21 +178,17 @@ class RealSystemTester:
                             self.log_test(
                                 f"AI Response: {test_case['name']}",
                                 False,
-                                f"HTTP {response.status}: {error_text[:100]}"
+                                f"HTTP {response.status}: {error_text[:100]}",
                             )
 
                 except TimeoutError:
                     self.log_test(
                         f"AI Response: {test_case['name']}",
                         False,
-                        f"Timeout after {test_case['timeout']}s"
+                        f"Timeout after {test_case['timeout']}s",
                     )
                 except Exception as e:
-                    self.log_test(
-                        f"AI Response: {test_case['name']}",
-                        False,
-                        f"Exception: {e}"
-                    )
+                    self.log_test(f"AI Response: {test_case['name']}", False, f"Exception: {e}")
 
         # Test streaming
         print(f"\nTesting streaming with {test_model}...")
@@ -207,13 +202,13 @@ class RealSystemTester:
             async with session.post(
                 f"{self.ollama_url}/api/generate",
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=30)
+                timeout=aiohttp.ClientTimeout(total=30),
             ) as response:
                 if response.status == 200:
                     async for line in response.content:
                         if line:
                             try:
-                                chunk = json.loads(line.decode('utf-8'))
+                                chunk = json.loads(line.decode("utf-8"))
                                 if "response" in chunk:
                                     full_response += chunk["response"]
                                     chunks_received += 1
@@ -232,23 +227,19 @@ class RealSystemTester:
                     self.log_test(
                         "AI Streaming Response",
                         len(full_response.strip()) > 0,
-                        f"{chunks_received} chunks, {streaming_time:.2f}s"
+                        f"{chunks_received} chunks, {streaming_time:.2f}s",
                     )
                 else:
-                    self.log_test(
-                        "AI Streaming Response",
-                        False,
-                        f"HTTP {response.status}"
-                    )
+                    self.log_test("AI Streaming Response", False, f"HTTP {response.status}")
 
         except Exception as e:
             self.log_test("AI Streaming Response", False, f"Exception: {e}")
 
     def test_conversation_components(self):
         """Test conversation system components."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("💬 TESTING CONVERSATION COMPONENTS")
-        print("="*60)
+        print("=" * 60)
 
         # Test AIPersona creation
         print("\nTesting AIPersona creation...")
@@ -261,7 +252,7 @@ class RealSystemTester:
                     model="phi3:mini",
                     role="Mathematician",
                     enabled=True,
-                    color="#FF6B6B"
+                    color="#FF6B6B",
                 ),
                 AIPersona(
                     id="test_bob",
@@ -269,7 +260,7 @@ class RealSystemTester:
                     model="phi3:mini",
                     role="Scientist",
                     enabled=True,
-                    color="#4ECDC4"
+                    color="#4ECDC4",
                 ),
                 AIPersona(
                     id="test_charlie",
@@ -277,18 +268,14 @@ class RealSystemTester:
                     model="phi3:mini",
                     role="Philosopher",
                     enabled=False,  # Disabled
-                    color="#45B7D1"
-                )
+                    color="#45B7D1",
+                ),
             ]
 
             for persona in test_personas:
                 print(f"  ✅ Created: {persona.name} ({persona.role}) - Enabled: {persona.enabled}")
 
-            self.log_test(
-                "AIPersona Creation",
-                True,
-                f"Created {len(test_personas)} personas"
-            )
+            self.log_test("AIPersona Creation", True, f"Created {len(test_personas)} personas")
 
             # Test speaker selection logic
             print("\nTesting speaker selection...")
@@ -308,9 +295,7 @@ class RealSystemTester:
             rotation_correct = selections == expected_pattern
 
             self.log_test(
-                "Speaker Selection Logic",
-                rotation_correct,
-                f"Pattern: {selections[:3]}..."
+                "Speaker Selection Logic", rotation_correct, f"Pattern: {selections[:3]}..."
             )
 
         except Exception as e:
@@ -318,9 +303,9 @@ class RealSystemTester:
 
     def test_file_operations(self):
         """Test file system operations."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📁 TESTING FILE SYSTEM OPERATIONS")
-        print("="*60)
+        print("=" * 60)
 
         # Create temporary workspace
         self.temp_dir = tempfile.mkdtemp()
@@ -336,8 +321,12 @@ class RealSystemTester:
                 ("Alice", "Hello world! This is a test message.", datetime.now()),
                 ("Bob", "Hi Alice! Great to meet you.", datetime.now() + timedelta(minutes=1)),
                 ("Alice", "How are you doing today?", datetime.now() + timedelta(minutes=2)),
-                ("Bob", "I'm doing great! Thanks for asking! 🚀", datetime.now() + timedelta(minutes=3)),
-                ("Charlie", "Hello everyone! I'm Charlie.", datetime.now() + timedelta(minutes=4))
+                (
+                    "Bob",
+                    "I'm doing great! Thanks for asking! 🚀",
+                    datetime.now() + timedelta(minutes=3),
+                ),
+                ("Charlie", "Hello everyone! I'm Charlie.", datetime.now() + timedelta(minutes=4)),
             ]
 
             for persona, message, timestamp in test_messages:
@@ -348,14 +337,12 @@ class RealSystemTester:
             log_files = list(Path(self.temp_dir).glob("*.txt"))
 
             self.log_test(
-                "Log File Creation",
-                len(log_files) >= 1,
-                f"Created {len(log_files)} log files"
+                "Log File Creation", len(log_files) >= 1, f"Created {len(log_files)} log files"
             )
 
             if log_files:
                 log_file = log_files[0]
-                content = log_file.read_text(encoding='utf-8')
+                content = log_file.read_text(encoding="utf-8")
 
                 print(f"  📄 Log file: {log_file.name}")
                 print(f"  📖 Content size: {len(content)} characters")
@@ -372,14 +359,14 @@ class RealSystemTester:
                 self.log_test(
                     "Message Logging Accuracy",
                     messages_found == len(test_messages),
-                    f"{messages_found}/{len(test_messages)} messages found"
+                    f"{messages_found}/{len(test_messages)} messages found",
                 )
 
                 # Test special characters
                 special_test_messages = [
                     ("SpecialChars", "Testing special chars: !@#$%^&*()_+-=[]{}|;:,.<>?"),
                     ("Unicode", "Testing unicode: ñáéíóú 🚀 🎉 💻 🧠"),
-                    ("MultiLine", "This is a message\nthat spans\nmultiple lines.")
+                    ("MultiLine", "This is a message\nthat spans\nmultiple lines."),
                 ]
 
                 print("\nTesting special character handling...")
@@ -389,18 +376,18 @@ class RealSystemTester:
                     print(f"  ✅ Logged special chars: {persona}")
 
                 # Re-read and verify
-                updated_content = log_file.read_text(encoding='utf-8')
+                updated_content = log_file.read_text(encoding="utf-8")
 
                 special_chars_ok = (
-                    "!@#$%" in updated_content and
-                    "🚀" in updated_content and
-                    "\n" in updated_content
+                    "!@#$%" in updated_content
+                    and "🚀" in updated_content
+                    and "\n" in updated_content
                 )
 
                 self.log_test(
                     "Special Character Handling",
                     special_chars_ok,
-                    "Special chars, unicode, and newlines preserved"
+                    "Special chars, unicode, and newlines preserved",
                 )
 
             # Test log parsing
@@ -412,7 +399,7 @@ class RealSystemTester:
             self.log_test(
                 "Log File Discovery",
                 len(available_files) > 0,
-                f"Found {len(available_files)} log files"
+                f"Found {len(available_files)} log files",
             )
 
             if available_files:
@@ -423,16 +410,20 @@ class RealSystemTester:
                 if parsed_messages:
                     # Show sample parsed messages
                     for i, msg in enumerate(parsed_messages[:3]):
-                        print(f"    {i+1}. [{msg.get('time', 'N/A')}] {msg.get('persona', 'N/A')}: {msg.get('content', 'N/A')[:50]}...")
+                        print(
+                            f"    {i+1}. [{msg.get('time', 'N/A')}] {msg.get('persona', 'N/A')}: {msg.get('content', 'N/A')[:50]}..."
+                        )
 
                     self.log_test(
                         "Log Parsing",
                         len(parsed_messages) > 0,
-                        f"Successfully parsed {len(parsed_messages)} messages"
+                        f"Successfully parsed {len(parsed_messages)} messages",
                     )
 
                     # Test conversation analysis
-                    participants = list(set(msg.get('persona', '') for msg in parsed_messages if msg.get('persona')))
+                    participants = {
+                        msg.get("persona", "") for msg in parsed_messages if msg.get("persona")
+                    }
                     participants = [p for p in participants if p]  # Remove empty strings
 
                     print(f"  👥 Participants: {participants}")
@@ -441,14 +432,14 @@ class RealSystemTester:
                         first_msg = parsed_messages[0]
                         last_msg = parsed_messages[-1]
 
-                        if 'datetime' in first_msg and 'datetime' in last_msg:
-                            duration = last_msg['datetime'] - first_msg['datetime']
+                        if "datetime" in first_msg and "datetime" in last_msg:
+                            duration = last_msg["datetime"] - first_msg["datetime"]
                             print(f"  ⏱️ Conversation span: {duration}")
 
                     self.log_test(
                         "Conversation Analysis",
                         len(participants) > 0,
-                        f"Analyzed conversation with {len(participants)} participants"
+                        f"Analyzed conversation with {len(participants)} participants",
                     )
 
         except Exception as e:
@@ -456,9 +447,9 @@ class RealSystemTester:
 
     def test_system_performance(self):
         """Test system performance under load."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("⚡ TESTING SYSTEM PERFORMANCE")
-        print("="*60)
+        print("=" * 60)
 
         # Test concurrent AI requests
         print("\nTesting concurrent AI requests...")
@@ -474,22 +465,18 @@ class RealSystemTester:
                     "What is 2+2?",
                     "What is 3+3?",
                     "What is 4+4?",
-                    "What is 5+5?"
+                    "What is 5+5?",
                 ]
 
                 async def get_response(prompt, session_id):
                     try:
-                        payload = {
-                            "model": "phi3:mini",
-                            "prompt": prompt,
-                            "stream": False
-                        }
+                        payload = {"model": "phi3:mini", "prompt": prompt, "stream": False}
 
                         start_time = time.time()
                         async with session.post(
                             f"{self.ollama_url}/api/generate",
                             json=payload,
-                            timeout=aiohttp.ClientTimeout(total=30)
+                            timeout=aiohttp.ClientTimeout(total=30),
                         ) as response:
                             end_time = time.time()
 
@@ -501,7 +488,7 @@ class RealSystemTester:
                                     "prompt": prompt,
                                     "response": response_text,
                                     "time": end_time - start_time,
-                                    "success": True
+                                    "success": True,
                                 }
                             else:
                                 return {
@@ -510,7 +497,7 @@ class RealSystemTester:
                                     "response": None,
                                     "time": end_time - start_time,
                                     "success": False,
-                                    "error": f"HTTP {response.status}"
+                                    "error": f"HTTP {response.status}",
                                 }
                     except Exception as e:
                         return {
@@ -518,7 +505,7 @@ class RealSystemTester:
                             "prompt": prompt,
                             "response": None,
                             "success": False,
-                            "error": str(e)
+                            "error": str(e),
                         }
 
                 # Run all requests concurrently
@@ -527,7 +514,7 @@ class RealSystemTester:
 
                 results = await asyncio.gather(
                     *[get_response(prompt, i) for i, prompt in enumerate(prompts)],
-                    return_exceptions=True
+                    return_exceptions=True,
                 )
 
                 end_time = time.time()
@@ -536,8 +523,12 @@ class RealSystemTester:
                 print(f"  Total concurrent time: {total_time:.2f}s")
 
                 # Analyze results
-                successful_results = [r for r in results if isinstance(r, dict) and r.get("success")]
-                failed_results = [r for r in results if isinstance(r, dict) and not r.get("success")]
+                successful_results = [
+                    r for r in results if isinstance(r, dict) and r.get("success")
+                ]
+                failed_results = [
+                    r for r in results if isinstance(r, dict) and not r.get("success")
+                ]
 
                 print(f"  ✅ Successful requests: {len(successful_results)}")
                 print(f"  ❌ Failed requests: {len(failed_results)}")
@@ -555,7 +546,7 @@ class RealSystemTester:
                             "What is 2+2?": ["2", "two"],
                             "What is 3+3?": ["3", "three"],
                             "What is 4+4?": ["4", "four"],
-                            "What is 5+5?": ["5", "five"]
+                            "What is 5+5?": ["5", "five"],
                         }
 
                         expected = expected_numbers.get(result["prompt"], [])
@@ -567,7 +558,7 @@ class RealSystemTester:
                     self.log_test(
                         "Concurrent AI Requests",
                         len(successful_results) >= 3,  # At least 3 should succeed
-                        f"{len(successful_results)}/{len(prompts)} successful, {total_time:.2f}s total"
+                        f"{len(successful_results)}/{len(prompts)} successful, {total_time:.2f}s total",
                     )
 
                 # Test rapid file operations
@@ -580,9 +571,7 @@ class RealSystemTester:
 
                 for i in range(50):  # Log 50 messages rapidly
                     logger.log_message(
-                        f"PerfTest{i%3}",
-                        f"Performance test message {i}",
-                        datetime.now()
+                        f"PerfTest{i%3}", f"Performance test message {i}", datetime.now()
                     )
                     messages_logged += 1
 
@@ -595,7 +584,7 @@ class RealSystemTester:
                 self.log_test(
                     "Rapid File Operations",
                     file_time < 5.0,  # Should complete within 5 seconds
-                    f"{messages_logged} messages in {file_time:.3f}s"
+                    f"{messages_logged} messages in {file_time:.3f}s",
                 )
 
         # Run the async test
@@ -609,9 +598,9 @@ class RealSystemTester:
 
     def print_summary(self):
         """Print test summary."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📊 COMPLETE SYSTEM TEST SUMMARY")
-        print("="*60)
+        print("=" * 60)
 
         total_tests = len(self.test_results)
         passed_tests = sum(1 for result in self.test_results if result["success"])
@@ -630,7 +619,7 @@ class RealSystemTester:
         else:
             print(f"\n⚠️ {failed_tests} tests failed. Review issues above.")
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
 
         # Show failed tests if any
         failed_results = [r for r in self.test_results if not r["success"]]
@@ -639,7 +628,7 @@ class RealSystemTester:
             for result in failed_results:
                 print(f"   • {result['name']}: {result['message']}")
 
-        print("="*60)
+        print("=" * 60)
 
         return failed_tests == 0
 

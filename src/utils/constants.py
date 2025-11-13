@@ -57,6 +57,17 @@ DEFAULT_ENABLE_THINKING = ENABLE_THINKING  # Alias for consistency
 
 
 # ======================
+# UI Assets & Paths
+# ======================
+
+# Path to System.css file
+SYSTEM_CSS_PATH = Path("static/css/system.css")
+
+# Path to logo image
+LOGO_IMAGE_PATH = Path("logo.png")
+
+
+# ======================
 # Auto-run Configuration
 # ======================
 
@@ -85,6 +96,41 @@ MAX_PERSONA_NAME_LENGTH = int(os.getenv("MAX_PERSONA_NAME_LENGTH", "50"))
 MAX_SYSTEM_PROMPT_LENGTH = int(os.getenv("MAX_SYSTEM_PROMPT_LENGTH", "10000"))
 ENABLE_INPUT_VALIDATION = os.getenv("ENABLE_INPUT_VALIDATION", "true").lower() == "true"
 REGEX_TIMEOUT = int(os.getenv("REGEX_TIMEOUT", "5"))
+
+
+# ======================
+# Timing Constants
+# ======================
+
+# Async connection cleanup delay (seconds)
+CONNECTION_CLEANUP_DELAY = 0.250
+
+# Event loop cleanup delay (seconds)
+EVENT_LOOP_CLEANUP_DELAY = 0.1
+
+# Connection test timeout (seconds)
+CONNECTION_TEST_TIMEOUT = 10
+
+# Response timeout bounds for UI (seconds)
+MIN_RESPONSE_TIMEOUT = 30.0
+MAX_RESPONSE_TIMEOUT = 600.0
+
+# Response delay bounds for UI (seconds)
+MIN_RESPONSE_DELAY = 1
+MAX_RESPONSE_DELAY = 30
+MIN_RESPONSE_DELAY_MAX = 2
+MAX_RESPONSE_DELAY_MAX = 60
+
+
+# ======================
+# Connection Pool Settings
+# ======================
+
+# Maximum number of simultaneous connections
+DEFAULT_CONNECTION_POOL_SIZE = 10
+
+# DNS cache time-to-live (seconds)
+DNS_CACHE_TTL = 300
 
 
 # ======================
