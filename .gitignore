@@ -32,3 +32,4 @@ system-css-main/.DS_Store
 
 # Logs
 *.log
+venv/
