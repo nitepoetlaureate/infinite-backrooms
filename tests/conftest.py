@@ -1,21 +1,22 @@
 """Pytest configuration and fixtures for Infinite AI Backrooms tests."""
 
-import pytest
-import sys
-from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch
-from datetime import datetime
-import tempfile
 import shutil
+import sys
+import tempfile
+from datetime import datetime
+from pathlib import Path
+from unittest.mock import AsyncMock, Mock
+
+import pytest
 
 # Add parent directory to path so we can import from streamlit_backroom
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from streamlit_backroom import AIPersona, OllamaClient, ConversationLogger
+from streamlit_backroom import AIPersona, ConversationLogger, OllamaClient
 from tests.fixtures.mock_responses import (
-    get_mock_models_response,
     get_mock_generate_response,
-    get_mock_streaming_chunks
+    get_mock_models_response,
+    get_mock_streaming_chunks,
 )
 
 

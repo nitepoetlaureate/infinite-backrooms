@@ -16,7 +16,7 @@ class ConversationLogger:
     Thinking tags are automatically removed from messages before logging.
     """
 
-    def __init__(self, log_dir: str = LOG_DIRECTORY) -> None:
+    def __init__(self, log_dir: str | Path = LOG_DIRECTORY) -> None:
         """Initialize conversation logger.
 
         Args:
@@ -49,9 +49,7 @@ class ConversationLogger:
         cleaned = re.sub(r"\s+", " ", cleaned).strip()
         return cleaned
 
-    def log_message(
-        self, persona: str, message: str, timestamp: datetime | None = None
-    ) -> None:
+    def log_message(self, persona: str, message: str, timestamp: datetime | None = None) -> None:
         """Log a message to today's file.
 
         Args:
@@ -70,3 +68,46 @@ class ConversationLogger:
             log_file = self.get_daily_log_file()
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(f"[{timestamp.strftime('%H:%M:%S')}] {persona}$ {cleaned_message}\n")
+
+    def parse_log_file(self, log_file_path: Path | str) -> list[dict[str, str]]:
+        """Parse a log file and return structured message data.
+
+        Args:
+            log_file_path: Path to the log file to parse
+
+        Returns:
+            List of dictionaries with keys: persona, content, timestamp
+        """
+        log_file_path = Path(log_file_path)
+        if not log_file_path.exists():
+            return []
+
+        messages = []
+        with open(log_file_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+
+                # Parse format: [HH:MM:SS] PersonaName$ message content
+                if line.startswith("[") and "]" in line and "$" in line:
+                    try:
+                        # Extract timestamp
+                        timestamp_end = line.index("]")
+                        timestamp = line[1:timestamp_end]
+
+                        # Extract persona and content
+                        rest = line[timestamp_end + 1 :].strip()
+                        if "$" in rest:
+                            persona_end = rest.index("$")
+                            persona = rest[:persona_end].strip()
+                            content = rest[persona_end + 1 :].strip()
+
+                            messages.append(
+                                {"timestamp": timestamp, "persona": persona, "content": content}
+                            )
+                    except (ValueError, IndexError):
+                        # Skip malformed lines
+                        continue
+
+        return messages

@@ -1,20 +1,18 @@
 """REAL INTEGRATION TESTS - These tests validate actual system functionality with real components."""
 
-import pytest
 import asyncio
-import json
-import time
-import tempfile
 import shutil
-from pathlib import Path
-from datetime import datetime
-import subprocess
-import os
 import sys
+import tempfile
+import time
+from datetime import datetime
+from pathlib import Path
+
+import pytest
 
 # Import the actual application modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from streamlit_backroom import OllamaClient, StreamlitBackroomApp, AIPersona, ConversationLogger
+from streamlit_backroom import AIPersona, ConversationLogger, OllamaClient, StreamlitBackroomApp
 
 
 @pytest.fixture(scope="session")
@@ -23,7 +21,16 @@ def init_streamlit_session():
     import streamlit as st
 
     # Mock the session state if running outside Streamlit
-    if not hasattr(st, 'runtime') or st.runtime._get_script_run_ctx() is None:
+    try:
+        # Try to get the script run context using the current API
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        ctx = get_script_run_ctx()
+        has_context = ctx is not None
+    except (AttributeError, ImportError):
+        # Fallback if API changes
+        has_context = False
+
+    if not has_context:
         # Create a mock session state
         if not hasattr(st, 'session_state'):
             class MockSessionState(dict):
@@ -67,7 +74,8 @@ class TestRealOllamaIntegration:
     @pytest.mark.asyncio
     async def test_real_ollama_connection(self, real_client):
         """Test real connection to Ollama API."""
-        success, models = await real_client.test_connection()
+        async with real_client:
+            success, models = await real_client.test_connection()
 
         assert success is True, f"Failed to connect to Ollama: {models}"
         assert len(models) >= 1, "No models available"
@@ -80,10 +88,11 @@ class TestRealOllamaIntegration:
 
         # Collect actual response chunks
         chunks = []
-        async for chunk in real_client.generate_stream(model, "What is 2+2? Answer in one word."):
-            chunks.append(chunk)
-            if chunk.get("done"):
-                break
+        async with real_client:
+            async for chunk in real_client.generate_stream(model, "What is 2+2? Answer in one word."):
+                chunks.append(chunk)
+                if chunk.get("done"):
+                    break
 
         assert len(chunks) >= 1, "No response chunks received"
 
@@ -113,11 +122,12 @@ class TestRealOllamaIntegration:
 
         # Run 3 requests concurrently
         start_time = time.time()
-        results = await asyncio.gather(
-            get_response(prompts[0]),
-            get_response(prompts[1]),
-            get_response(prompts[2])
-        )
+        async with real_client:
+            results = await asyncio.gather(
+                get_response(prompts[0]),
+                get_response(prompts[1]),
+                get_response(prompts[2])
+            )
         end_time = time.time()
 
         assert len(results) == 3, "Not all concurrent requests completed"
@@ -141,7 +151,6 @@ class TestRealConversationFlow:
     @pytest.fixture
     def real_app(self, temp_log_dir, init_streamlit_session):
         """Create real StreamlitBackroomApp with temp directory."""
-        import streamlit as st
         app = StreamlitBackroomApp()
         # Initialize session state
         app.initialize_session_state()

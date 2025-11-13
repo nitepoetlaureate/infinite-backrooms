@@ -1,9 +1,9 @@
 """Mock Ollama API responses for testing."""
 
-from typing import Dict, List, Any
+from typing import Any
 
 
-def get_mock_models_response() -> Dict[str, Any]:
+def get_mock_models_response() -> dict[str, Any]:
     """Mock response for /api/tags endpoint."""
     return {
         "models": [
@@ -29,7 +29,7 @@ def get_mock_models_response() -> Dict[str, Any]:
     }
 
 
-def get_mock_generate_response(text: str = "Test response") -> Dict[str, Any]:
+def get_mock_generate_response(text: str = "Test response") -> dict[str, Any]:
     """Mock response for /api/generate endpoint."""
     return {
         "model": "llama2:latest",
@@ -46,7 +46,7 @@ def get_mock_generate_response(text: str = "Test response") -> Dict[str, Any]:
     }
 
 
-def get_mock_streaming_chunks(text: str = "Hello world") -> List[bytes]:
+def get_mock_streaming_chunks(text: str = "Hello world") -> list[bytes]:
     """Mock streaming response chunks."""
     words = text.split()
     chunks = []
@@ -70,7 +70,7 @@ def get_mock_streaming_chunks(text: str = "Hello world") -> List[bytes]:
     return chunks
 
 
-def get_mock_error_response() -> Dict[str, Any]:
+def get_mock_error_response() -> dict[str, Any]:
     """Mock error response."""
     return {
         "error": "model not found"

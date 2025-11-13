@@ -1,10 +1,11 @@
 """Performance optimization utilities for Streamlit UI."""
 
 from typing import Any
+
 import streamlit as st
 
-from src.utils.constants import ROLE_EMOJI_MAP, ROLE_TEMPLATES
 from src.models.persona import AIPersona
+from src.utils.constants import ROLE_EMOJI_MAP, ROLE_TEMPLATES
 
 
 @st.cache_data
@@ -76,7 +77,7 @@ class PaginationHelper:
         """
         if key not in st.session_state:
             st.session_state[key] = 0
-        return st.session_state[key]
+        return int(st.session_state[key])
 
     def set_page(self, page: int, key: str = "page") -> None:
         """Set current page number in session state.
@@ -178,16 +179,16 @@ class BatchStateUpdate:
         ...     # Single rerun happens here if any updates were made
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize batch update context."""
-        self.updates = {}
+        self.updates: dict[str, Any] = {}
         self.needs_rerun = False
 
-    def __enter__(self):
+    def __enter__(self) -> "BatchStateUpdate":
         """Enter context manager."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Exit context manager and apply updates."""
         if self.needs_rerun:
             # Apply all updates
@@ -208,11 +209,57 @@ class BatchStateUpdate:
             self.needs_rerun = True
 
 
-def optimize_rerun() -> dict[str, Any]:
+class StateChangeTracker(dict):
+    """Dictionary subclass that tracks whether any changes were made.
+
+    This allows for optimization of Streamlit reruns by only triggering
+    reruns when actual changes occur.
+
+    Example:
+        >>> changes = StateChangeTracker()
+        >>> changes["key1"] = value1
+        >>> if changes.has_changes():
+        ...     apply_changes(changes)
+        ...     st.rerun()
+    """
+
+    def __init__(self) -> None:
+        """Initialize the state change tracker."""
+        super().__init__()
+        self._has_changes: bool = False
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        """Set an item and mark that changes occurred.
+
+        Args:
+            key: Dictionary key
+            value: Value to set
+        """
+        super().__setitem__(key, value)
+        self._has_changes = True
+
+    def has_changes(self) -> bool:
+        """Check if any changes were made.
+
+        Returns:
+            True if any items were set, False otherwise
+        """
+        return self._has_changes
+
+    def __bool__(self) -> bool:
+        """Allow use in boolean context to check for changes.
+
+        Returns:
+            True if changes were made, False otherwise
+        """
+        return self._has_changes
+
+
+def optimize_rerun() -> StateChangeTracker:
     """Context for optimizing multiple state changes.
 
     Returns:
-        Dictionary to track state changes
+        StateChangeTracker dictionary to track state changes
 
     Example:
         >>> changes = optimize_rerun()
@@ -222,7 +269,7 @@ def optimize_rerun() -> dict[str, Any]:
         ...     apply_changes(changes)
         ...     st.rerun()
     """
-    return {}
+    return StateChangeTracker()
 
 
 @st.cache_data(ttl=60)
@@ -242,9 +289,7 @@ def get_cached_stats(total_messages: int, total_personas: int) -> dict[str, int]
     return {
         "messages": total_messages,
         "personas": total_personas,
-        "avg_messages_per_persona": total_messages // total_personas
-        if total_personas > 0
-        else 0,
+        "avg_messages_per_persona": total_messages // total_personas if total_personas > 0 else 0,
     }
 
 

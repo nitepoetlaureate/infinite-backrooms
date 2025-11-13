@@ -1,14 +1,14 @@
 """Tests for OllamaClient class."""
 
-import pytest
-import aiohttp
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import aiohttp
+import pytest
+
 from streamlit_backroom import OllamaClient
 from tests.fixtures.mock_responses import (
     get_mock_models_response,
-    get_mock_generate_response,
-    get_mock_streaming_chunks
 )
 
 
@@ -48,7 +48,8 @@ class TestOllamaClient:
             mock_session_class.return_value = mock_session
 
             client = OllamaClient()
-            success, models = await client.test_connection()
+            async with client:
+                success, models = await client.test_connection()
 
             assert success is True
             assert len(models) == 3
@@ -68,7 +69,8 @@ class TestOllamaClient:
             mock_session_class.return_value = mock_session
 
             client = OllamaClient()
-            success, models = await client.test_connection()
+            async with client:
+                success, models = await client.test_connection()
 
             assert success is False
             assert models == []
@@ -78,14 +80,15 @@ class TestOllamaClient:
         """Test connection failure due to timeout."""
         with patch('aiohttp.ClientSession') as mock_session_class:
             mock_session = AsyncMock()
-            mock_session.get = Mock(side_effect=asyncio.TimeoutError())
+            mock_session.get = Mock(side_effect=TimeoutError())
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
 
             mock_session_class.return_value = mock_session
 
             client = OllamaClient()
-            success, models = await client.test_connection()
+            async with client:
+                success, models = await client.test_connection()
 
             assert success is False
             assert models == []
@@ -107,7 +110,8 @@ class TestOllamaClient:
             mock_session_class.return_value = mock_session
 
             client = OllamaClient()
-            success, models = await client.test_connection()
+            async with client:
+                success, models = await client.test_connection()
 
             assert success is False
             assert models == []
@@ -130,7 +134,8 @@ class TestOllamaClient:
             mock_session_class.return_value = mock_session
 
             client = OllamaClient()
-            success, models = await client.test_connection()
+            async with client:
+                success, models = await client.test_connection()
 
             assert success is True
             assert models == []
@@ -248,11 +253,12 @@ class TestOllamaClient:
             client = OllamaClient()
 
             # Test multiple concurrent calls
-            results = await asyncio.gather(
-                client.test_connection(),
-                client.test_connection(),
-                client.test_connection()
-            )
+            async with client:
+                results = await asyncio.gather(
+                    client.test_connection(),
+                    client.test_connection(),
+                    client.test_connection()
+                )
 
             assert len(results) == 3
             assert all(success for success, _ in results)

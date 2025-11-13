@@ -42,7 +42,6 @@ from src.utils.constants import (
     MIN_CONTEXT_MESSAGES,
     PRESET_DIVERSE_PERSONAS,
     PRESET_STRUCTURED_PERSONAS,
-    ROLE_EMOJI_MAP,
     ROLE_TEMPLATES,
 )
 
@@ -53,7 +52,7 @@ logger = logging.getLogger(__name__)
 
 def inject_system_css() -> None:
     """Inject System.css styling into the Streamlit app for retro Mac OS aesthetic."""
-    with open("static/css/system.css", "r") as f:
+    with open("static/css/system.css") as f:
         system_css = f.read()
 
     st.markdown(
@@ -1057,7 +1056,7 @@ Your response should be conversational and engaging."""
                         try:
                             loop.run_until_complete(task)
                         except asyncio.CancelledError:
-                            pass
+                            logger.debug("Task cancelled after KeyboardInterrupt - expected behavior")
                 except Exception as e:
                     st.error(f"Processing error: {str(e)}")
                 finally:
@@ -1066,17 +1065,17 @@ Your response should be conversational and engaging."""
                         try:
                             loop.run_until_complete(task)
                         except asyncio.CancelledError:
-                            pass
+                            logger.debug("Task cancellation during final cleanup - expected behavior")
 
                     try:
                         loop.run_until_complete(asyncio.sleep(0.1))
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"Exception during async cleanup sleep: {e}")
 
                     try:
                         loop.close()
-                    except RuntimeError:
-                        pass
+                    except RuntimeError as e:
+                        logger.debug(f"RuntimeError closing event loop (loop may already be closed): {e}")
 
             # Show timestamp and model
             timestamp = datetime.now()
@@ -1236,7 +1235,7 @@ Your response should be conversational and engaging."""
             st.subheader("📝 Daily Log File")
             st.info(f"Log location: `{log_file}`")
 
-            with open(log_file, "r", encoding="utf-8") as f:
+            with open(log_file, encoding="utf-8") as f:
                 log_content = f.read()
 
             st.text_area("Today's Log Content", value=log_content, height=300)
@@ -1255,8 +1254,9 @@ Your response should be conversational and engaging."""
         with st.sidebar:
             try:
                 st.image("logo.png", use_container_width=True)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Logo image not found or failed to load: {e}")
+                st.write("**AI Backroom**")
             st.caption("*Where AI instances explore their curiosity through infinite conversation*")
 
             # Connection status
@@ -1384,7 +1384,7 @@ def main() -> None:
 
 
 # Type imports for async generator
-from typing import AsyncGenerator  # noqa: E402, F401
+from collections.abc import AsyncGenerator  # noqa: E402, F401
 
 if __name__ == "__main__":
     main()

@@ -6,11 +6,11 @@ environment variables using python-dotenv.
 
 import os
 from pathlib import Path
-from typing import Dict
 
 # Try to load environment variables from .env file (optional)
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     # python-dotenv not installed, will use environment variables only
@@ -53,6 +53,7 @@ MAX_TEMPERATURE = 2.0
 DEFAULT_TEMPERATURE = float(os.getenv("DEFAULT_TEMPERATURE", "0.7"))
 
 ENABLE_THINKING = os.getenv("ENABLE_THINKING", "true").lower() == "true"
+DEFAULT_ENABLE_THINKING = ENABLE_THINKING  # Alias for consistency
 
 
 # ======================
@@ -62,6 +63,10 @@ ENABLE_THINKING = os.getenv("ENABLE_THINKING", "true").lower() == "true"
 AUTO_RUN_DELAY_MIN = 2
 AUTO_RUN_DELAY_MAX = 8
 AUTO_ADVANCE_DEFAULT = os.getenv("AUTO_ADVANCE_DEFAULT", "true").lower() == "true"
+DEFAULT_AUTO_ADVANCE = AUTO_ADVANCE_DEFAULT  # Alias for consistency
+DEFAULT_RESPONSE_DELAY_MIN = float(AUTO_RUN_DELAY_MIN)
+DEFAULT_RESPONSE_DELAY_MAX = float(AUTO_RUN_DELAY_MAX)
+DEFAULT_MAX_HISTORY = DEFAULT_HISTORY_MESSAGES  # Alias for consistency
 
 
 # ======================
@@ -87,7 +92,7 @@ REGEX_TIMEOUT = int(os.getenv("REGEX_TIMEOUT", "5"))
 # ======================
 
 # Persona role to emoji mapping
-ROLE_EMOJI_MAP: Dict[str, str] = {
+ROLE_EMOJI_MAP: dict[str, str] = {
     "Moderator": "🎯",
     "Note-Taker": "📝",
     "Philosopher": "🤔",
@@ -104,7 +109,7 @@ ROLE_EMOJI_MAP: Dict[str, str] = {
     "Comedian": "😄",
     "Analyst": "📊",
     "Dreamer": "💭",
-    "Pragmatist": "⚙️"
+    "Pragmatist": "⚙️",
 }
 
 DEFAULT_ROLE = "Explorer"
@@ -115,7 +120,7 @@ DEFAULT_EMOJI = "🧭"
 # Role Templates
 # ======================
 
-ROLE_TEMPLATES: Dict[str, str] = {
+ROLE_TEMPLATES: dict[str, str] = {
     "": "No specific role",
     "Moderator": "A skilled conversation facilitator who guides discussions, asks thoughtful follow-up questions, introduces new topics when needed, and helps ensure all voices are heard. Keeps conversations engaging and on-track.",
     "Note-Taker": "A diligent observer who periodically summarizes key points, captures important insights, identifies emerging themes, and helps track the evolution of ideas throughout the conversation.",
@@ -133,7 +138,7 @@ ROLE_TEMPLATES: Dict[str, str] = {
     "Comedian": "Brings humor and levity to conversations while still engaging meaningfully with topics.",
     "Analyst": "Systematic thinker who breaks down complex topics into components and enjoys detailed analysis.",
     "Dreamer": "Imaginative and idealistic, often thinking about possibilities and 'what if' scenarios.",
-    "Pragmatist": "Practical and results-oriented, focuses on what works and real-world applications."
+    "Pragmatist": "Practical and results-oriented, focuses on what works and real-world applications.",
 }
 
 
@@ -188,7 +193,7 @@ Something went wrong during response generation:
 - Review Ollama logs for details
 
 Technical details: {error}
-"""
+""",
 }
 
 
@@ -209,20 +214,20 @@ PRESET_DIVERSE_PERSONAS = [
         "name": "Socrates",
         "role": "Philosopher",
         "model": "llama2",
-        "system_prompt": "You are Socrates, the ancient Greek philosopher. Ask probing questions, challenge assumptions, and guide others to discover truth through dialogue."
+        "system_prompt": "You are Socrates, the ancient Greek philosopher. Ask probing questions, challenge assumptions, and guide others to discover truth through dialogue.",
     },
     {
         "name": "Einstein",
         "role": "Scientist",
         "model": "llama2",
-        "system_prompt": "You are Albert Einstein. Explain complex scientific concepts with clarity, curiosity, and occasional humor. Connect physics to everyday life."
+        "system_prompt": "You are Albert Einstein. Explain complex scientific concepts with clarity, curiosity, and occasional humor. Connect physics to everyday life.",
     },
     {
         "name": "Shakespeare",
         "role": "Creative Writer",
         "model": "llama2",
-        "system_prompt": "You are William Shakespeare. Speak with eloquence and poetry, drawing from deep knowledge of human nature and dramatic storytelling."
-    }
+        "system_prompt": "You are William Shakespeare. Speak with eloquence and poetry, drawing from deep knowledge of human nature and dramatic storytelling.",
+    },
 ]
 
 PRESET_STRUCTURED_PERSONAS = [
@@ -230,18 +235,18 @@ PRESET_STRUCTURED_PERSONAS = [
         "name": "Moderator",
         "role": "Moderator",
         "model": "llama2",
-        "system_prompt": "You are a skilled conversation moderator. Guide discussions, ask follow-up questions, ensure all voices are heard, and keep conversations engaging."
+        "system_prompt": "You are a skilled conversation moderator. Guide discussions, ask follow-up questions, ensure all voices are heard, and keep conversations engaging.",
     },
     {
         "name": "Note-Taker",
         "role": "Note-Taker",
         "model": "llama2",
-        "system_prompt": "You are a diligent note-taker. Summarize key points, capture insights, identify themes, and track the evolution of ideas."
+        "system_prompt": "You are a diligent note-taker. Summarize key points, capture insights, identify themes, and track the evolution of ideas.",
     },
     {
         "name": "Analyst",
         "role": "Analyst",
         "model": "llama2",
-        "system_prompt": "You are a systematic analyst. Break down complex topics, identify patterns, and provide detailed analysis of ideas discussed."
-    }
+        "system_prompt": "You are a systematic analyst. Break down complex topics, identify patterns, and provide detailed analysis of ideas discussed.",
+    },
 ]

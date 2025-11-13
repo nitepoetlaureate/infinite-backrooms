@@ -1,5 +1,7 @@
 """Accessibility improvements for the UI."""
 
+from typing import Any
+
 import streamlit as st
 
 
@@ -8,7 +10,7 @@ def accessible_button(
     key: str | None = None,
     help_text: str | None = None,
     shortcut: str | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> bool:
     """Create an accessible button with additional help text.
 
@@ -29,13 +31,15 @@ def accessible_button(
     # Add shortcut to help text if provided
     full_help = help_text or ""
     if shortcut:
-        full_help = f"{full_help} [Shortcut: {shortcut}]" if full_help else f"Keyboard shortcut: {shortcut}"
+        full_help = (
+            f"{full_help} [Shortcut: {shortcut}]" if full_help else f"Keyboard shortcut: {shortcut}"
+        )
 
     # Pass help text to button
     if full_help:
         kwargs["help"] = full_help
 
-    return st.button(label, key=key, **kwargs)
+    return bool(st.button(label, key=key, **kwargs))
 
 
 def screen_reader_text(text: str) -> None:
@@ -77,7 +81,7 @@ def accessible_header(title: str, level: int = 1, help_text: str | None = None) 
         >>> accessible_header("Conversation Settings", level=2, help_text="Configure your chat")
     """
     # Create header
-    header_func = getattr(st, f"header" if level == 1 else f"subheader" if level == 2 else "markdown")
+    header_func = getattr(st, "header" if level == 1 else "subheader" if level == 2 else "markdown")
 
     if level <= 2:
         header_func(title)
@@ -95,7 +99,7 @@ def accessible_form_field(
     key: str,
     help_text: str | None = None,
     required: bool = False,
-    **kwargs,
+    **kwargs: Any,
 ) -> Any:
     """Create an accessible form field with consistent labeling.
 
@@ -254,6 +258,3 @@ def add_accessibility_statement() -> None:
             - Keyboard accessible
             """
         )
-
-
-from typing import Any

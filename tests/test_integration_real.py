@@ -1,20 +1,19 @@
 """REAL INTEGRATION TESTS - No Mocks! These tests validate actual system functionality."""
 
-import pytest
 import asyncio
-import json
-import time
-import tempfile
-import shutil
-from pathlib import Path
-from datetime import datetime
-import subprocess
 import os
+import shutil
 import sys
+import tempfile
+import time
+from datetime import datetime
+from pathlib import Path
+
+import pytest
 
 # Import the actual application modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from streamlit_backroom import OllamaClient, StreamlitBackroomApp, AIPersona, ConversationLogger
+from streamlit_backroom import AIPersona, ConversationLogger, OllamaClient, StreamlitBackroomApp
 
 
 class TestRealOllamaIntegration:
@@ -28,7 +27,8 @@ class TestRealOllamaIntegration:
     @pytest.mark.asyncio
     async def test_real_ollama_connection(self, real_client):
         """Test real connection to Ollama API."""
-        success, models = await real_client.test_connection()
+        async with real_client:
+            success, models = await real_client.test_connection()
 
         assert success is True, f"Failed to connect to Ollama: {models}"
         assert len(models) >= 1, "No models available"
@@ -41,10 +41,11 @@ class TestRealOllamaIntegration:
 
         # Collect actual response chunks
         chunks = []
-        async for chunk in real_client.generate_stream(model, "What is 2+2? Answer in one word."):
-            chunks.append(chunk)
-            if chunk.get("done"):
-                break
+        async with real_client:
+            async for chunk in real_client.generate_stream(model, "What is 2+2? Answer in one word."):
+                chunks.append(chunk)
+                if chunk.get("done"):
+                    break
 
         assert len(chunks) >= 1, "No response chunks received"
 
@@ -65,14 +66,15 @@ class TestRealOllamaIntegration:
         system_prompt = "You are a mathematician. Always answer with just the number."
 
         chunks = []
-        async for chunk in real_client.generate_stream(
-            model,
-            "What is five plus three?",
-            system=system_prompt
-        ):
-            chunks.append(chunk)
-            if chunk.get("done"):
-                break
+        async with real_client:
+            async for chunk in real_client.generate_stream(
+                model,
+                "What is five plus three?",
+                system=system_prompt
+            ):
+                chunks.append(chunk)
+                if chunk.get("done"):
+                    break
 
         response_text = ""
         for chunk in chunks:
@@ -99,11 +101,12 @@ class TestRealOllamaIntegration:
 
         # Run 3 requests concurrently
         start_time = time.time()
-        results = await asyncio.gather(
-            get_response(prompts[0]),
-            get_response(prompts[1]),
-            get_response(prompts[2])
-        )
+        async with real_client:
+            results = await asyncio.gather(
+                get_response(prompts[0]),
+                get_response(prompts[1]),
+                get_response(prompts[2])
+            )
         end_time = time.time()
 
         assert len(results) == 3, "Not all concurrent requests completed"
@@ -120,10 +123,11 @@ class TestRealOllamaIntegration:
         error_occurred = False
 
         try:
-            async for chunk in real_client.generate_stream("nonexistent:model", "test"):
-                chunks.append(chunk)
-                if chunk.get("done"):
-                    break
+            async with real_client:
+                async for chunk in real_client.generate_stream("nonexistent:model", "test"):
+                    chunks.append(chunk)
+                    if chunk.get("done"):
+                        break
         except Exception as e:
             error_occurred = True
             # Should get some kind of error about model not found
@@ -714,8 +718,8 @@ class TestRealSystemPerformance:
     def test_memory_usage_stability(self):
         """Test memory usage stability over extended operation."""
         import gc
+
         import psutil
-        import os
 
         # Get initial memory usage
         process = psutil.Process(os.getpid())

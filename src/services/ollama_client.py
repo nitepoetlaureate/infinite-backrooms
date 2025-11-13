@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import aiohttp
 
@@ -85,7 +85,7 @@ class OllamaClient:
         prompt: str,
         system: str | None = None,
         think: bool = True,
-        timeout: int = DEFAULT_RESPONSE_TIMEOUT,
+        timeout: float = DEFAULT_RESPONSE_TIMEOUT,
     ) -> AsyncGenerator[dict[str, str], None]:
         """Generate streaming response from Ollama model.
 
@@ -164,7 +164,7 @@ class OllamaClient:
         except asyncio.CancelledError:
             yield {"type": "info", "content": "Request cancelled"}
             return
-        except asyncio.TimeoutError:
+        except TimeoutError:
             yield {"type": "error", "content": "Request timeout"}
         except Exception as e:
             yield {"type": "error", "content": f"Connection error: {str(e)}"}

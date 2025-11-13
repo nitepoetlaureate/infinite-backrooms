@@ -5,22 +5,22 @@ This script tests the ENTIRE infinite-backrooms system with REAL components.
 """
 
 import asyncio
-import aiohttp
 import json
-import time
-import tempfile
 import shutil
 import sys
-import os
-from pathlib import Path
+import tempfile
+import time
 from datetime import datetime, timedelta
+from pathlib import Path
+
+import aiohttp
 
 # Add project root to path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from streamlit_backroom import AIPersona, ConversationLogger
 from log_viewer import LogParser
+from streamlit_backroom import AIPersona, ConversationLogger
 
 
 class RealSystemTester:
@@ -182,7 +182,7 @@ class RealSystemTester:
                                 f"HTTP {response.status}: {error_text[:100]}"
                             )
 
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     self.log_test(
                         f"AI Response: {test_case['name']}",
                         False,
@@ -622,7 +622,7 @@ class RealSystemTester:
         print(f"❌ Failed: {failed_tests}")
 
         if failed_tests == 0:
-            print(f"\n🎉 ALL TESTS PASSED! System is PRODUCTION READY!")
+            print("\n🎉 ALL TESTS PASSED! System is PRODUCTION READY!")
             print("   • Real AI model integration working flawlessly")
             print("   • Conversation system components fully functional")
             print("   • File operations robust and performant")

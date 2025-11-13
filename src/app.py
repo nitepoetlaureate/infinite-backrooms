@@ -8,22 +8,21 @@ from __future__ import annotations
 
 import asyncio
 import json
-import random
-import time
+import logging
 import uuid
 from dataclasses import asdict
 from datetime import datetime
-from typing import Any
 
 import streamlit as st
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 from src.models.persona import AIPersona
 from src.services.logger import ConversationLogger
 from src.services.ollama_client import OllamaClient
 from src.ui.components import (
     get_persona_avatar,
-    highlight_mentions,
-    render_persona_header,
     render_persona_list_item,
 )
 from src.utils.constants import (
@@ -105,18 +104,19 @@ class StreamlitBackroomApp:
         Returns:
             Next AIPersona to speak, or None if no enabled personas
         """
-        enabled_personas = [p for p in st.session_state.personas if p.enabled]
+        enabled_personas: list[AIPersona] = [p for p in st.session_state.personas if p.enabled]
         if not enabled_personas:
             return None
 
         if st.session_state.last_speaker_index is None:
             st.session_state.last_speaker_index = 0
         else:
-            st.session_state.last_speaker_index = (
-                st.session_state.last_speaker_index + 1
-            ) % len(enabled_personas)
+            st.session_state.last_speaker_index = (st.session_state.last_speaker_index + 1) % len(
+                enabled_personas
+            )
 
-        return enabled_personas[st.session_state.last_speaker_index]
+        index: int = int(st.session_state.last_speaker_index)
+        return enabled_personas[index]
 
     def generate_system_prompt(self, persona: AIPersona) -> str:
         """Generate system prompt for persona based on role and other personas.
@@ -143,9 +143,9 @@ class StreamlitBackroomApp:
 
             # Special instructions for functional roles
             if persona.role == "Moderator":
-                base_prompt += f"\n\nAs a Moderator, focus on:\n- Asking engaging follow-up questions\n- Introducing new topics when conversations stagnate\n- Encouraging quieter personas to share their thoughts\n- Summarizing different viewpoints when helpful\n- Keeping discussions constructive and inclusive\n- Use @mentions to directly engage specific personas"
+                base_prompt += "\n\nAs a Moderator, focus on:\n- Asking engaging follow-up questions\n- Introducing new topics when conversations stagnate\n- Encouraging quieter personas to share their thoughts\n- Summarizing different viewpoints when helpful\n- Keeping discussions constructive and inclusive\n- Use @mentions to directly engage specific personas"
             elif persona.role == "Note-Taker":
-                base_prompt += f"\n\nAs a Note-Taker, focus on:\n- Periodically summarizing key points and insights\n- Identifying recurring themes and patterns\n- Highlighting particularly interesting or novel ideas\n- Connecting current discussion to earlier topics\n- Asking clarifying questions to capture nuances\n- Only summarize when there's substantial content to synthesize\n- Use @mentions when attributing ideas to specific personas"
+                base_prompt += "\n\nAs a Note-Taker, focus on:\n- Periodically summarizing key points and insights\n- Identifying recurring themes and patterns\n- Highlighting particularly interesting or novel ideas\n- Connecting current discussion to earlier topics\n- Asking clarifying questions to capture nuances\n- Only summarize when there's substantial content to synthesize\n- Use @mentions when attributing ideas to specific personas"
 
             base_prompt += f"\n\nEmbody this role naturally in your conversations while staying true to your identity as {persona.name}."
         elif persona.role:
@@ -180,7 +180,9 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
         """
         system_prompt = self.generate_system_prompt(persona)
         enable_thinking = st.session_state.settings.get("enable_thinking", True)
-        timeout_seconds = st.session_state.settings.get("response_timeout", DEFAULT_RESPONSE_TIMEOUT)
+        timeout_seconds = st.session_state.settings.get(
+            "response_timeout", DEFAULT_RESPONSE_TIMEOUT
+        )
 
         # Check if model is known to not support thinking
         if persona.model in st.session_state.non_thinking_models:
@@ -584,7 +586,7 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
             st.subheader("📝 Daily Log File")
             st.info(f"Log location: `{log_file}`")
 
-            with open(log_file, "r", encoding="utf-8") as f:
+            with open(log_file, encoding="utf-8") as f:
                 log_content = f.read()
 
             st.text_area("Today's Log Content", value=log_content, height=300)
@@ -603,8 +605,10 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
         with st.sidebar:
             try:
                 st.image("logo.png", use_container_width=True)
-            except Exception:
-                pass  # Logo file may not exist
+            except (FileNotFoundError, PermissionError, OSError) as e:
+                # Logo file may not exist or be inaccessible
+                logger.debug(f"Logo image not found or failed to load: {e}")
+                st.write("**AI Backroom**")
             st.caption("*Where AI instances explore their curiosity through infinite conversation*")
 
             # Connection status
@@ -629,9 +633,7 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
                             loop = asyncio.new_event_loop()
                             asyncio.set_event_loop(loop)
                             try:
-                                connected = loop.run_until_complete(
-                                    self.check_ollama_connection()
-                                )
+                                connected = loop.run_until_complete(self.check_ollama_connection())
                                 if connected:
                                     st.success(
                                         f"✅ Connected! Found {len(st.session_state.available_models)} models"
@@ -731,7 +733,7 @@ def main() -> None:
 
 
 # Allow imports
-from typing import AsyncGenerator  # noqa: E402
+from collections.abc import AsyncGenerator  # noqa: E402
 
 if __name__ == "__main__":
     main()

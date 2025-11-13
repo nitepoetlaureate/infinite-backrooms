@@ -19,10 +19,8 @@ Options:
 import argparse
 import re
 import sys
-from pathlib import Path
 from datetime import datetime
-from typing import List, Tuple
-
+from pathlib import Path
 
 # Old log file patterns to match
 OLD_PATTERNS = [
@@ -36,7 +34,7 @@ NEW_PATTERN_TEMPLATE = "streamlit_backroom_{date}.txt"
 CURRENT_PATTERN = r"streamlit_backroom_(\d{4}-\d{2}-\d{2})\.txt"
 
 
-def find_old_log_files(log_dir: Path, verbose: bool = False) -> List[Tuple[Path, str]]:
+def find_old_log_files(log_dir: Path, verbose: bool = False) -> list[tuple[Path, str]]:
     """
     Find all log files that need migration.
 
@@ -140,7 +138,7 @@ def migrate_file(
             return False
 
 
-def check_conflicts(log_dir: Path, files_to_migrate: List[Tuple[Path, str]]) -> List[str]:
+def check_conflicts(log_dir: Path, files_to_migrate: list[tuple[Path, str]]) -> list[str]:
     """
     Check for potential filename conflicts.
 

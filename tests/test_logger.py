@@ -1,8 +1,7 @@
 """Tests for ConversationLogger class."""
 
-import pytest
-from pathlib import Path
 from datetime import datetime
+
 from streamlit_backroom import ConversationLogger
 
 

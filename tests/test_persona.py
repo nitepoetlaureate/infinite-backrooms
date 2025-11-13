@@ -1,6 +1,5 @@
 """Tests for AIPersona dataclass."""
 
-import pytest
 from streamlit_backroom import AIPersona
 
 

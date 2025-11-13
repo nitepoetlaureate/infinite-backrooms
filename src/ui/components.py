@@ -54,7 +54,11 @@ def render_persona_list_item(persona: AIPersona) -> None:
     Args:
         persona: Persona to render
     """
-    role_emoji = ROLE_EMOJI_MAP.get(persona.role, DEFAULT_FALLBACK_EMOJI) if persona.role else DEFAULT_FALLBACK_EMOJI
+    role_emoji = (
+        ROLE_EMOJI_MAP.get(persona.role, DEFAULT_FALLBACK_EMOJI)
+        if persona.role
+        else DEFAULT_FALLBACK_EMOJI
+    )
     role_text = f" ({persona.role})" if persona.role else ""
 
     persona_name_styled = (
