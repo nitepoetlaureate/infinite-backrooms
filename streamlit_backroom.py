@@ -21,16 +21,10 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 import uuid
 
-# Suppress async cleanup warnings
-warnings.filterwarnings("ignore", message="Task was destroyed but it is pending!")
-warnings.filterwarnings("ignore", message="Unclosed client session")  
-warnings.filterwarnings("ignore", message="Event loop is closed")
-warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*Event loop is closed.*")
-warnings.filterwarnings("ignore", category=ResourceWarning, message=".*unclosed.*client.*session.*")
-
-# Also suppress aiohttp specific warnings
+# Configure logging for better error tracking
 import logging
-logging.getLogger('aiohttp.client').setLevel(logging.ERROR)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -100,8 +94,47 @@ class OllamaClient:
                         return True, models
                     else:
                         return False, []
+        except aiohttp.ClientConnectorError:
+            st.error("**Cannot connect to Ollama**")
+            with st.expander("🔧 Troubleshooting steps"):
+                st.markdown("""
+                Please ensure:
+                1. **Ollama is installed and running**
+                   - Start it with: `ollama serve`
+                2. **Ollama is accessible at the configured URL**
+                   - Default: http://localhost:11434
+                   - Check if the service is running on the correct port
+                3. **At least one model is installed**
+                   - Check with: `ollama list`
+                   - Install a model: `ollama pull llama2`
+
+                For more help, visit: https://ollama.ai/
+                """)
+            return False, []
+        except asyncio.TimeoutError:
+            st.error("**Connection to Ollama timed out**")
+            with st.expander("🔧 Troubleshooting steps"):
+                st.markdown("""
+                The connection attempt took too long. Try:
+                1. Check if Ollama service is responding slowly
+                2. Verify network connectivity
+                3. Restart the Ollama service: `ollama serve`
+                4. Check system resources (CPU, RAM)
+                """)
+            return False, []
         except Exception as e:
-            st.error(f"Failed to connect to Ollama: {e}")
+            st.error("**Failed to connect to Ollama**")
+            with st.expander("🔧 Troubleshooting steps and technical details"):
+                st.markdown("""
+                An unexpected error occurred. Please try:
+                1. Restart Ollama service
+                2. Check Ollama logs for errors
+                3. Verify the Ollama URL in settings
+
+                **Technical details:**
+                """)
+                st.code(str(e))
+            logger.error(f"Ollama connection error: {e}", exc_info=True)
             return False, []
     
     async def generate_stream(self, model: str, prompt: str, system: str = None, think: bool = True, timeout: int = 300) -> AsyncGenerator[Dict[str, str], None]:
@@ -175,23 +208,37 @@ class OllamaClient:
                                 yield chunk
                             return
                         else:
-                            yield {"type": "error", "content": f"Error {response.status}: {error_text}"}
+                            logger.error(f"Ollama API error {response.status}: {error_text}")
+                            if response.status == 404:
+                                yield {"type": "error", "content": f"Model '{model}' not found. Install it with: ollama pull {model}"}
+                            else:
+                                yield {"type": "error", "content": f"Error {response.status}: {error_text[:200]}"}
                     else:
                         error_text = await response.text()
-                        yield {"type": "error", "content": f"Error {response.status}: {error_text}"}
+                        logger.error(f"Ollama API error {response.status}: {error_text}")
+                        if response.status == 404:
+                            yield {"type": "error", "content": f"Model '{model}' not found. Install it with: ollama pull {model}"}
+                        elif response.status == 500:
+                            yield {"type": "error", "content": f"Ollama server error. Check if the model is loaded and service is healthy. Try: ollama run {model}"}
+                        else:
+                            yield {"type": "error", "content": f"HTTP Error {response.status}: {error_text[:200]}"}
             except asyncio.CancelledError:
                 # Handle cancellation at the request level
                 yield {"type": "info", "content": "Request cancelled"}
                 return
             except asyncio.TimeoutError:
-                yield {"type": "error", "content": "Error: Request timeout"}
+                yield {"type": "error", "content": f"Request timed out after {timeout} seconds. Try increasing the timeout in Settings or using a faster model."}
+                logger.warning(f"Timeout generating response for model {model}")
             except Exception as e:
-                yield {"type": "error", "content": f"Error: {str(e)}"}
+                # Log detailed error for debugging
+                logger.error(f"Error during streaming generation: {e}", exc_info=True)
+                yield {"type": "error", "content": f"Error generating response. Check Ollama service status. Technical details: {str(e)}"}
         except asyncio.CancelledError:
             # Handle cancellation at the session level - don't yield anything, just return
             return
         except Exception as e:
-            yield {"type": "error", "content": f"Connection error: {str(e)}"}
+            logger.error(f"Connection error during generation: {e}", exc_info=True)
+            yield {"type": "error", "content": f"Connection error: Failed to communicate with Ollama. Ensure the service is running. Technical details: {str(e)}"}
         finally:
             # Ensure session is always closed
             if session and not session.closed:

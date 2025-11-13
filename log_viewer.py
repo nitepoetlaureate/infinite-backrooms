@@ -88,7 +88,8 @@ class LogParser:
         # Convert timestamp to datetime for better sorting/filtering
         try:
             df['datetime'] = pd.to_datetime(df['full_timestamp'])
-        except:
+        except (ValueError, pd.errors.ParserError) as e:
+            st.warning(f"Could not parse some timestamps: {str(e)}")
             df['datetime'] = pd.NaT
         
         return df.sort_values('datetime', ascending=False).reset_index(drop=True)
@@ -185,11 +186,45 @@ def apply_filters(df: pd.DataFrame, personas: List[str], search_term: str,
             mask = filtered_df['message'].str.lower().str.contains(search_term.lower(), regex=False)
         elif search_type == "Regex":
             try:
-                mask = filtered_df['message'].str.contains(search_term, case=False, na=False, regex=True)
-            except re.error as e:
-                st.error(f"Invalid regex pattern: {str(e)}")
+                # Validate regex pattern first to catch syntax errors early
+                pattern = re.compile(search_term, re.IGNORECASE)
+
+                # Add timeout protection for ReDoS attacks (Unix-only)
+                import signal
+                import platform
+
+                def timeout_handler(signum, frame):
+                    raise TimeoutError("Regex search timed out")
+
+                # Only use signal on Unix systems
+                if platform.system() != 'Windows':
+                    # Set 5 second timeout
+                    signal.signal(signal.SIGALRM, timeout_handler)
+                    signal.alarm(5)
+
+                try:
+                    mask = filtered_df['message'].str.contains(
+                        search_term,
+                        case=False,
+                        na=False,
+                        regex=True,
+                        flags=re.IGNORECASE
+                    )
+                finally:
+                    # Cancel alarm if on Unix
+                    if platform.system() != 'Windows':
+                        signal.alarm(0)
+
+            except re.error:
+                st.error("Invalid regular expression pattern. Please check your syntax.")
                 mask = pd.Series([False] * len(filtered_df))
-        
+            except TimeoutError:
+                st.error("Regex search timed out. Please simplify your pattern to avoid catastrophic backtracking.")
+                mask = pd.Series([False] * len(filtered_df))
+            except Exception:
+                st.error("An error occurred during regex search. Please try a different pattern.")
+                mask = pd.Series([False] * len(filtered_df))
+
         filtered_df = filtered_df[mask]
     
     return filtered_df
