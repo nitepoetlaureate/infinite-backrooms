@@ -169,3 +169,84 @@ class TestConversationLogger:
 
         assert "Logger1" in content
         assert "Logger2" in content
+
+    def test_parse_log_file_with_valid_messages(self, temp_log_dir):
+        """Test parsing log file with valid message format."""
+        conversation_logger = ConversationLogger(log_dir=str(temp_log_dir))
+
+        # Log some messages
+        conversation_logger.log_message("Alice", "Hello there")
+        conversation_logger.log_message("Bob", "Hi Alice!")
+
+        log_file = conversation_logger.get_daily_log_file()
+
+        # Parse the log file
+        messages = conversation_logger.parse_log_file(log_file)
+
+        assert len(messages) == 2
+        assert messages[0]["persona"] == "Alice"
+        assert messages[0]["content"] == "Hello there"
+        assert messages[1]["persona"] == "Bob"
+        assert messages[1]["content"] == "Hi Alice!"
+        assert "timestamp" in messages[0]
+
+    def test_parse_log_file_nonexistent_file(self, temp_log_dir):
+        """Test parsing nonexistent log file returns empty list."""
+        conversation_logger = ConversationLogger(log_dir=str(temp_log_dir))
+
+        messages = conversation_logger.parse_log_file(temp_log_dir / "nonexistent.txt")
+
+        assert messages == []
+
+    def test_parse_log_file_with_empty_file(self, temp_log_dir):
+        """Test parsing empty log file."""
+        empty_file = temp_log_dir / "empty.txt"
+        empty_file.write_text("")
+
+        conversation_logger = ConversationLogger(log_dir=str(temp_log_dir))
+        messages = conversation_logger.parse_log_file(empty_file)
+
+        assert messages == []
+
+    def test_parse_log_file_with_malformed_lines(self, temp_log_dir):
+        """Test parsing log file with malformed lines."""
+        malformed_file = temp_log_dir / "malformed.txt"
+        malformed_file.write_text(
+            "[12:34:56] Persona$ Valid message\n"
+            "Invalid line without timestamp\n"
+            "[12:34:57] Missing dollar sign\n"
+            "[12:34:58] Another$ Valid message\n"
+        )
+
+        conversation_logger = ConversationLogger(log_dir=str(temp_log_dir))
+        messages = conversation_logger.parse_log_file(malformed_file)
+
+        # Should only parse valid messages
+        assert len(messages) == 2
+        assert messages[0]["content"] == "Valid message"
+        assert messages[1]["content"] == "Valid message"
+
+    def test_parse_log_file_with_special_characters(self, temp_log_dir):
+        """Test parsing log file with special characters in content."""
+        conversation_logger = ConversationLogger(log_dir=str(temp_log_dir))
+
+        conversation_logger.log_message("Bot", "Message with @#$%^&*() special chars")
+
+        log_file = conversation_logger.get_daily_log_file()
+        messages = conversation_logger.parse_log_file(log_file)
+
+        assert len(messages) == 1
+        assert "@#$%^&*()" in messages[0]["content"]
+
+    def test_parse_log_file_with_unicode(self, temp_log_dir):
+        """Test parsing log file with Unicode characters."""
+        conversation_logger = ConversationLogger(log_dir=str(temp_log_dir))
+
+        conversation_logger.log_message("Bot", "Hello 世界 🌍")
+
+        log_file = conversation_logger.get_daily_log_file()
+        messages = conversation_logger.parse_log_file(log_file)
+
+        assert len(messages) == 1
+        assert "世界" in messages[0]["content"]
+        assert "🌍" in messages[0]["content"]

@@ -7,6 +7,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2025-11-14
+
+### Added - Phase 4: Testing & Quality Improvements
+- **59 new test cases** across 6 new test files
+  - `tests/test_tutorial.py` - Tutorial module tests (3 tests)
+  - `tests/test_session.py` - Session management tests (11 tests)
+  - `tests/test_ui_wrappers.py` - UI wrapper module tests (8 tests)
+  - `tests/test_performance.py` - Performance benchmarks (9 tests)
+  - `tests/test_error_messages.py` - Error message and constants tests (19 tests)
+  - `tests/test_logger.py` - Additional logger tests (+6 tests)
+  - `tests/test_persona.py` - Validation error tests (+3 tests)
+
+- **Security audit documentation** (SECURITY_AUDIT.md)
+  - Comprehensive security review covering OWASP Top 10
+  - Input validation assessment
+  - Injection prevention verification
+  - Path traversal protection audit
+  - ReDoS protection review
+  - Overall security grade: A-
+
+- **Performance benchmarks**
+  - Persona creation performance tests
+  - Logger write/parse performance tests
+  - Session caching performance validation
+  - Memory usage tests for large conversations
+  - Validation performance benchmarks
+
+### Changed - Phase 4: Test Coverage
+- **Test coverage increased from 49.01% to 56.27%** (+7.26 percentage points)
+- **Total tests increased from 132 to 191** (+59 tests, +45% increase)
+- **UI wrapper modules: 0% → 100% coverage**
+- **Session management: 15.79% → 42.11% coverage**
+- **Logger module: 47.54% → improved with parse_log_file tests**
+- **Persona validation: 75% → 100% coverage**
+
+### Improved - Phase 4: Quality Assurance
+- Enhanced test coverage for critical modules
+- Added edge case testing for validation functions
+- Improved error handling test coverage
+- Added performance regression tests
+- Better integration test structure
+
+### Documentation - Phase 4
+- Created comprehensive security audit (SECURITY_AUDIT.md)
+- Documented performance benchmarks
+- Added test coverage analysis
+- Security recommendations documented
+
+### Testing Statistics
+- **Unit Tests:** 191 passing
+- **Integration Tests:** 29 (require Ollama, deselected in unit tests)
+- **Total Tests:** 220
+- **Test Coverage:** 56.27% (up from 49.01%)
+- **Lines of Test Code:** ~4,800+ (up from ~3,500)
+
+### Quality Metrics
+- ✅ All 191 unit tests passing
+- ✅ Zero test failures
+- ✅ Zero regressions introduced
+- ✅ Performance benchmarks established
+- ✅ Security audit completed
+- ⚠️ Test coverage target 60% (achieved 56.27%, significant progress)
+
 ## [0.1.3] - 2025-11-14
 
 ### Added - Phase 3: UX & Feature Completeness

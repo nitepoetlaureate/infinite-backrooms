@@ -1,5 +1,7 @@
 """Tests for AIPersona dataclass."""
 
+import pytest
+
 from src.models.persona import AIPersona
 
 
@@ -83,3 +85,18 @@ class TestAIPersona:
         assert sample_persona.name == "NewName"
         assert sample_persona.enabled is False
         assert sample_persona.color == "#000000"
+
+    def test_persona_empty_name_raises_error(self) -> None:
+        """Test that creating persona with empty name raises ValueError."""
+        with pytest.raises(ValueError, match="Persona name cannot be empty"):
+            AIPersona(id="test-id", name="", model="llama2")
+
+    def test_persona_empty_model_raises_error(self) -> None:
+        """Test that creating persona with empty model raises ValueError."""
+        with pytest.raises(ValueError, match="Persona model cannot be empty"):
+            AIPersona(id="test-id", name="TestBot", model="")
+
+    def test_persona_empty_id_raises_error(self) -> None:
+        """Test that creating persona with empty id raises ValueError."""
+        with pytest.raises(ValueError, match="Persona id cannot be empty"):
+            AIPersona(id="", name="TestBot", model="llama2")
