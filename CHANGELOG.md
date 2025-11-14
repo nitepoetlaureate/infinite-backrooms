@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2025-11-14
+
+### Added - Phase 3: UX & Feature Completeness
+- **First-run tutorial system** (`src/ui/tutorial.py`)
+  - Interactive 4-step onboarding for new users
+  - Welcome screen with project overview
+  - Guided tour of persona creation, conversations, and settings
+  - "Restart Tutorial" button in sidebar for returning users
+  - Automatically shown to users with no personas
+  - Dismissible and doesn't show again after completion
+- **Keyboard shortcuts** for improved navigation
+  - `?` - Show keyboard shortcuts help dialog
+  - `Ctrl/Cmd + K` - Focus chat input field
+  - `Esc` - Blur/unfocus current element
+  - JavaScript-based implementation (Streamlit compatibility)
+- **Quick-load sample personas buttons** (verified existing feature)
+  - "🎭 Add Diverse Conversation Set" - Loads Socrates, Einstein, Shakespeare
+  - "📋 Add Structured Discussion Set" - Loads Moderator, Note-Taker, Analyst
+  - Already implemented in Personas tab (lines 766, 793)
+
+### Changed - Phase 3: Code Quality
+- Removed unused feature flags from codebase
+  - `ENABLE_PROFILING` - Was defined but never used
+  - `ENABLE_INPUT_VALIDATION` - Input validation is always active
+  - Updated `src/utils/constants.py` to remove unused constants
+  - Updated `.env.example` with removal notes for clarity
+
+### Fixed - Phase 3: Technical Debt
+- Cleaned up unused configuration flags reducing code complexity
+- Improved code maintainability by removing dead code
+
+### User Experience Impact
+- ✨ **Better onboarding** - New users guided through setup process
+- ⌨️ **Keyboard navigation** - Power users can navigate faster
+- 🎭 **Quick start** - Sample personas available with one click
+- 🧹 **Cleaner codebase** - Removed unused flags and dead code
+
 ## [0.1.2] - 2025-11-14
 
 ### Added - Phase 2: Performance & Stability

@@ -30,6 +30,7 @@ from src.ui.components import (
     render_persona_header,
     render_persona_list_item,
 )
+from src.ui.tutorial import reset_tutorial, show_tutorial
 from src.utils.constants import (
     AUTO_ADVANCE_DEFAULT,
     AUTO_RUN_DELAY_MAX,
@@ -1544,12 +1545,59 @@ Your response should be conversational and engaging."""
                 st.markdown("• 🧠 **Thinking enabled** - View AI reasoning in expanders")
                 st.markdown("• Works best with **deepseek-r1** and compatible models")
 
+            # Tutorial control
+            st.divider()
+            if st.button("📚 Restart Tutorial", key="restart_tutorial_sidebar"):
+                reset_tutorial(st.session_state)
+                st.success("Tutorial reset! Page will reload.")
+                st.rerun()
+
     def run(self) -> None:
         """Main Streamlit app interface."""
         self.sidebar_ui()
 
-        # Welcome message for new users
-        if not st.session_state.personas:
+        # Add keyboard shortcuts
+        st.markdown("""
+        <script>
+        document.addEventListener('keydown', function(e) {
+            // Press '?' to show keyboard shortcuts help
+            if (e.key === '?' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                // Check if we're not in an input field
+                if (!e.target.matches('input, textarea')) {
+                    alert('⌨️ Keyboard Shortcuts:\\n\\n' +
+                          '? - Show this help\\n' +
+                          'Ctrl/Cmd + K - Focus chat input\\n' +
+                          'Esc - Blur/unfocus current element\\n\\n' +
+                          'Note: Use buttons for conversation controls');
+                    e.preventDefault();
+                }
+            }
+
+            // Ctrl/Cmd + K to focus chat input
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                const chatInput = document.querySelector('[data-testid="stChatInput"] input, [data-testid="stChatInput"] textarea');
+                if (chatInput) {
+                    chatInput.focus();
+                    e.preventDefault();
+                }
+            }
+
+            // Escape to blur current element
+            if (e.key === 'Escape') {
+                document.activeElement.blur();
+            }
+        });
+        </script>
+        """, unsafe_allow_html=True)
+
+        # Show first-run tutorial for new users
+        if not st.session_state.get("tutorial_completed", False) and not st.session_state.personas:
+            show_tutorial(st.session_state)
+            # Don't show main tabs during tutorial
+            return
+
+        # Welcome message for users who skipped tutorial
+        if not st.session_state.personas and st.session_state.get("tutorial_completed", False):
             st.info(
                 "👋 **Welcome to AI Backroom!** Start by creating your first AI persona in the **Personas** tab, then head to **Conversation** to begin chatting!"
             )

@@ -85,7 +85,6 @@ DEFAULT_MAX_HISTORY = DEFAULT_HISTORY_MESSAGES  # Alias for consistency
 # ======================
 
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
-ENABLE_PROFILING = os.getenv("ENABLE_PROFILING", "false").lower() == "false"
 
 
 # ======================
@@ -94,7 +93,6 @@ ENABLE_PROFILING = os.getenv("ENABLE_PROFILING", "false").lower() == "false"
 
 MAX_PERSONA_NAME_LENGTH = int(os.getenv("MAX_PERSONA_NAME_LENGTH", "50"))
 MAX_SYSTEM_PROMPT_LENGTH = int(os.getenv("MAX_SYSTEM_PROMPT_LENGTH", "10000"))
-ENABLE_INPUT_VALIDATION = os.getenv("ENABLE_INPUT_VALIDATION", "true").lower() == "true"
 REGEX_TIMEOUT = int(os.getenv("REGEX_TIMEOUT", "5"))
 
 
