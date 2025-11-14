@@ -8,23 +8,39 @@
 
 A Streamlit-based web application that enables you to create AI personas with distinct roles and personalities, then watch them engage in dynamic, and potentially infinite conversations using your local Ollama models.
 
-**✨ New Features:**
-- 🧪 Comprehensive test suite (pytest)
-- 📚 Complete documentation (Architecture, API, Development)
-- 🔒 Security scanning (Bandit, Safety)
-- 🚀 CI/CD workflows (GitHub Actions)
-- ♿ Accessibility improvements
-- 🎯 Performance optimizations
+**✨ New Features (v0.1.4):**
+- 📚 **Interactive tutorial** - First-run onboarding for new users
+- ⌨️ **Keyboard shortcuts** - Quick navigation (`?` for help, `Ctrl+K` for chat)
+- 🚀 **Performance optimizations** - 30-50% faster with session caching
+- 📄 **Message pagination** - Handle 1,000+ messages smoothly
+- 🧪 **Comprehensive test suite** - 191 tests, 56% coverage
+- 📖 **Complete documentation** - Architecture, API, Security Audit
+- 🔒 **Security audit** - Grade A-, OWASP Top 10 compliant
+- 🎯 **CI/CD workflows** - Automated testing and quality checks
+
+## 🔒 Security Notice
+
+**This application is designed for local, single-user environments.**
+
+✅ Safe for: Local development, personal AI experimentation, trusted networks
+⚠️ Not safe for: Public deployment without authentication and access controls
+
+The application includes comprehensive input validation and injection protection, but lacks authentication by design. See [SECURITY_AUDIT.md](SECURITY_AUDIT.md) for details.
 
 ![AI Backroom Screenshot](screenshot.png)
 
 ## Features
 
 - **Multi-Persona Conversations**: Create and manage multiple AI personas with unique personalities and roles
+- **Interactive Tutorial**: 4-step guided onboarding for new users with restart option
+- **Keyboard Shortcuts**: Navigate faster with `?` (help), `Ctrl/Cmd+K` (focus chat), `Esc` (blur)
 - **Real-time Chat Interface**: Beautiful tabbed interface with color-coded messages and persona identification
 - **Role-Based Behavior**: 17 predefined roles that shape conversation dynamics and personality traits
 - **@Mention System**: Personas can reference each other using @mentions with visual highlighting
 - **Configurable Context**: Adjustable conversation history (1-50 messages) for AI context awareness
+- **Message Pagination**: Smooth handling of 1,000+ messages with 50 messages per page
+- **Performance Optimized**: Session-based caching for 30-50% faster conversation generation
+- **Quick-Load Presets**: Instantly load diverse or structured conversation sets
 - **Automatic Logging**: Daily conversation logs saved to text files for analysis
 - **Session Management**: Export conversations as JSON and persistent settings storage
 - **Standalone Log Viewer**: Separate application for advanced log analysis and search
@@ -79,9 +95,10 @@ The application uses a tabbed interface with four main sections:
 - Quick setup options for diverse conversation sets
 
 ### 3. Settings Tab
-- Adjust conversation context (5-25 messages)
+- Adjust conversation context (1-50 messages)
 - Configure response delays and auto-advance settings
-- Manage conversation history limits
+- Manage conversation history limits (10-200 messages)
+- Enable/disable thinking mode for compatible models
 - Connection status and model information
 
 ### 4. Export & Logs Tab
@@ -129,9 +146,10 @@ Personas can reference each other using @mentions (e.g., "@Philosopher what do y
 - Enhances conversation flow and direct interaction
 
 ### Conversation Context
-- Configurable context window (5-25 messages) determines how much conversation history each AI sees
+- Configurable context window (1-50 messages) determines how much conversation history each AI sees
 - Larger context enables more coherent long-form discussions
 - Smaller context keeps conversations focused and reduces processing time
+- Optimal range: 10-20 messages for most conversations
 
 ### Logging and Analysis
 - Automatic daily logging to `conversations/streamlit_backroom_YYYY-MM-DD.txt`
@@ -272,6 +290,7 @@ infinite-backrooms/
 ## Documentation
 
 - **[AI Assistant Guide (CLAUDE.md)](CLAUDE.md)** - Comprehensive guide for AI assistants and developers
+- **[Security Audit (SECURITY_AUDIT.md)](SECURITY_AUDIT.md)** - Comprehensive security review (Grade A-)
 - **[Architecture Guide](docs/ARCHITECTURE.md)** - System design and architecture
 - **[API Reference](docs/API.md)** - Complete API documentation
 - **[Development Guide](docs/DEVELOPMENT.md)** - Setup and development workflow
@@ -302,15 +321,25 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines including:
 
 ## Testing
 
-This project has a comprehensive test suite with 80%+ code coverage goal:
+This project has a comprehensive test suite with **191 passing unit tests** and **56.27% code coverage**:
 
-- ✅ Unit tests for all core components
+- ✅ **191 unit tests** for all core components (100% passing)
+- ✅ **29 integration tests** (require Ollama server)
+- ✅ **Performance benchmarks** (persona creation, logging, caching)
+- ✅ **Security tests** (input validation, injection protection)
 - ✅ Async tests for OllamaClient
 - ✅ Mock fixtures for testing
-- ✅ Coverage reporting
+- ✅ HTML coverage reports
 - ✅ CI/CD integration
 
 Run `./scripts/test.sh` or `uv run pytest tests/ -v -k "not real and not Real"` to see all unit tests.
+
+**Coverage by Module:**
+- UI Components: 100%
+- Input Validation: 100%
+- UI Wrappers: 100%
+- Persona Models: 100%
+- Overall: 56.27%
 
 ## Security
 

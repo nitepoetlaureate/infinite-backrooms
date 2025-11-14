@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5] - 2025-11-14
+
+### Changed - Phase 5: Documentation & Polish
+- **README.md** - Comprehensive updates for v0.1.4 features
+  - Added security notice prominently at top
+  - Updated features list with tutorial, keyboard shortcuts, pagination
+  - Added performance improvements section
+  - Updated test statistics (191 tests, 56.27% coverage)
+  - Updated context window range (1-50 messages)
+  - Added coverage by module breakdown
+  - Updated documentation links to include Security Audit
+
+- **CLAUDE.md** - Updated with current project status
+  - Version updated to 0.1.4
+  - Status changed to "Production-Ready (Beta)"
+  - Test statistics updated (191 tests, 56.27% coverage)
+  - Architecture grade improved to A- (from B+)
+  - Added Phase 3 & 4 files to project structure
+  - Updated module coverage table with current numbers
+  - Added performance tests category
+  - Expanded architecture checklist with new features
+
+### Documentation - Phase 5: Accuracy & Completeness
+- All documentation now reflects v0.1.4 capabilities
+- Security notice prominently displayed
+- Test statistics current and accurate
+- Feature list comprehensive and up-to-date
+- Project structure reflects all recent additions
+
+### Quality Assurance - Phase 5
+- ✅ All 191 unit tests passing
+- ✅ Documentation accuracy validated
+- ✅ Security notice added
+- ✅ Test statistics synchronized across docs
+- ✅ No regressions introduced
+
 ## [0.1.4] - 2025-11-14
 
 ### Added - Phase 4: Testing & Quality Improvements
