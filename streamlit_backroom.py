@@ -56,6 +56,7 @@ from src.utils.constants import (
     ROLE_TEMPLATES,
     SYSTEM_CSS_PATH,
 )
+from src.utils.session import get_ollama_client
 from src.utils.validation import validate_model_name, validate_persona_name
 
 # Configure logging
@@ -386,17 +387,23 @@ class StreamlitBackroomApp:
             st.session_state.non_thinking_models = set()
         if "pending_manual_turn" not in st.session_state:
             st.session_state.pending_manual_turn = False
+        if "message_page" not in st.session_state:
+            st.session_state.message_page = 0
+        if "messages_per_page" not in st.session_state:
+            st.session_state.messages_per_page = 50  # Default pagination size
 
     async def check_ollama_connection(self) -> bool:
         """Check Ollama connection and update available models.
 
+        Uses cached OllamaClient for improved performance.
+
         Returns:
             True if connection successful
         """
-        async with OllamaClient(DEFAULT_OLLAMA_URL) as client:
-            connected, models = await client.test_connection()
-            st.session_state.available_models = models
-            return connected
+        client = await get_ollama_client(st.session_state, DEFAULT_OLLAMA_URL)
+        connected, models = await client.test_connection()
+        st.session_state.available_models = models
+        return connected
 
     def get_next_speaker(self) -> AIPersona | None:
         """Get the next speaker in rotation.
@@ -469,6 +476,8 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
     ) -> AsyncGenerator[dict[str, str], None]:
         """Get streaming response from AI persona.
 
+        Uses cached OllamaClient for improved performance across multiple requests.
+
         Args:
             persona: Persona to get response from
             prompt: Prompt to send
@@ -486,14 +495,15 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
         if persona.model in st.session_state.non_thinking_models:
             enable_thinking = False
 
-        async with OllamaClient(DEFAULT_OLLAMA_URL) as client:
-            async for chunk in client.generate_stream(
-                persona.model, prompt, system_prompt, think=enable_thinking, timeout=timeout_seconds
-            ):
-                # Track non-thinking models
-                if chunk["type"] == "info" and "doesn't support thinking" in chunk["content"]:
-                    st.session_state.non_thinking_models.add(persona.model)
-                yield chunk
+        # Use cached client for improved performance
+        client = await get_ollama_client(st.session_state, DEFAULT_OLLAMA_URL)
+        async for chunk in client.generate_stream(
+            persona.model, prompt, system_prompt, think=enable_thinking, timeout=timeout_seconds
+        ):
+            # Track non-thinking models
+            if chunk["type"] == "info" and "doesn't support thinking" in chunk["content"]:
+                st.session_state.non_thinking_models.add(persona.model)
+            yield chunk
 
     def persona_management_ui(self) -> None:
         """UI for managing AI personas."""
@@ -895,6 +905,9 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
             st.warning("⚠️ No enabled personas found. Please add and enable at least one persona.")
             return
 
+        # Create persona lookup dictionary for O(1) access (performance optimization)
+        persona_lookup = {p.name: p for p in st.session_state.personas}
+
         # Control buttons
         col1, col2, col3, col4 = st.columns(4, vertical_alignment="bottom")
 
@@ -972,15 +985,49 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
             self.logger.log_message("User", prompt, timestamp)
             st.rerun()
 
-        # Use the same limit as max_history setting
-        display_limit = st.session_state.settings["max_history"]
-        messages_to_display = st.session_state.messages
+        # Pagination for large conversations
+        total_messages = len(st.session_state.messages)
+        messages_per_page = st.session_state.messages_per_page
+        total_pages = max(1, (total_messages + messages_per_page - 1) // messages_per_page)
 
-        # Show info about message limit
-        if st.session_state.total_message_count > display_limit:
-            st.info(
-                f"📜 Showing last {display_limit} of {st.session_state.total_message_count} total messages (limited for performance). Full conversation history is available in **Export & Logs** tab."
-            )
+        # Reset to last page if current page is out of bounds
+        if st.session_state.message_page >= total_pages:
+            st.session_state.message_page = max(0, total_pages - 1)
+
+        # Calculate message range for current page
+        start_idx = st.session_state.message_page * messages_per_page
+        end_idx = min(start_idx + messages_per_page, total_messages)
+        messages_to_display = st.session_state.messages[start_idx:end_idx]
+
+        # Pagination controls (shown if more than one page)
+        if total_pages > 1:
+            st.markdown(f"**Messages {start_idx + 1}-{end_idx} of {total_messages}**")
+            pcol1, pcol2, pcol3, pcol4 = st.columns([1, 1, 2, 1])
+
+            with pcol1:
+                if st.button("⏮️ First", disabled=st.session_state.message_page == 0):
+                    st.session_state.message_page = 0
+                    st.rerun()
+
+            with pcol2:
+                if st.button("◀️ Prev", disabled=st.session_state.message_page == 0):
+                    st.session_state.message_page -= 1
+                    st.rerun()
+
+            with pcol3:
+                st.markdown(
+                    f"<div style='text-align: center; padding: 8px;'>Page {st.session_state.message_page + 1} of {total_pages}</div>",
+                    unsafe_allow_html=True
+                )
+
+            with pcol4:
+                if st.button("Next ▶️", disabled=st.session_state.message_page >= total_pages - 1):
+                    st.session_state.message_page += 1
+                    st.rerun()
+
+            st.divider()
+        elif total_messages > 0:
+            st.markdown(f"**{total_messages} message{'s' if total_messages != 1 else ''} total**")
 
         # Display messages using st.chat_message
         for message in messages_to_display:
@@ -989,13 +1036,8 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
                     st.write(message["content"])
                     st.caption(f"🕒 {message['timestamp'].strftime('%H:%M:%S')}")
             else:
-                # Find persona for avatar and role info
-                persona = None
-                for p in st.session_state.personas:
-                    if p.name == message["persona_name"]:
-                        persona = p
-                        break
-
+                # Find persona for avatar and role info (O(1) lookup)
+                persona = persona_lookup.get(message["persona_name"])
                 avatar = get_persona_avatar(persona)
 
                 with st.chat_message("assistant", avatar=avatar):
