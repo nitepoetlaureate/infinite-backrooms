@@ -161,7 +161,7 @@ def check_conflicts(log_dir: Path, files_to_migrate: list[tuple[Path, str]]) -> 
     return conflicts
 
 
-def show_summary(total_files: int, migrated: int, skipped: int, failed: int, dry_run: bool = False):
+def show_summary(total_files: int, migrated: int, skipped: int, failed: int, dry_run: bool = False) -> None:
     """
     Show migration summary.
 
@@ -185,7 +185,7 @@ def show_summary(total_files: int, migrated: int, skipped: int, failed: int, dry
         print("\n💡 Run without --dry-run to perform actual migration")
 
 
-def main():
+def main() -> None:
     """Main entry point for log migration script."""
     parser = argparse.ArgumentParser(
         description="Migrate log files to standardized naming convention",

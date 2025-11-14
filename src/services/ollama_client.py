@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import ssl
 from collections.abc import AsyncGenerator
 
 import aiohttp
@@ -35,23 +36,56 @@ class OllamaClient:
                 print(chunk)
     """
 
-    def __init__(self, base_url: str = DEFAULT_OLLAMA_URL) -> None:
+    def __init__(
+        self,
+        base_url: str = DEFAULT_OLLAMA_URL,
+        verify_ssl: bool = True,
+        ssl_context: ssl.SSLContext | None = None,
+    ) -> None:
         """Initialize Ollama client.
 
         Args:
             base_url: Base URL for Ollama API (default: http://localhost:11434)
+            verify_ssl: Whether to verify SSL certificates for HTTPS connections (default: True)
+            ssl_context: Custom SSL context for HTTPS connections (optional)
         """
         self.base_url = base_url
+        self.verify_ssl = verify_ssl
         self._session: aiohttp.ClientSession | None = None
         self._connector: aiohttp.TCPConnector | None = None
 
+        # Create SSL context for HTTPS connections
+        if ssl_context is not None:
+            self.ssl_context = ssl_context
+        elif self.verify_ssl:
+            # Use default context with certificate verification
+            self.ssl_context = ssl.create_default_context()
+        else:
+            # Create context without certificate verification (for self-signed certs)
+            self.ssl_context = ssl.create_default_context()
+            self.ssl_context.check_hostname = False
+            self.ssl_context.verify_mode = ssl.CERT_NONE
+            logger.warning(
+                "SSL verification disabled. This should only be used with trusted servers."
+            )
+
     async def __aenter__(self) -> OllamaClient:
         """Enter async context manager - create session and connector."""
+        # Determine SSL setting based on URL scheme
+        ssl_setting: ssl.SSLContext | bool
+        if self.base_url.startswith("https://"):
+            # HTTPS connection - use SSL context
+            ssl_setting = self.ssl_context
+        else:
+            # HTTP connection - no SSL needed
+            ssl_setting = False
+
         self._connector = aiohttp.TCPConnector(
             limit=DEFAULT_CONNECTION_POOL_SIZE,
             ttl_dns_cache=DNS_CACHE_TTL,
             force_close=True,
             enable_cleanup_closed=True,
+            ssl=ssl_setting,
         )
         timeout = aiohttp.ClientTimeout(total=None, sock_read=DEFAULT_RESPONSE_TIMEOUT)
         self._session = aiohttp.ClientSession(connector=self._connector, timeout=timeout)

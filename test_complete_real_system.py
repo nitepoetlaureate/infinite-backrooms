@@ -27,12 +27,12 @@ from src.services.logger import ConversationLogger
 class RealSystemTester:
     """Complete real system validation without any mocking."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.ollama_url = "http://localhost:11434"
         self.temp_dir = None
         self.test_results = []
 
-    def log_test(self, test_name, success, message=""):
+    def log_test(self, test_name: str, success: bool, message: str = "") -> None:
         """Log test result."""
         status = "✅ PASS" if success else "❌ FAIL"
         print(f"{status} {test_name}")
@@ -235,7 +235,7 @@ class RealSystemTester:
         except Exception as e:
             self.log_test("AI Streaming Response", False, f"Exception: {e}")
 
-    def test_conversation_components(self):
+    def test_conversation_components(self) -> None:
         """Test conversation system components."""
         print("\n" + "=" * 60)
         print("💬 TESTING CONVERSATION COMPONENTS")
@@ -301,7 +301,7 @@ class RealSystemTester:
         except Exception as e:
             self.log_test("AIPersona Creation", False, f"Exception: {e}")
 
-    def test_file_operations(self):
+    def test_file_operations(self) -> None:
         """Test file system operations."""
         print("\n" + "=" * 60)
         print("📁 TESTING FILE SYSTEM OPERATIONS")
@@ -445,7 +445,7 @@ class RealSystemTester:
         except Exception as e:
             self.log_test("File System Operations", False, f"Exception: {e}")
 
-    def test_system_performance(self):
+    def test_system_performance(self) -> None:
         """Test system performance under load."""
         print("\n" + "=" * 60)
         print("⚡ TESTING SYSTEM PERFORMANCE")
@@ -590,13 +590,13 @@ class RealSystemTester:
         # Run the async test
         asyncio.run(run_concurrent_test())
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up temporary files."""
         if self.temp_dir and Path(self.temp_dir).exists():
             shutil.rmtree(self.temp_dir)
             print(f"\n🧹 Cleaned up temporary directory: {self.temp_dir}")
 
-    def print_summary(self):
+    def print_summary(self) -> None:
         """Print test summary."""
         print("\n" + "=" * 60)
         print("📊 COMPLETE SYSTEM TEST SUMMARY")

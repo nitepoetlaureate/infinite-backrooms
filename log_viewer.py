@@ -267,7 +267,7 @@ def apply_filters(
     return filtered_df
 
 
-def display_statistics(df: pd.DataFrame):
+def display_statistics(df: pd.DataFrame) -> None:
     """Display conversation statistics"""
     if df.empty:
         st.info("No messages to display")
@@ -294,7 +294,7 @@ def display_statistics(df: pd.DataFrame):
             st.metric("Files", df["file"].nunique())
 
 
-def display_persona_breakdown(df: pd.DataFrame):
+def display_persona_breakdown(df: pd.DataFrame) -> None:
     """Display breakdown by persona"""
     if df.empty:
         return
@@ -319,7 +319,7 @@ def display_persona_breakdown(df: pd.DataFrame):
         st.bar_chart(chart_data.set_index("persona"))
 
 
-def display_messages(df: pd.DataFrame):
+def display_messages(df: pd.DataFrame) -> None:
     """Display the filtered messages"""
     if df.empty:
         st.info("No messages match the current filters")
@@ -392,7 +392,7 @@ def display_messages(df: pd.DataFrame):
         )
 
 
-def main():
+def main() -> None:
     """Main Streamlit app"""
     st.set_page_config(page_title="AI Conversation Log Viewer", page_icon="🤖", layout="wide")
 

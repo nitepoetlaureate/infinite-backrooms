@@ -518,7 +518,42 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
                         status.update(label="Connection failed", state="error", expanded=False)
                 except Exception as e:
                     logger.error(f"Error checking Ollama connection: {str(e)}")
-                    st.error(f"❌ Connection error: {str(e)}")
+                    st.error("**❌ Cannot connect to Ollama**")
+                    with st.expander("🔧 Troubleshooting Guide", expanded=True):
+                        st.markdown("""
+                        ### Common Solutions:
+
+                        1. **Ensure Ollama is installed and running**
+                           ```bash
+                           # Start Ollama server
+                           ollama serve
+                           ```
+
+                        2. **Verify Ollama is accessible**
+                           - Default URL: http://localhost:11434
+                           - Check if the service is running: `ps aux | grep ollama`
+
+                        3. **Check if models are installed**
+                           ```bash
+                           # List installed models
+                           ollama list
+
+                           # Install a model if needed
+                           ollama pull llama2
+                           ```
+
+                        4. **Firewall or network issues**
+                           - Ensure port 11434 is not blocked
+                           - Try accessing http://localhost:11434 in your browser
+
+                        5. **Check Ollama logs for errors**
+                           ```bash
+                           # View Ollama logs
+                           journalctl -u ollama -f
+                           ```
+
+                        **Technical details:** `{str(e)}`
+                        """)
                     status.update(label="Connection check failed", state="error", expanded=True)
 
         # Display current personas
@@ -663,7 +698,27 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
 
             if st.form_submit_button("➕ Add Persona"):
                 if not name or not model:
-                    st.error("Please provide both name and model")
+                    st.error("**❌ Missing Required Fields**")
+                    with st.expander("📝 What's needed", expanded=True):
+                        st.markdown("""
+                        ### Required Information
+
+                        To create a persona, you must provide:
+
+                        1. **Persona Name** (required)
+                           - Give your AI persona a unique name
+                           - Examples: "Socrates", "Einstein", "DataBot"
+
+                        2. **Model** (required)
+                           - Select or enter an Ollama model name
+                           - Click "🔄 Check Ollama Connection" to see available models
+                           - Common models: `llama2`, `mistral`, `deepseek-r1`
+
+                        **Optional fields:**
+                        - **Role**: Predefined personality type
+                        - **Custom System Prompt**: Additional behavior instructions
+                        - **Color**: Visual distinction in chat
+                        """)
                 else:
                     # Validate persona name
                     name_valid, name_error = validate_persona_name(name)
@@ -1005,7 +1060,35 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
         """
         current_persona = self.get_next_speaker()
         if not current_persona:
-            st.error("No enabled personas available")
+            st.error("**❌ No Active Personas**")
+            with st.expander("🔧 Troubleshooting Guide", expanded=True):
+                st.markdown("""
+                ### No Personas Available for Conversation
+
+                You need at least one enabled persona to start a conversation.
+
+                **How to fix:**
+                1. **Create a new persona**
+                   - Go to the **Personas** tab
+                   - Click "➕ Add Persona"
+                   - Fill in name, model, and role
+                   - Ensure "Enabled" is checked
+
+                2. **Enable existing personas**
+                   - Go to the **Personas** tab
+                   - Find your personas in the list
+                   - Check the "Enabled" checkbox for at least one persona
+
+                3. **Quick start with presets**
+                   - Go to the **Personas** tab
+                   - Click "🎭 Add Diverse Conversation Set" or
+                   - Click "📋 Add Structured Discussion Set"
+                   - This will add multiple pre-configured personas
+
+                4. **Check Ollama connection first**
+                   - Click "🔄 Check Ollama Connection" in the Personas tab
+                   - Ensure models are available before creating personas
+                """)
             return
 
         # Generate prompt based on conversation history
@@ -1174,19 +1257,112 @@ Your response should be conversational and engaging."""
             return thinking_content, response_content
         except aiohttp.ClientError as e:
             logger.error(f"Network error during stream processing: {str(e)}")
-            st.error(
-                f"❌ Network error: {str(e)}\n\nPlease check your Ollama connection and try again."
-            )
+            st.error("**❌ Network Connection Lost**")
+            with st.expander("🔧 Troubleshooting Guide", expanded=True):
+                st.markdown(f"""
+                ### Network Error During AI Response
+
+                The connection to Ollama was lost while generating a response.
+
+                **Quick Fixes:**
+                1. **Check if Ollama is still running**
+                   ```bash
+                   ps aux | grep ollama
+                   ```
+                   If not running, restart it: `ollama serve`
+
+                2. **Network connectivity**
+                   - Ensure your computer hasn't gone to sleep
+                   - Check if localhost connectivity is working
+                   - Test: Open http://localhost:11434 in your browser
+
+                3. **Resource constraints**
+                   - Ollama may have crashed due to insufficient memory
+                   - Check system resources: `top` or Activity Monitor
+                   - Consider using a smaller model
+
+                4. **Try again**
+                   - Click "Next Turn" to retry with the same persona
+                   - The error may be temporary
+
+                **Technical details:** `{str(e)}`
+                """)
             return thinking_content, response_content
         except TimeoutError as e:
             logger.error(f"Timeout during stream processing: {str(e)}")
-            st.error(
-                "❌ Request timed out. Try increasing the timeout in Settings or check your Ollama server."
-            )
+            st.error("**❌ Response Timeout**")
+            with st.expander("🔧 Troubleshooting Guide", expanded=True):
+                st.markdown(f"""
+                ### AI Response Took Too Long
+
+                The AI model didn't complete its response within the timeout limit.
+
+                **Solutions:**
+                1. **Increase timeout in Settings**
+                   - Go to the **Settings** tab
+                   - Increase "Response Timeout" (current: {st.session_state.settings.get('response_timeout', DEFAULT_RESPONSE_TIMEOUT)}s)
+                   - Recommended: 300-600 seconds for larger models
+
+                2. **Use a smaller/faster model**
+                   - Larger models (70B, 34B) take longer to respond
+                   - Consider using smaller models (7B, 13B) for faster responses
+                   - Examples: `llama2:7b`, `mistral:7b`
+
+                3. **Reduce context messages**
+                   - Go to **Settings** tab
+                   - Reduce "Context Messages" to send less history
+                   - This speeds up processing
+
+                4. **Check system resources**
+                   - Model may be running slowly due to insufficient RAM/CPU
+                   - Close other applications to free up resources
+                   - Check: `top` or Activity Monitor
+
+                5. **Verify Ollama is responsive**
+                   - Test with: `ollama run llama2 "hello"`
+                   - If slow, restart Ollama: `killall ollama && ollama serve`
+
+                **Current timeout:** {st.session_state.settings.get('response_timeout', DEFAULT_RESPONSE_TIMEOUT)} seconds
+                """)
             return thinking_content, response_content
         except Exception as e:
             logger.error(f"Unexpected error during stream processing: {str(e)}")
-            st.error(f"❌ Unexpected error: {str(e)}\n\nPlease try again or check the logs.")
+            st.error("**❌ Unexpected Error**")
+            with st.expander("🔧 Troubleshooting Guide", expanded=True):
+                st.markdown(f"""
+                ### Something Went Wrong
+
+                An unexpected error occurred while processing the AI response.
+
+                **What to try:**
+                1. **Try again**
+                   - Click "Next Turn" to retry
+                   - The error may be temporary
+
+                2. **Check Ollama status**
+                   ```bash
+                   # Verify Ollama is running
+                   ps aux | grep ollama
+
+                   # Test Ollama directly
+                   ollama run llama2 "test"
+                   ```
+
+                3. **Restart the conversation**
+                   - Clear conversation and start fresh
+                   - This may resolve state-related issues
+
+                4. **Check logs for details**
+                   - Look in the **Export & Logs** tab
+                   - Review error details in the application logs
+
+                5. **Report persistent issues**
+                   - If this keeps happening, it may be a bug
+                   - Note the error details below for reporting
+
+                **Error type:** `{type(e).__name__}`
+                **Error details:** `{str(e)}`
+                """)
             return thinking_content, response_content
 
         return thinking_content, response_content
