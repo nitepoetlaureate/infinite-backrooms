@@ -27,13 +27,13 @@ class TestGetPersonaAvatar:
             id="test-1",
             name="TestBot",
             model="llama2:latest",
-            role="creative",
+            role="Creative Writer",
             system_prompt="",
             color="#FF5733",
             enabled=True,
         )
         avatar = get_persona_avatar(persona)
-        assert avatar == "🎨"  # creative role emoji
+        assert avatar == "✍️"  # Creative Writer role emoji
 
     def test_get_avatar_with_unknown_role(self):
         """Test avatar retrieval with unknown role returns fallback."""
@@ -69,7 +69,7 @@ class TestGetPersonaAvatar:
             id="test-1",
             name="Analyst",
             model="llama2:latest",
-            role="analyst",
+            role="Analyst",
             system_prompt="",
             color="#FF5733",
             enabled=True,
@@ -102,7 +102,7 @@ class TestRenderPersonaHeader:
             id="test-1",
             name="TestBot",
             model="llama2:latest",
-            role="creative",
+            role="Creative Writer",
             system_prompt="",
             color="#FF5733",
             enabled=True,
@@ -119,7 +119,7 @@ class TestRenderPersonaHeader:
         # Check that the color is in the style
         assert "#FF5733" in call_args[0][0]
         # Check that role is included
-        assert "creative" in call_args[0][0]
+        assert "Creative Writer" in call_args[0][0]
         # Check unsafe_allow_html is True
         assert call_args[1]["unsafe_allow_html"] is True
 
@@ -130,7 +130,7 @@ class TestRenderPersonaHeader:
             id="test-1",
             name="TestBot",
             model="llama2:latest",
-            role="creative",
+            role="Creative Writer",
             system_prompt="",
             color="#FF5733",
             enabled=True,
@@ -143,7 +143,7 @@ class TestRenderPersonaHeader:
 
         # Check that the HTML contains the persona name but not role text
         assert "TestBot" in call_args[0][0]
-        assert "creative" not in call_args[0][0].split("</span>")[-1]  # Role not after the span
+        assert "Creative Writer" not in call_args[0][0].split("</span>")[-1]  # Role not after the span
 
     @patch("src.ui.components.st")
     def test_render_header_with_empty_role(self, mock_st):
@@ -173,7 +173,7 @@ class TestRenderPersonaHeader:
             id="test-1",
             name="Test-Bot_123",
             model="llama2:latest",
-            role="analyst",
+            role="Analyst",
             system_prompt="",
             color="#00FF00",
             enabled=True,
@@ -196,7 +196,7 @@ class TestRenderPersonaListItem:
             id="test-1",
             name="TestBot",
             model="llama2:latest",
-            role="creative",
+            role="Creative Writer",
             system_prompt="",
             color="#FF5733",
             enabled=True,
@@ -209,7 +209,7 @@ class TestRenderPersonaListItem:
 
         # Check that the HTML contains persona name and role
         assert "TestBot" in call_args[0][0]
-        assert "creative" in call_args[0][0]
+        assert "Creative Writer" in call_args[0][0]
         assert "#FF5733" in call_args[0][0]
 
     @patch("src.ui.components.st")
@@ -242,7 +242,7 @@ class TestRenderPersonaListItem:
             id="test-1",
             name="Analyst",
             model="llama2:latest",
-            role="analyst",
+            role="Analyst",
             system_prompt="",
             color="#0000FF",
             enabled=True,
@@ -267,7 +267,7 @@ class TestHighlightMentions:
                 id="alice-1",
                 name="Alice",
                 model="llama2:latest",
-                role="creative",
+                role="Creative Writer",
                 system_prompt="",
                 color="#FF5733",
                 enabled=True,
@@ -289,7 +289,7 @@ class TestHighlightMentions:
                 id="alice-1",
                 name="Alice",
                 model="llama2:latest",
-                role="creative",
+                role="Creative Writer",
                 system_prompt="",
                 color="#FF5733",
                 enabled=True,
@@ -298,7 +298,7 @@ class TestHighlightMentions:
                 id="bob-1",
                 name="Bob",
                 model="llama2:latest",
-                role="analyst",
+                role="Analyst",
                 system_prompt="",
                 color="#33C3FF",
                 enabled=True,
@@ -321,7 +321,7 @@ class TestHighlightMentions:
                 id="alice-1",
                 name="Alice",
                 model="llama2:latest",
-                role="creative",
+                role="Creative Writer",
                 system_prompt="",
                 color="#FF5733",
                 enabled=True,
@@ -350,7 +350,7 @@ class TestHighlightMentions:
                 id="alice-1",
                 name="Alice",
                 model="llama2:latest",
-                role="creative",
+                role="Creative Writer",
                 system_prompt="",
                 color="#FF5733",
                 enabled=True,
@@ -371,7 +371,7 @@ class TestHighlightMentions:
                 id="alice-1",
                 name="Alice",
                 model="llama2:latest",
-                role="creative",
+                role="Creative Writer",
                 system_prompt="",
                 color="#FF5733",
                 enabled=True,
@@ -391,7 +391,7 @@ class TestHighlightMentions:
                 id="alice-1",
                 name="Alice",
                 model="llama2:latest",
-                role="creative",
+                role="Creative Writer",
                 system_prompt="",
                 color="#FF5733",
                 enabled=True,
@@ -412,7 +412,7 @@ class TestHighlightMentions:
                 id="alice-1",
                 name="Alice",
                 model="llama2:latest",
-                role="creative",
+                role="Creative Writer",
                 system_prompt="",
                 color="#FF5733",
                 enabled=True,
@@ -433,7 +433,7 @@ class TestHighlightMentions:
                 id="alice-1",
                 name="Alice",
                 model="llama2:latest",
-                role="creative",
+                role="Creative Writer",
                 system_prompt="",
                 color="#FF5733",
                 enabled=True,

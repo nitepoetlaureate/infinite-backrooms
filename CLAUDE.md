@@ -4,30 +4,39 @@
 
 **Infinite Backrooms** is an interactive multi-persona AI conversation platform that enables dynamic conversations between multiple AI personas using local Ollama models.
 
-**Current Status:** ✅ Production-Ready (Post Aggressive Fixes Implementation)
+**Current Status:** ⚠️ Beta / Active Development
 **Version:** 0.1.0
-**Python:** 3.12+
+**Python:** 3.11+ (specified as 3.12+ in pyproject.toml, but works on 3.11)
 **License:** MIT
+
+**Important Notes:**
+- Core functionality is stable and well-tested (132 unit tests passing)
+- Integration tests require a running Ollama instance
+- Recommended for local development and experimentation
+- Not recommended for production use without thorough testing in your environment
 
 ---
 
 ## Quick Stats
 
 ### Code Quality Metrics (as of 2025-11-14)
-- **Test Coverage:** 48.15% (up from 31.57%)
-- **Passing Tests:** 124 of 161 tests
-- **Type Hints:** 100% coverage across all modules
+- **Test Coverage:** ~18-22% (varies by test run configuration)
+- **Unit Tests Passing:** 132 of 132 ✅
+- **Integration Tests:** 29 tests (require Ollama server) ⚠️
+- **Total Tests:** 161 (132 unit + 29 integration)
+- **Type Hints:** 100% coverage across all modules ✅
 - **Lines of Code:** ~8,000+ (excluding tests)
 - **Test Code:** ~3,500+ lines
 - **Documentation:** 5,000+ lines
 
-### Architecture Grade: **A-**
+### Architecture Grade: **B+** (Solid, with room for improvement)
 - ✅ Modular architecture implemented
 - ✅ Proper separation of concerns
 - ✅ Comprehensive input validation
 - ✅ HTTPS/SSL support
 - ✅ Async/await patterns throughout
-- ⚠️ Some integration tests require Ollama server
+- ⚠️ Integration tests require Ollama server (29 tests)
+- ⚠️ Test coverage could be higher (currently ~20%)
 
 ---
 
@@ -199,48 +208,59 @@ if not is_valid:
 
 ### Test Coverage by Module
 
-| Module | Coverage | Tests | Status |
-|--------|----------|-------|--------|
-| `src/ui/components.py` | 95% | 22 | ✅ Excellent |
-| `src/utils/validation.py` | 95% | 32 | ✅ Excellent |
-| `src/services/ollama_client.py` | 75% | 32 | ✅ Good |
-| `src/services/logger.py` | 90% | 15 | ✅ Excellent |
-| `src/models/persona.py` | 100% | 5 | ✅ Complete |
-| `src/utils/constants.py` | 100% | 9 | ✅ Complete |
-| `src/app.py` | 45% | 20 | ⚠️ Acceptable |
-| **Overall** | **48.15%** | **161** | ✅ Good |
+**Note:** Coverage percentages vary based on test configuration and which tests are run.
+
+| Module | Approx. Coverage | Tests | Status |
+|--------|------------------|-------|--------|
+| `src/ui/components.py` | 20-100% | 22 | ✅ All pass |
+| `src/utils/validation.py` | 0-95% | 32 | ✅ All pass |
+| `src/utils/constants.py` | 96% | 9 | ✅ All pass |
+| `src/services/ollama_client.py` | 9-75% | 32 | ✅ All pass |
+| `src/services/logger.py` | 18-90% | 15 | ✅ All pass |
+| `src/models/persona.py` | 50-100% | 5 | ✅ All pass |
+| `src/app.py` | 0-45% | 22 | ✅ All pass |
+| **Overall** | **~18-22%** | **161** | ⚠️ Varies by config |
 
 ### Test Categories
 
-1. **Unit Tests** (124 passing)
+1. **Unit Tests** (132 passing ✅)
    - Fast, no external dependencies
    - Mock Ollama responses
    - Cover individual functions
+   - All tests pass reliably
 
-2. **Integration Tests** (37 require Ollama)
+2. **Integration Tests** (29 require Ollama ⚠️)
    - Test real Ollama connections
    - End-to-end conversation flows
    - File I/O operations
-   - **Note:** These fail without a running Ollama server (expected)
+   - **Note:** These fail without a running Ollama server (expected behavior)
 
 ### Running Tests
 
+**Important:** Use `python -m pytest` for reliable test execution.
+
 ```bash
-# All tests
-pytest tests/
+# All tests (requires pytest-cov and pytest-asyncio plugins)
+python -m pytest tests/ --cov=src --cov-report=html --cov-report=term-missing --asyncio-mode=auto
 
-# Unit tests only (skip integration)
-pytest tests/ -m "not integration"
+# Unit tests only (skip integration tests that need Ollama)
+python -m pytest tests/ -k "not real and not Real"
 
-# With coverage report
-pytest tests/ --cov=src --cov-report=html
+# Fast unit tests without coverage
+python -m pytest tests/ -v -k "not real and not Real"
 
 # Specific module
-pytest tests/test_validation.py -v
+python -m pytest tests/test_validation.py -v
 
-# Fast tests only
-pytest tests/ -k "not real"
+# Just see test results without coverage
+python -m pytest tests/ -v --tb=no -k "not real and not Real"
 ```
+
+**Test Execution Notes:**
+- Bare `pytest` command may work depending on your Python environment setup
+- Some environments have multiple pytest installations; `python -m pytest` ensures correct version
+- Integration tests (`tests/test_*real*.py`) require a running Ollama server
+- Expected results without Ollama: 132 passed, 29 skipped/failed
 
 ---
 
@@ -362,20 +382,31 @@ MAX_SYSTEM_PROMPT_LENGTH=2000
 
 ### Current Issues
 
-1. **Integration Tests Require Ollama** (37 tests)
+1. **Integration Tests Require Ollama** (29 tests)
    - Tests in `test_integration_real.py` and `test_real_integration.py` fail without Ollama
    - This is **expected behavior** - these are real integration tests
-   - Unit tests (124) pass without external dependencies
+   - Unit tests (132) pass without external dependencies ✅
 
-2. **Some UI Code Hard to Test**
-   - `src/app.py` has 45% coverage (acceptable for Streamlit UI)
+2. **Python Version Specification Mismatch**
+   - `pyproject.toml` specifies `requires-python = ">=3.12"`
+   - Code actually works fine on Python 3.11.x
+   - Consider updating pyproject.toml if 3.11 support is intended
+
+3. **Test Coverage Reporting Varies**
+   - Coverage percentage depends on which tests are run
+   - Different pytest configurations yield different coverage numbers
+   - Unit tests alone: ~18-22% coverage
+   - With integration tests: potentially higher (if Ollama is available)
+
+4. **Some UI Code Hard to Test**
+   - `src/app.py` has low coverage (varies by run)
    - Streamlit session state mocking is complex
-   - Focus on testing business logic, not UI rendering
+   - Focus is on testing business logic, not UI rendering
 
-3. **Style Warnings** (Non-Critical)
-   - ~78 ruff warnings (E501 line length, E402 import order)
+5. **Style Warnings** (Non-Critical)
+   - ~78 ruff warnings (E501 line length, E402 import order, UP047)
    - These are style issues, not functionality issues
-   - Can be fixed with auto-formatters
+   - Can be fixed with auto-formatters (black, ruff --fix)
 
 ### Design Limitations
 

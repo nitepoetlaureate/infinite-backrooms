@@ -7,6 +7,7 @@ import pytest
 
 from src.app import StreamlitBackroomApp, run_async
 from src.models.persona import AIPersona
+from tests.conftest import MockSessionState
 
 
 class TestRunAsync:
@@ -84,7 +85,7 @@ class TestStreamlitBackroomAppInit:
     def test_app_initialization(self, mock_st):
         """Test basic app initialization."""
         # Setup mock session_state
-        mock_st.session_state = {}
+        mock_st.session_state = MockSessionState()
 
         app = StreamlitBackroomApp()
 
@@ -95,7 +96,7 @@ class TestStreamlitBackroomAppInit:
     @patch("src.app.st")
     def test_initialize_session_state_creates_all_keys(self, mock_st):
         """Test that session state initialization creates all required keys."""
-        mock_st.session_state = {}
+        mock_st.session_state = MockSessionState()
 
         app = StreamlitBackroomApp()
         app.initialize_session_state()
@@ -115,7 +116,7 @@ class TestStreamlitBackroomAppInit:
     @patch("src.app.st")
     def test_initialize_session_state_default_values(self, mock_st):
         """Test that session state has correct default values."""
-        mock_st.session_state = {}
+        mock_st.session_state = MockSessionState()
 
         app = StreamlitBackroomApp()
         app.initialize_session_state()
@@ -131,11 +132,11 @@ class TestStreamlitBackroomAppInit:
     @patch("src.app.st")
     def test_initialize_session_state_preserves_existing(self, mock_st):
         """Test that existing session state values are not overwritten."""
-        mock_st.session_state = {
+        mock_st.session_state = MockSessionState({
             "personas": ["existing"],
             "messages": ["existing"],
             "custom_key": "custom_value",
-        }
+        })
 
         app = StreamlitBackroomApp()
         app.initialize_session_state()
@@ -173,10 +174,10 @@ class TestGetNextSpeaker:
             ),
         ]
 
-        mock_st.session_state = {
+        mock_st.session_state = MockSessionState({
             "personas": personas,
             "last_speaker_index": None,
-        }
+        })
 
         app = StreamlitBackroomApp()
         app.initialize_session_state()
@@ -230,10 +231,10 @@ class TestGetNextSpeaker:
             ),
         ]
 
-        mock_st.session_state = {
+        mock_st.session_state = MockSessionState({
             "personas": personas,
             "last_speaker_index": None,
-        }
+        })
 
         app = StreamlitBackroomApp()
         app.initialize_session_state()
@@ -265,10 +266,10 @@ class TestGetNextSpeaker:
             ),
         ]
 
-        mock_st.session_state = {
+        mock_st.session_state = MockSessionState({
             "personas": personas,
             "last_speaker_index": None,
-        }
+        })
 
         app = StreamlitBackroomApp()
         app.initialize_session_state()
@@ -280,10 +281,10 @@ class TestGetNextSpeaker:
     @patch("src.app.st")
     def test_get_next_speaker_empty_personas_list(self, mock_st):
         """Test behavior with empty personas list."""
-        mock_st.session_state = {
+        mock_st.session_state = MockSessionState({
             "personas": [],
             "last_speaker_index": None,
-        }
+        })
 
         app = StreamlitBackroomApp()
         app.initialize_session_state()
@@ -319,9 +320,9 @@ class TestGenerateSystemPrompt:
             enabled=True,
         )
 
-        mock_st.session_state = {
+        mock_st.session_state = MockSessionState({
             "personas": [persona, other_persona],
-        }
+        })
 
         app = StreamlitBackroomApp()
         prompt = app.generate_system_prompt(persona)
@@ -346,9 +347,9 @@ class TestGenerateSystemPrompt:
             enabled=True,
         )
 
-        mock_st.session_state = {
+        mock_st.session_state = MockSessionState({
             "personas": [persona],
-        }
+        })
 
         app = StreamlitBackroomApp()
         prompt = app.generate_system_prompt(persona)
@@ -370,9 +371,9 @@ class TestGenerateSystemPrompt:
             enabled=True,
         )
 
-        mock_st.session_state = {
+        mock_st.session_state = MockSessionState({
             "personas": [persona],
-        }
+        })
 
         app = StreamlitBackroomApp()
         prompt = app.generate_system_prompt(persona)
@@ -403,9 +404,9 @@ class TestGenerateSystemPrompt:
             enabled=True,
         )
 
-        mock_st.session_state = {
+        mock_st.session_state = MockSessionState({
             "personas": [persona, other],
-        }
+        })
 
         app = StreamlitBackroomApp()
         prompt = app.generate_system_prompt(persona)
@@ -427,9 +428,9 @@ class TestGenerateSystemPrompt:
             enabled=True,
         )
 
-        mock_st.session_state = {
+        mock_st.session_state = MockSessionState({
             "personas": [persona],
-        }
+        })
 
         app = StreamlitBackroomApp()
         prompt = app.generate_system_prompt(persona)
@@ -450,9 +451,9 @@ class TestGenerateSystemPrompt:
             enabled=True,
         )
 
-        mock_st.session_state = {
+        mock_st.session_state = MockSessionState({
             "personas": [persona],
-        }
+        })
 
         app = StreamlitBackroomApp()
         prompt = app.generate_system_prompt(persona)
@@ -495,9 +496,9 @@ class TestGenerateSystemPrompt:
             enabled=True,
         )
 
-        mock_st.session_state = {
+        mock_st.session_state = MockSessionState({
             "personas": [persona, disabled, enabled],
-        }
+        })
 
         app = StreamlitBackroomApp()
         prompt = app.generate_system_prompt(persona)
@@ -515,7 +516,7 @@ class TestCheckOllamaConnection:
     @patch("src.app.OllamaClient")
     async def test_check_ollama_connection_success(self, mock_ollama_class, mock_st):
         """Test successful Ollama connection."""
-        mock_st.session_state = {}
+        mock_st.session_state = MockSessionState()
 
         # Mock the OllamaClient context manager
         mock_client = AsyncMock()
@@ -537,7 +538,7 @@ class TestCheckOllamaConnection:
     @patch("src.app.OllamaClient")
     async def test_check_ollama_connection_failure(self, mock_ollama_class, mock_st):
         """Test failed Ollama connection."""
-        mock_st.session_state = {}
+        mock_st.session_state = MockSessionState()
 
         # Mock the OllamaClient context manager
         mock_client = AsyncMock()

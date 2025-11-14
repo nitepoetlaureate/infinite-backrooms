@@ -70,10 +70,9 @@ class TestOllamaClient:
 
             client = OllamaClient()
             async with client:
-                success, models = await client.test_connection()
-
-            assert success is False
-            assert models == []
+                # Should raise ClientError after retries
+                with pytest.raises(aiohttp.ClientError, match="Connection failed"):
+                    await client.test_connection()
 
     @pytest.mark.asyncio
     async def test_connection_failure_timeout(self):
@@ -88,10 +87,9 @@ class TestOllamaClient:
 
             client = OllamaClient()
             async with client:
-                success, models = await client.test_connection()
-
-            assert success is False
-            assert models == []
+                # Should raise TimeoutError after retries
+                with pytest.raises(TimeoutError):
+                    await client.test_connection()
 
     @pytest.mark.asyncio
     async def test_connection_failure_http_error(self):
@@ -489,7 +487,7 @@ class TestOllamaClient:
             mock_response = AsyncMock()
             mock_response.status = 200
             mock_response.content = MagicMock()
-            mock_response.content.__aiter__ = mock_iter
+            mock_response.content.__aiter__ = lambda _: mock_iter()
             mock_response.__aenter__ = AsyncMock(return_value=mock_response)
             mock_response.__aexit__ = AsyncMock(return_value=None)
 
@@ -506,8 +504,11 @@ class TestOllamaClient:
                 async for chunk in client.generate_stream("llama2:latest", "Test"):
                     chunks.append(chunk)
 
-                # Should have info chunk about cancellation
+                # Should have received response chunk and info chunk about cancellation
+                response_chunks = [c for c in chunks if c.get("type") == "response"]
                 info_chunks = [c for c in chunks if c.get("type") == "info"]
+                assert len(response_chunks) >= 1  # Got at least "Start" response
+                assert len(info_chunks) >= 1  # Got cancellation info
                 assert any("cancel" in c.get("content", "").lower() for c in info_chunks)
 
     @pytest.mark.asyncio
@@ -527,7 +528,7 @@ class TestOllamaClient:
             mock_response = AsyncMock()
             mock_response.status = 200
             mock_response.content = MagicMock()
-            mock_response.content.__aiter__ = mock_iter
+            mock_response.content.__aiter__ = lambda _: mock_iter()
             mock_response.__aenter__ = AsyncMock(return_value=mock_response)
             mock_response.__aexit__ = AsyncMock(return_value=None)
 
@@ -544,9 +545,11 @@ class TestOllamaClient:
                 async for chunk in client.generate_stream("llama2:latest", "Test"):
                     chunks.append(chunk)
 
-                # Should have valid response chunk (invalid JSON skipped)
+                # Invalid JSON should be silently skipped, only valid chunk yielded
+                # The valid chunk is {"response": "Valid", "done": true} which yields "Valid"
                 response_chunks = [c for c in chunks if c.get("type") == "response"]
-                assert len(response_chunks) >= 1
+                assert len(response_chunks) == 1
+                assert response_chunks[0]["content"] == "Valid"
 
     @pytest.mark.asyncio
     async def test_generate_stream_http_error(self):

@@ -50,11 +50,10 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
     "-v",
-    "--cov=src",
-    "--cov-report=html",
-    "--cov-report=term-missing",
-    "--asyncio-mode=auto"
 ]
+# Note: Coverage and asyncio options should be passed explicitly:
+# pytest --cov=src --cov-report=html --cov-report=term-missing --asyncio-mode=auto
+# This ensures pytest works even without pytest-cov and pytest-asyncio plugins installed
 
 [tool.coverage.run]
 source = ["."]

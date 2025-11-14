@@ -143,10 +143,29 @@ def sample_conversation_history():
     ]
 
 
+class MockSessionState(dict):
+    """Mock Streamlit session state that supports both dict and attribute access."""
+
+    def __getattr__(self, name):
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError(f"'MockSessionState' object has no attribute '{name}'")
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
+    def __delattr__(self, name):
+        try:
+            del self[name]
+        except KeyError:
+            raise AttributeError(f"'MockSessionState' object has no attribute '{name}'")
+
+
 @pytest.fixture
 def mock_streamlit_session_state():
     """Mock Streamlit session state."""
-    return {
+    return MockSessionState({
         "personas": [],
         "conversation_history": [],
         "auto_mode": False,
@@ -154,7 +173,7 @@ def mock_streamlit_session_state():
         "turn_count": 0,
         "ollama_url": "http://localhost:11434",
         "available_models": [],
-    }
+    })
 
 
 # Pytest configuration
