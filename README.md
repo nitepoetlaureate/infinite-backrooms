@@ -22,9 +22,9 @@ A Streamlit-based web application that enables you to create AI personas with di
 
 - **Multi-Persona Conversations**: Create and manage multiple AI personas with unique personalities and roles
 - **Real-time Chat Interface**: Beautiful tabbed interface with color-coded messages and persona identification
-- **Role-Based Behavior**: 17+ predefined roles that shape conversation dynamics and personality traits
+- **Role-Based Behavior**: 17 predefined roles that shape conversation dynamics and personality traits
 - **@Mention System**: Personas can reference each other using @mentions with visual highlighting
-- **Configurable Context**: Adjustable conversation history (5-25 messages) for AI context awareness
+- **Configurable Context**: Adjustable conversation history (1-50 messages) for AI context awareness
 - **Automatic Logging**: Daily conversation logs saved to text files for analysis
 - **Session Management**: Export conversations as JSON and persistent settings storage
 - **Standalone Log Viewer**: Separate application for advanced log analysis and search
@@ -212,19 +212,25 @@ infinite-backrooms/
 ### Running Tests
 
 ```bash
-# Run all tests
-uv run pytest
+# Recommended: Use the test script for best experience
+./scripts/test.sh              # Run unit tests with coverage (default)
+./scripts/test.sh unit          # Run unit tests only
+./scripts/test.sh all           # Run ALL tests (requires Ollama)
+./scripts/test.sh fast          # Quick unit tests (no coverage)
+./scripts/test.sh coverage      # Detailed coverage report
 
-# Run with coverage
-uv run pytest --cov
+# Or run pytest directly
+uv run pytest tests/ -v -k "not real and not Real"  # Unit tests only
+uv run pytest tests/ --cov --cov-report=html         # All tests with coverage
 
 # Run specific test file
-uv run pytest tests/test_ollama_client.py
+uv run pytest tests/test_ollama_client.py -v
 
-# Generate HTML coverage report
-uv run pytest --cov --cov-report=html
+# View coverage report
 open htmlcov/index.html
 ```
+
+**Note:** Integration tests require a running Ollama server on `localhost:11434`. Use `-k "not real and not Real"` to skip integration tests if Ollama is not available.
 
 ### Code Quality
 
@@ -280,11 +286,12 @@ We welcome contributions! This project uses UV for dependency management.
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Install dependencies: `uv sync`
+3. Install dependencies: `uv sync --dev`
 4. Make your changes
-5. Run tests: `uv run pytest`
+5. Run tests: `./scripts/test.sh` or `uv run pytest tests/ -v -k "not real and not Real"`
 6. Format code: `uv run black .`
-7. Submit a pull request
+7. Lint code: `uv run ruff check .`
+8. Submit a pull request
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines including:
 - Code of Conduct
@@ -303,7 +310,7 @@ This project has a comprehensive test suite with 80%+ code coverage goal:
 - ✅ Coverage reporting
 - ✅ CI/CD integration
 
-Run `uv run pytest -v` to see all tests.
+Run `./scripts/test.sh` or `uv run pytest tests/ -v -k "not real and not Real"` to see all unit tests.
 
 ## Security
 

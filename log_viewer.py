@@ -23,8 +23,12 @@ class LogParser:
             return []
 
         log_files = []
-        # Look for both old backroom format and new ai_conversation format
-        patterns = ["backroom_*.txt", "ai_conversation_*.txt"]
+        # Look for current format and legacy formats
+        patterns = [
+            "streamlit_backroom_*.txt",  # Current format (post-refactoring)
+            "backroom_*.txt",             # Legacy format 1
+            "ai_conversation_*.txt",      # Legacy format 2
+        ]
 
         for pattern in patterns:
             log_files.extend(self.log_dir.glob(pattern))

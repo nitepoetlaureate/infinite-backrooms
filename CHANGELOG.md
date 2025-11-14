@@ -7,6 +7,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2025-11-14
+
+### Added - Phase 1: Critical Blockers Completed
+- Test runner script (`scripts/test.sh`) with multiple modes
+  - Unit tests only mode
+  - Fast mode (no coverage)
+  - Full test suite mode
+  - Coverage reporting mode
+- UI module structure created
+  - `src/ui/persona_ui.py` - Persona management wrapper
+  - `src/ui/conversation_ui.py` - Conversation display wrapper
+  - `src/ui/settings_ui.py` - Settings and export wrapper
+  - Architecture ready for future detailed refactoring
+
+### Changed - Phase 1: Test Environment & CI/CD
+- Updated GitHub Actions CI workflow (`.github/workflows/ci.yml`)
+  - All commands now use `uv run` for proper environment isolation
+  - Tests explicitly skip integration tests that require Ollama
+  - Added `-k "not real and not Real"` filter to all test commands
+- Updated README.md test instructions
+  - Added detailed testing guide with script usage
+  - Clarified distinction between unit and integration tests
+  - Added note about Ollama requirement for integration tests
+- Updated contribution guide with correct test commands
+
+### Fixed - Phase 1: Critical Issues
+- **Log viewer file pattern mismatch** (`log_viewer.py:27-31`)
+  - Added `streamlit_backroom_*.txt` pattern to match current logger output
+  - Maintained backward compatibility with legacy patterns
+  - Fixed issue where new logs wouldn't display in viewer
+- **Test environment configuration**
+  - CI/CD now properly uses virtual environment via `uv run`
+  - Local development has convenient test script
+  - All 132 unit tests passing ✅
+
+### Documentation - Phase 1: Accuracy Improvements
+- **README.md**
+  - Fixed context window claim: "5-25 messages" → "1-50 messages" (accurate)
+  - Fixed role count claim: "17+ predefined roles" → "17 predefined roles" (precise)
+  - Updated test commands throughout
+- **ARCHITECTURE.md**
+  - Fixed context window documentation to match implementation
+  - Fixed role count documentation
+  - Added quick start preset options to feature list
+- **Verified JSON export feature exists** (lines 1376-1388 in streamlit_backroom.py)
+  - Exports session data, personas, and conversation history
+  - Feature was already implemented, documentation was accurate
+
+### Testing
+- All 132 unit tests passing ✅
+- 29 integration tests skipped (require Ollama server)
+- Test coverage: ~48% (focus on business logic)
+- Zero test failures in unit test suite
+
+## [0.1.0] - Previous Release
+
 ### Added
 - Comprehensive test suite with pytest
   - Unit tests for AIPersona dataclass

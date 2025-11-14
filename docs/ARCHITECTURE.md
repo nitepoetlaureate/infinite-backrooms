@@ -68,14 +68,15 @@ The UI is built with Streamlit and organized into tabbed sections:
 #### Personas Tab
 - Persona management interface
 - Create, edit, delete personas
-- Role selection (17+ predefined roles)
+- Role selection (17 predefined roles)
 - System prompt customization
 - Model assignment per persona
 - Visual color coding
+- Quick start preset options
 
 #### Settings Tab
 - Ollama connection configuration
-- Context window size (5-25 messages)
+- Context window size (1-50 messages)
 - Temperature and other model parameters
 - Response timeout configuration
 
