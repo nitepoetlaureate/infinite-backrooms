@@ -265,6 +265,7 @@ infinite-backrooms/
 
 ## Documentation
 
+- **[AI Assistant Guide (CLAUDE.md)](CLAUDE.md)** - Comprehensive guide for AI assistants and developers
 - **[Architecture Guide](docs/ARCHITECTURE.md)** - System design and architecture
 - **[API Reference](docs/API.md)** - Complete API documentation
 - **[Development Guide](docs/DEVELOPMENT.md)** - Setup and development workflow
