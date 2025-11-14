@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Streamlit application
+  app:
+    build: .
+    container_name: infinite-backrooms-app
+    ports:
+      - "8501:8501"
+    volumes:
+      # Persist conversation logs
+      - ./conversations:/app/conversations
+      # Persist application logs
+      - ./logs:/app/logs
+    environment:
+      # Configure Ollama connection to point to the ollama service
+      - BACKROOM_OLLAMA_BASE_URL=http://ollama:11434
+      - BACKROOM_OLLAMA_TIMEOUT=10
+      - BACKROOM_LOG_DIR=conversations
+      - BACKROOM_LOG_LEVEL=INFO
+    depends_on:
+      - ollama
+    restart: unless-stopped
+    networks:
+      - backroom-network
+
+  # Ollama service for AI models
+  ollama:
+    image: ollama/ollama:latest
+    container_name: infinite-backrooms-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      # Persist Ollama models
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - backroom-network
+    # Uncomment below if you have NVIDIA GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # Optional: Log viewer as a separate service
+  log-viewer:
+    build: .
+    container_name: infinite-backrooms-log-viewer
+    command: ["uv", "run", "streamlit", "run", "log_viewer.py",
+              "--server.address", "0.0.0.0",
+              "--server.port", "8502",
+              "--server.headless", "true"]
+    ports:
+      - "8502:8502"
+    volumes:
+      - ./conversations:/app/conversations
+    restart: unless-stopped
+    networks:
+      - backroom-network
+
+volumes:
+  # Named volume for Ollama model persistence
+  ollama_data:
+    driver: local
+
+networks:
+  backroom-network:
+    driver: bridge

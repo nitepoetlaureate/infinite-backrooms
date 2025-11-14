@@ -16,6 +16,8 @@ class LogParser:
     
     def __init__(self, log_dir: str = "conversations"):
         self.log_dir = Path(log_dir)
+        # Create directory if it doesn't exist (fixes critical bug)
+        self.log_dir.mkdir(exist_ok=True)
     
     def get_available_log_files(self) -> List[Path]:
         """Get all available log files"""
@@ -23,8 +25,8 @@ class LogParser:
             return []
         
         log_files = []
-        # Look for both old backroom format and new ai_conversation format
-        patterns = ["backroom_*.txt", "ai_conversation_*.txt"]
+        # Look for all supported log file formats
+        patterns = ["backroom_*.txt", "ai_conversation_*.txt", "streamlit_backroom_*.txt"]
         
         for pattern in patterns:
             log_files.extend(self.log_dir.glob(pattern))

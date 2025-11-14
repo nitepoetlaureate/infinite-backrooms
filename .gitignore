@@ -1,16 +1,66 @@
 # Python-generated files
 __pycache__/
 *.py[oc]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
 build/
 dist/
 wheels/
-*.egg-info
+.Python
 
 # Virtual environments
-.venv
+.venv/
+venv/
+ENV/
+env/
+.env
 
-# TXT files
+# Environment files (keep .env.example)
+.env
+.env.local
+.env.production
+
+# Conversation logs
 conversations/*.txt
 
-# CLI client
+# Application logs
+logs/
+*.log
+
+# CLI client (deprecated)
 backroom.py
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# Security reports
+bandit-report.json
+*.sarif
+
+# Docker volumes
+ollama_data/
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+
+# OS files
+Thumbs.db
+.DS_Store
