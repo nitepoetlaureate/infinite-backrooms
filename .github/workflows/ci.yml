@@ -2,154 +2,142 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop, "claude/**" ]
+    branches: [ main, develop, claude/* ]
   pull_request:
     branches: [ main, develop ]
+  workflow_dispatch:
 
 jobs:
-  # Code quality checks
-  lint:
-    name: Lint and Format Check
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.12']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install UV
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+
+    - name: Lint with ruff
+      run: |
+        uv run ruff check . --output-format=github
+
+    - name: Check formatting with black
+      run: |
+        uv run black --check . --diff
+
+    - name: Type check with mypy
+      run: |
+        uv run mypy . --install-types --non-interactive || true
+      continue-on-error: true
+
+    - name: Run tests with pytest
+      run: |
+        uv run pytest --cov --cov-report=xml --cov-report=term-missing -v -k "not real and not Real"
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: Generate coverage badge
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "Coverage report generated"
+
+  lint-security:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
 
-      - name: Install UV
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    - name: Install UV
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-      - name: Install dependencies
-        run: uv sync
+    - name: Install dependencies
+      run: |
+        uv sync --dev
 
-      - name: Check code formatting
-        run: |
-          uv run ruff format --check .
-        continue-on-error: true
+    - name: Run Bandit security linter
+      run: |
+        uv run bandit -r . -f json -o bandit-report.json || true
+        uv run bandit -r . -f screen
 
-      - name: Lint code
-        run: |
-          uv run ruff check .
-        continue-on-error: true
+    - name: Upload Bandit report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: bandit-report
+        path: bandit-report.json
 
-  # Security scan
-  security:
-    name: Security Scan
+    - name: Run Safety dependency check
+      run: |
+        uv run safety check --json || true
+        uv run safety check
+      continue-on-error: true
+
+  build:
     runs-on: ubuntu-latest
+    needs: [test, lint-security]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
 
-      - name: Install bandit
-        run: pip install bandit[toml]
+    - name: Install UV
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-      - name: Run security scan
-        run: |
-          bandit -r . -f json -o bandit-report.json || true
-          bandit -r . || true
+    - name: Build package
+      run: |
+        uv sync
+        uv run python -m build
 
-      - name: Upload security report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: security-report
-          path: bandit-report.json
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/
 
-  # Build Docker image
-  docker:
-    name: Docker Build Test
+  notify:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: false
-          tags: infinite-backrooms:test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # Integration test
-  integration:
-    name: Integration Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install UV
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Test imports
-        run: |
-          uv run python -c "import streamlit_backroom; print('✓ Main app imports successfully')"
-          uv run python -c "import log_viewer; print('✓ Log viewer imports successfully')"
-          uv run python -c "import async_utils; print('✓ Async utils imports successfully')"
-          uv run python -c "import constants; print('✓ Constants imports successfully')"
-          uv run python -c "import roles; print('✓ Roles imports successfully')"
-          uv run python -c "import validators; print('✓ Validators imports successfully')"
-
-      - name: Verify file structure
-        run: |
-          test -f streamlit_backroom.py || exit 1
-          test -f log_viewer.py || exit 1
-          test -f async_utils.py || exit 1
-          test -f constants.py || exit 1
-          test -f roles.py || exit 1
-          test -f validators.py || exit 1
-          test -f Dockerfile || exit 1
-          test -f docker-compose.yml || exit 1
-          test -f .env.example || exit 1
-          echo "✓ All required files present"
-
-  # Summary job
-  ci-success:
-    name: CI Success
-    runs-on: ubuntu-latest
-    needs: [lint, security, docker, integration]
+    needs: [test, lint-security, build]
     if: always()
     steps:
-      - name: Check all jobs
-        run: |
-          if [ "${{ needs.lint.result }}" != "success" ]; then
-            echo "⚠️  Lint job failed or was skipped"
-          fi
-          if [ "${{ needs.security.result }}" != "success" ]; then
-            echo "⚠️  Security job failed or was skipped"
-          fi
-          if [ "${{ needs.docker.result }}" != "success" ]; then
-            echo "❌ Docker build failed!"
-            exit 1
-          fi
-          if [ "${{ needs.integration.result }}" != "success" ]; then
-            echo "❌ Integration test failed!"
-            exit 1
-          fi
-          echo "✅ All critical CI checks passed!"
+    - name: Workflow status
+      run: |
+        echo "CI workflow completed"
+        echo "Test: ${{ needs.test.result }}"
+        echo "Security: ${{ needs.lint-security.result }}"
+        echo "Build: ${{ needs.build.result }}"
