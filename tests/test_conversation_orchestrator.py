@@ -50,14 +50,17 @@ class MockConversationOrchestrator:
 
     async def _generate_response(self, persona, message: str) -> str:
         """Generate a response from a specific persona."""
+        response_parts = []
         async for chunk in self.ollama_client.generate_stream(
             model=persona.model,
             prompt=f"{persona.system_prompt}\n\nUser: {message}\nAssistant:",
             persona_name=persona.name
         ):
+            if chunk.get("response"):
+                response_parts.append(chunk.get("response"))
             if chunk.get("done", False):
-                return chunk.get("response", "")
-        return ""
+                break
+        return "".join(response_parts)
 
     def get_conversation_history(self) -> List[Dict[str, Any]]:
         """Get the conversation history."""
@@ -76,15 +79,14 @@ class TestConversationOrchestrator:
     def mock_ollama_client(self):
         """Mock Ollama client for testing."""
         client = Mock()
-        client.generate_stream = AsyncMock()
 
+        # Create proper async generator mock
         async def mock_generate_stream(*args, **kwargs):
             """Mock async generator for streaming."""
             yield {"response": "Hello ", "done": False}
-            yield {"response": "there!", "done": False}
-            yield {"response": "", "done": True}
+            yield {"response": "there!", "done": True}
 
-        client.generate_stream.side_effect = mock_generate_stream
+        client.generate_stream = mock_generate_stream
         return client
 
     @pytest.fixture
@@ -115,11 +117,22 @@ class TestConversationOrchestrator:
     @pytest.fixture
     def sample_personas(self):
         """Sample personas for testing."""
-        return [
-            Mock(name="Alice", model="llama2:latest", system_prompt="You are Alice."),
-            Mock(name="Bob", model="mistral:latest", system_prompt="You are Bob."),
-            Mock(name="Charlie", model="llama2:latest", system_prompt="You are Charlie.")
-        ]
+        alice = Mock()
+        alice.name = "Alice"
+        alice.model = "llama2:latest"
+        alice.system_prompt = "You are Alice."
+
+        bob = Mock()
+        bob.name = "Bob"
+        bob.model = "mistral:latest"
+        bob.system_prompt = "You are Bob."
+
+        charlie = Mock()
+        charlie.name = "Charlie"
+        charlie.model = "llama2:latest"
+        charlie.system_prompt = "You are Charlie."
+
+        return [alice, bob, charlie]
 
     @pytest.mark.asyncio
     async def test_start_conversation_success(self, orchestrator, sample_personas):
@@ -154,7 +167,7 @@ class TestConversationOrchestrator:
         assert result["processed"] is True
         assert "timestamp" in result
         assert "responses" in result
-        assert len(result["responses"]) == 2  # Bob and Charlie should respond
+        assert len(result["responses"]) == 2  # Bob and Charlie should respond, not Alice
 
         # Verify logging
         orchestrator.conversation_logger.log_message.assert_called()

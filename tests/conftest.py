@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Import from actual module locations based on codebase analysis
 from src.models.persona import AIPersona
 from src.services.ollama_client import OllamaClient
-from src.services.logger import ConversationLogger
+from src.services.secure_logger import SecureConversationLogger
 from src.utils.sanitization import sanitize_html
 from src.utils.validation import validate_persona_name, validate_model_name
 
@@ -156,8 +156,8 @@ def temp_log_dir():
 
 @pytest.fixture
 def conversation_logger(temp_log_dir):
-    """Create a ConversationLogger with temporary directory."""
-    return ConversationLogger(log_dir=str(temp_log_dir))
+    """Create a SecureConversationLogger with temporary directory."""
+    return SecureConversationLogger(log_dir=str(temp_log_dir))
 
 
 @pytest.fixture

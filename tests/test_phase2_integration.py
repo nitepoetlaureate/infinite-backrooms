@@ -56,19 +56,19 @@ class TestPhase2Integration:
         """Create sample personas for testing."""
         return [
             AIPersona(
+                id="alice-001",
                 name="Alice",
-                model="llama2",
-                description="AI expert in machine learning",
+                model="llama2:latest",
                 role="Expert",
-                thinking_enabled=True,
+                system_prompt="AI expert in machine learning",
                 enabled=True
             ),
             AIPersona(
+                id="bob-002",
                 name="Bob",
-                model="mistral",
-                description="Creative AI assistant",
+                model="mistral:latest",
                 role="Creative",
-                thinking_enabled=False,
+                system_prompt="Creative AI assistant",
                 enabled=True
             )
         ]

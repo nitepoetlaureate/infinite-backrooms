@@ -3,7 +3,7 @@
 import pytest
 from pathlib import Path
 from datetime import datetime
-from streamlit_backroom import SecureConversationLogger
+from src.services.secure_logger import SecureConversationLogger
 
 
 class TestConversationLogger:

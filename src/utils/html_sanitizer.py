@@ -70,10 +70,11 @@ class SecureHTMLRenderer:
         if allowed_css_properties:
             self.ALLOWED_CSS_PROPERTIES = allowed_css_properties
 
-        # Configure bleach CSS sanitizer
-        self.css_sanitizer = bleach.CSSSanitizer(
-            allowed_css_properties=self.ALLOWED_CSS_PROPERTIES,
-            allowed_svg_properties=set()
+        # Configure bleach cleaner
+        self.html_cleaner = bleach.Cleaner(
+            tags=self.ALLOWED_TAGS,
+            attributes=self.ALLOWED_ATTRIBUTES,
+            strip=True
         )
 
     def sanitize_html(self, html_content: str) -> str:
@@ -105,12 +106,11 @@ class SecureHTMLRenderer:
                 strip_comments=True
             )
 
-            # Second pass: Clean CSS in style attributes
+            # Second pass: Final clean with protocols
             clean_content = bleach.clean(
                 clean_content,
                 tags=self.ALLOWED_TAGS,
                 attributes=self.ALLOWED_ATTRIBUTES,
-                css_sanitizer=self.css_sanitizer,
                 protocols=self.ALLOWED_PROTOCOLS,
                 strip=True,
                 strip_comments=True
@@ -239,9 +239,9 @@ class SecureHTMLRenderer:
             if not css:
                 return ""
 
-            # Use bleach CSS sanitizer to clean the CSS
-            clean_css = self.css_sanitizer.sanitize(css)
-            return clean_css if clean_css else ""
+            # For now, strip CSS completely for security
+            # TODO: Implement proper CSS sanitization with updated bleach API
+            return ""
 
         except Exception:
             return ""

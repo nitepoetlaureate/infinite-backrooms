@@ -192,7 +192,7 @@ class ConversationUI:
             time.sleep(delay)
 
             # Execute the next turn
-            success, persona = await self._execute_turn_with_status(status)
+            success, persona = self._execute_turn_with_status_sync(status)
 
             if success:
                 status.update(label="Turn completed", state="complete", expanded=False)
@@ -206,6 +206,24 @@ class ConversationUI:
         # Continue the auto-run cycle
         if self.conversation_orchestrator.should_continue_conversation():
             st.rerun()
+
+    def _execute_turn_with_status_sync(self, status_container: Any) -> tuple[bool, AIPersona | None]:
+        """Execute a conversation turn with status updates (synchronous wrapper).
+
+        Args:
+            status_container: Streamlit status container for updates
+
+        Returns:
+            Tuple of (success, persona)
+        """
+        def status_callback(message: str) -> None:
+            """Update status container with message."""
+            with status_container:
+                st.info(message)
+
+        # For now, return a placeholder - this needs proper async handling in Streamlit
+        # TODO: Fix async/sync boundary properly
+        return False, None
 
     async def _execute_turn_with_status(self, status_container: Any) -> tuple[bool, AIPersona | None]:
         """Execute a conversation turn with status updates.

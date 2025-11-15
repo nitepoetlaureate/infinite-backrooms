@@ -14,7 +14,7 @@ import sys
 
 # Import the actual application modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from streamlit_backroom import OllamaClient, StreamlitBackroomApp, AIPersona, SecureConversationLogger
+from streamlit_backroom import OllamaClient, StreamlitBackroomSafeApp, AIPersona, ConversationLogger
 
 
 @pytest.fixture(scope="session")
@@ -147,13 +147,13 @@ class TestRealConversationFlow:
 
     @pytest.fixture
     def real_app(self, temp_log_dir, init_streamlit_session):
-        """Create real StreamlitBackroomApp with temp directory."""
+        """Create real StreamlitBackroomSafeApp with temp directory."""
         import streamlit as st
-        app = StreamlitBackroomApp()
+        app = StreamlitBackroomSafeApp()
         # Initialize session state
         app.initialize_session_state()
         # Override log directory
-        app.conversation_logger = SecureConversationLogger(temp_log_dir)
+        app.conversation_logger = ConversationLogger(temp_log_dir)
         return app
 
     @pytest.fixture
@@ -238,7 +238,7 @@ class TestRealFileOperations:
     def test_real_conversation_logger_file_operations(self, temp_workspace):
         """Test real conversation logger file operations."""
         log_dir = Path(temp_workspace)
-        logger = SecureConversationLogger(str(log_dir))
+        logger = ConversationLogger(str(log_dir))
 
         # Test log file creation
         today = datetime.now().strftime("%Y-%m-%d")
@@ -279,7 +279,7 @@ class TestRealFileOperations:
     def test_real_log_rotation(self, temp_workspace):
         """Test real log file rotation across days."""
         log_dir = Path(temp_workspace)
-        logger = SecureConversationLogger(str(log_dir))
+        logger = ConversationLogger(str(log_dir))
 
         # Simulate different days
         yesterday = datetime(2025, 11, 11)
@@ -428,10 +428,10 @@ class TestEndToEndRealSystem:
         client = OllamaClient("http://localhost:11434")
 
         # Real conversation logger
-        logger = SecureConversationLogger(temp_workspace)
+        logger = ConversationLogger(temp_workspace)
 
         # Real app with real components
-        app = StreamlitBackroomApp()
+        app = StreamlitBackroomSafeApp()
         app.ollama_client = client
         app.conversation_logger = logger
 

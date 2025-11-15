@@ -50,28 +50,40 @@ class TestPersonaManager:
     @pytest.fixture
     def mock_streamlit(self):
         """Mock Streamlit components."""
-        with patch('streamlit.subheader'), \
-             patch('streamlit.columns'), \
-             patch('streamlit.expander'), \
-             patch('streamlit.form'), \
-             patch('streamlit.text_input'), \
-             patch('streamlit.selectbox'), \
-             patch('streamlit.text_area'), \
-             patch('streamlit.checkbox'), \
-             patch('streamlit.form_submit_button'), \
-             patch('streamlit.button'), \
-             patch('streamlit.success'), \
-             patch('streamlit.error'), \
-             patch('streamlit.info'), \
-             patch('streamlit.warning'), \
-             patch('streamlit.caption'), \
-             patch('streamlit.code'), \
-             patch('streamlit.write'), \
-             patch('streamlit.markdown'), \
-             patch('streamlit.multiselect'), \
-             patch('streamlit.number_input'), \
-             patch('streamlit.download_button'), \
-             patch('streamlit.session_state', {}):
+        from unittest.mock import patch
+        from contextlib import ExitStack
+
+        # List all the streamlit functions to patch
+        patches = [
+            'streamlit.subheader',
+            'streamlit.columns',
+            'streamlit.expander',
+            'streamlit.form',
+            'streamlit.text_input',
+            'streamlit.selectbox',
+            'streamlit.text_area',
+            'streamlit.checkbox',
+            'streamlit.form_submit_button',
+            'streamlit.button',
+            'streamlit.success',
+            'streamlit.error',
+            'streamlit.info',
+            'streamlit.warning',
+            'streamlit.caption',
+            'streamlit.code',
+            'streamlit.write',
+            'streamlit.markdown',
+            'streamlit.multiselect',
+            'streamlit.number_input',
+            'streamlit.download_button'
+        ]
+
+        with ExitStack() as stack:
+            # Enter all context managers
+            for patch_name in patches:
+                stack.enter_context(patch(patch_name))
+            # Handle session_state separately with a value
+            stack.enter_context(patch('streamlit.session_state', {}))
             yield
 
     def test_persona_manager_initialization(self, mock_session_manager):
