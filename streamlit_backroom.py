@@ -590,7 +590,8 @@ class StreamlitBackroomApp:
         else:
             st.session_state.last_speaker_index = (st.session_state.last_speaker_index + 1) % len(enabled_personas)
 
-        return enabled_personas[st.session_state.last_speaker_index]
+        next_speaker: AIPersona = enabled_personas[st.session_state.last_speaker_index]
+        return next_speaker
     
     def generate_system_prompt(self, persona: AIPersona) -> str:
         """Generate system prompt for persona"""
