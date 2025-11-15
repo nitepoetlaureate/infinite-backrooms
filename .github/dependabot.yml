@@ -1,7 +1,10 @@
-version: 2
+# Dependabot configuration for automated dependency updates
+# This file schedules security and version updates for project dependencies
 
+version: 2
 updates:
-  # Enable version updates for pip (Python)
+
+  # Python dependencies from pyproject.toml
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
@@ -10,33 +13,92 @@ updates:
       time: "09:00"
     open-pull-requests-limit: 10
     reviewers:
+      - "nitepoetlaureate"
       - "guinacio"
     assignees:
-      - "guinacio"
+      - "nitepoetlaureate"
     commit-message:
       prefix: "deps"
       include: "scope"
     labels:
       - "dependencies"
       - "python"
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "version-update:semver-patch"
+          - "version-update:semver-minor"
+      development-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "version-update:semver-patch"
+          - "version-update:semver-minor"
+      security-patches:
+        update-types:
+          - "version-update:semver-patch"
+          - "security"
     ignore:
       # Ignore major version updates for stable packages
       - dependency-name: "streamlit"
         update-types: ["version-update:semver-major"]
 
-  # Enable version updates for GitHub Actions
+  # GitHub Actions dependencies
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "tuesday"
       time: "09:00"
     open-pull-requests-limit: 5
     reviewers:
+      - "nitepoetlaureate"
       - "guinacio"
+    assignees:
+      - "nitepoetlaureate"
     commit-message:
       prefix: "ci"
       include: "scope"
     labels:
       - "dependencies"
       - "github-actions"
+
+  # Docker dependencies (if using Dockerfile)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "nitepoetlaureate"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # Daily security updates for critical Python packages
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "04:00"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "nitepoetlaureate"
+    assignees:
+      - "nitepoetlaureate"
+    commit-message:
+      prefix: "security"
+      include: "scope"
+    labels:
+      - "security"
+      - "dependencies"
+      - "automated"
+    update-types:
+      - "version-update:semver-patch"
+      - "security"
+    groups:
+      security-updates:
+        dependency-type: "production"

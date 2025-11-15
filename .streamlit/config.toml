@@ -1,0 +1,64 @@
+# Streamlit Configuration for Production Deployment
+# Security-hardened configuration for Infinite AI Backrooms
+# This file is required for proper Streamlit deployment
+
+[server]
+# Core server settings
+port = 8501
+enableCORS = true
+enableXsrfProtection = true
+maxUploadSize = 10
+maxMessageSize = 200
+
+# Security and performance settings
+enableStaticServing = false
+runOnSave = false
+fileWatcherType = "none"
+enableWebsocketCompression = true
+
+# Session security
+cookieName = "streamlit_backroom_session"
+cookieSecret = ""  # Will be set via environment variable in production
+
+# Rate limiting and DoS protection
+maxMessageSize = 200
+maxUploadSize = 10
+
+[browser]
+# Browser and analytics settings
+gatherUsageStats = false
+serverAddress = "localhost"
+serverPort = 8501
+
+[theme]
+# Theme configuration (System 7 style handled via CSS)
+primaryColor = "#000000"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F0F0"
+textColor = "#000000"
+font = "monospace"
+
+[client]
+# Client-side settings
+showErrorDetails = false
+toolbarMode = "minimal"
+
+[logger]
+# Logging configuration for production
+level = "warning"
+messageFormat = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+[runner]
+# Runner settings for production
+magicEnabled = false
+installTracer = false
+fixMatplotlib = true
+fastReruns = true
+enforceSerializableSessionState = false
+
+# Production-specific settings
+[server.production]
+# These are automatically set in production environments
+headless = true
+enableCORS = true
+enableXsrfProtection = true

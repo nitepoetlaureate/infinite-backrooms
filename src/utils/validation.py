@@ -180,3 +180,52 @@ def validate_integer_range(value: int, min_val: int, max_val: int, field_name: s
         return False, f"{field_name} must be at most {max_val}"
 
     return True, None
+
+
+def validate_role(role: str) -> tuple[bool, Optional[str]]:
+    """Validate role string.
+
+    Args:
+        role: Role string to validate
+
+    Returns:
+        Tuple of (is_valid, error_message)
+
+    Security:
+        - Limits role length to prevent DoS
+        - Restricts to safe characters
+    """
+    if not role:
+        return True, None  # Empty role is allowed
+
+    if len(role) > 50:
+        return False, "Role must be 50 characters or less"
+
+    # Allow letters, numbers, spaces, hyphens
+    if not re.match(r'^[a-zA-Z0-9\s\-]+$', role):
+        return False, "Role can only contain letters, numbers, spaces, and hyphens"
+
+    return True, None
+
+
+def validate_color(color: str) -> tuple[bool, Optional[str]]:
+    """Validate color hex code.
+
+    Args:
+        color: Hex color code to validate
+
+    Returns:
+        Tuple of (is_valid, error_message)
+
+    Security:
+        - Validates hex color format
+        - Prevents CSS injection
+    """
+    if not color:
+        return False, "Color cannot be empty"
+
+    # Check hex color format
+    if not re.match(r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$', color):
+        return False, "Invalid color format. Expected #RGB or #RRGGBB"
+
+    return True, None

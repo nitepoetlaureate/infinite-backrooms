@@ -18,8 +18,8 @@ from typing import Any
 import streamlit as st
 
 from src.models.persona import AIPersona
-from src.services.logger import ConversationLogger
-from src.services.ollama_client import OllamaClient
+from src.services.secure_logger import SecureConversationLogger
+from src.services.streamlit_ollama_client import StreamlitOllamaClient
 from src.ui.components import (
     get_persona_avatar,
     highlight_mentions,
@@ -53,8 +53,8 @@ class StreamlitBackroomApp:
 
     def __init__(self) -> None:
         """Initialize the application with services and session state."""
-        self.logger = ConversationLogger()
-        self.ollama = OllamaClient()
+        self.logger = SecureConversationLogger()
+        self.ollama = StreamlitOllamaClient()
         self.initialize_session_state()
 
     def initialize_session_state(self) -> None:
@@ -94,10 +94,10 @@ class StreamlitBackroomApp:
         Returns:
             True if connection successful, False otherwise
         """
-        async with OllamaClient(DEFAULT_OLLAMA_URL) as client:
-            connected, models = await client.test_connection()
-            st.session_state.available_models = models
-            return connected
+        client = StreamlitOllamaClient(DEFAULT_OLLAMA_URL)
+        connected, models = await client.test_connection_async()
+        st.session_state.available_models = models
+        return connected
 
     def get_next_speaker(self) -> AIPersona | None:
         """Get the next speaker in rotation.
@@ -186,14 +186,14 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
         if persona.model in st.session_state.non_thinking_models:
             enable_thinking = False
 
-        async with OllamaClient(DEFAULT_OLLAMA_URL) as client:
-            async for chunk in client.generate_stream(
-                persona.model, prompt, system_prompt, think=enable_thinking, timeout=timeout_seconds
-            ):
-                # Track non-thinking models
-                if chunk["type"] == "info" and "doesn't support thinking" in chunk["content"]:
-                    st.session_state.non_thinking_models.add(persona.model)
-                yield chunk
+        client = StreamlitOllamaClient(DEFAULT_OLLAMA_URL)
+        for chunk in client.generate_stream(
+            persona.model, prompt, system_prompt, think=enable_thinking, timeout=timeout_seconds
+        ):
+            # Track non-thinking models
+            if chunk["type"] == "info" and "doesn't support thinking" in chunk["content"]:
+                st.session_state.non_thinking_models.add(persona.model)
+            yield chunk
 
     def persona_management_ui(self) -> None:
         """UI for managing AI personas."""

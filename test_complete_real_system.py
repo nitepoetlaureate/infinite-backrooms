@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from streamlit_backroom import AIPersona, ConversationLogger
+from streamlit_backroom import AIPersona, SecureConversationLogger
 from log_viewer import LogParser
 
 
@@ -330,7 +330,7 @@ class RealSystemTester:
             # Test conversation logging
             print("\nTesting conversation logging...")
 
-            logger = ConversationLogger(self.temp_dir)
+            logger = SecureConversationLogger(self.temp_dir)
 
             test_messages = [
                 ("Alice", "Hello world! This is a test message.", datetime.now()),
@@ -573,7 +573,7 @@ class RealSystemTester:
                 # Test rapid file operations
                 print("\nTesting rapid file operations...")
 
-                logger = ConversationLogger(self.temp_dir)
+                logger = SecureConversationLogger(self.temp_dir)
 
                 file_start_time = time.time()
                 messages_logged = 0

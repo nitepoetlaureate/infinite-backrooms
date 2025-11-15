@@ -1,0 +1,69 @@
+{
+  "name": "Infinite AI Backrooms",
+  "description": "Interactive Multi-Persona AI Conversation Platform with System 7 retro aesthetic",
+  "repository": "https://github.com/nitepoetlaureate/infinite-backrooms",
+  "logo": "https://raw.githubusercontent.com/nitepoetlaureate/infinite-backrooms/master/logo.png",
+  "keywords": [
+    "streamlit",
+    "ai",
+    "ollama",
+    "llm",
+    "conversation",
+    "multi-agent"
+  ],
+  "success_url": "/",
+  "env": {
+    "OLLAMA_URL": {
+      "description": "URL for your Ollama API server (REQUIRED - localhost won't work in cloud)",
+      "value": "https://your-ollama-server.com",
+      "required": true
+    },
+    "OLLAMA_TIMEOUT": {
+      "description": "Connection timeout in seconds",
+      "value": "120",
+      "required": false
+    },
+    "OLLAMA_RESPONSE_TIMEOUT": {
+      "description": "Response timeout for AI generation (seconds)",
+      "value": "300",
+      "required": false
+    },
+    "LOG_LEVEL": {
+      "description": "Application log level",
+      "value": "INFO",
+      "required": false
+    },
+    "MAX_HISTORY_MESSAGES": {
+      "description": "Maximum messages to display in UI",
+      "value": "50",
+      "required": false
+    },
+    "DEFAULT_CONTEXT_MESSAGES": {
+      "description": "Number of recent messages sent to AI as context",
+      "value": "10",
+      "required": false
+    },
+    "ENABLE_THINKING": {
+      "description": "Enable AI thinking display (for compatible models)",
+      "value": "true",
+      "required": false
+    },
+    "DEBUG": {
+      "description": "Enable debug mode (should be false in production)",
+      "value": "false",
+      "required": false
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "stack": "heroku-24"
+}

@@ -14,7 +14,7 @@ import sys
 
 # Import the actual application modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from streamlit_backroom import OllamaClient, StreamlitBackroomApp, AIPersona, ConversationLogger
+from streamlit_backroom import OllamaClient, StreamlitBackroomApp, AIPersona, SecureConversationLogger
 
 
 @pytest.fixture(scope="session")
@@ -23,7 +23,13 @@ def init_streamlit_session():
     import streamlit as st
 
     # Mock the session state if running outside Streamlit
-    if not hasattr(st, 'runtime') or st.runtime._get_script_run_ctx() is None:
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        ctx_exists = get_script_run_ctx() is not None
+    except (ImportError, AttributeError):
+        ctx_exists = False
+
+    if not ctx_exists:
         # Create a mock session state
         if not hasattr(st, 'session_state'):
             class MockSessionState(dict):
@@ -56,6 +62,7 @@ def init_streamlit_session():
     yield st.session_state
 
 
+@pytest.mark.integration
 class TestRealOllamaIntegration:
     """Test actual Ollama API connections and real model responses."""
 
@@ -146,7 +153,7 @@ class TestRealConversationFlow:
         # Initialize session state
         app.initialize_session_state()
         # Override log directory
-        app.conversation_logger = ConversationLogger(temp_log_dir)
+        app.conversation_logger = SecureConversationLogger(temp_log_dir)
         return app
 
     @pytest.fixture
@@ -231,7 +238,7 @@ class TestRealFileOperations:
     def test_real_conversation_logger_file_operations(self, temp_workspace):
         """Test real conversation logger file operations."""
         log_dir = Path(temp_workspace)
-        logger = ConversationLogger(str(log_dir))
+        logger = SecureConversationLogger(str(log_dir))
 
         # Test log file creation
         today = datetime.now().strftime("%Y-%m-%d")
@@ -272,7 +279,7 @@ class TestRealFileOperations:
     def test_real_log_rotation(self, temp_workspace):
         """Test real log file rotation across days."""
         log_dir = Path(temp_workspace)
-        logger = ConversationLogger(str(log_dir))
+        logger = SecureConversationLogger(str(log_dir))
 
         # Simulate different days
         yesterday = datetime(2025, 11, 11)
@@ -292,6 +299,7 @@ class TestRealFileOperations:
         assert any("2025-11-12" in name for name in file_names), "Today's log file missing"
 
 
+@pytest.mark.integration
 class TestRealSystemPerformance:
     """Test real system performance under realistic conditions."""
 
@@ -351,6 +359,19 @@ class TestRealSystemPerformance:
         """Test memory usage stability over extended operation."""
         import gc
 
+        # Try to import psutil, skip test if not available
+        try:
+            import psutil
+            has_psutil = True
+        except ImportError:
+            has_psutil = False
+
+        if has_psutil:
+            import os
+            # Get initial memory usage
+            process = psutil.Process(os.getpid())
+            initial_memory = process.memory_info().rss
+
         # Create and use many objects
         for i in range(100):
             # Create temporary objects
@@ -376,10 +397,20 @@ class TestRealSystemPerformance:
         # Final cleanup
         gc.collect()
 
-        # If we get here without memory errors, the test passes
-        assert True, "Memory stability test completed"
+        if has_psutil:
+            # Check memory usage
+            final_memory = process.memory_info().rss
+            memory_increase = final_memory - initial_memory
+            memory_increase_mb = memory_increase / (1024 * 1024)
+
+            # Should not leak too much memory (allow some reasonable increase)
+            assert memory_increase_mb < 100, f"Memory leak detected: {memory_increase_mb:.1f}MB increase"
+        else:
+            # If psutil not available, just verify we didn't crash
+            assert True, "Memory stability test completed (psutil not available)"
 
 
+@pytest.mark.integration
 class TestEndToEndRealSystem:
     """Complete end-to-end tests with real system components."""
 
@@ -397,7 +428,7 @@ class TestEndToEndRealSystem:
         client = OllamaClient("http://localhost:11434")
 
         # Real conversation logger
-        logger = ConversationLogger(temp_workspace)
+        logger = SecureConversationLogger(temp_workspace)
 
         # Real app with real components
         app = StreamlitBackroomApp()

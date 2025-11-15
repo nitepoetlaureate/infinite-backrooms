@@ -1,0 +1,65 @@
+{
+  "metrics": {
+    "max_samples": 10000,
+    "cleanup_interval": 300,
+    "resource_monitoring_interval": 30,
+    "storage_path": null,
+    "export_interval": 3600,
+    "retention_hours": 24
+  },
+  "logging": {
+    "log_level": "INFO",
+    "log_file": null,
+    "max_file_size": 10485760,
+    "backup_count": 5,
+    "enable_console": true,
+    "enable_json": true,
+    "log_directory": "logs"
+  },
+  "health_checks": {
+    "enabled_checks": [
+      "streamlit_app",
+      "ollama_api",
+      "cpu_usage",
+      "memory_usage",
+      "disk_usage"
+    ],
+    "streamlit_url": "http://localhost:8501",
+    "ollama_url": "http://localhost:11434",
+    "check_interval": 60,
+    "timeout": 10,
+    "cpu_threshold": 80.0,
+    "memory_threshold": 85.0,
+    "disk_threshold": 90.0
+  },
+  "alerts": {
+    "enabled": false,
+    "smtp_server": null,
+    "smtp_port": 587,
+    "smtp_username": null,
+    "smtp_password": null,
+    "smtp_from_email": null,
+    "smtp_to_emails": [],
+    "webhook_url": null,
+    "slack_webhook_url": null,
+    "slack_channel": null,
+    "check_interval": 60,
+    "rules": []
+  },
+  "profiling": {
+    "enabled": false,
+    "call_profiling": true,
+    "memory_profiling": true,
+    "max_profile_entries": 1000,
+    "max_memory_snapshots": 100,
+    "export_directory": "monitoring/profiles"
+  },
+  "dashboard": {
+    "enabled": true,
+    "output_directory": "monitoring/dashboards",
+    "auto_generate": true,
+    "generate_interval": 300,
+    "serve_dashboard": false,
+    "dashboard_port": 8080
+  }
+}

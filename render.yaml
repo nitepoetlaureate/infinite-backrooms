@@ -1,0 +1,78 @@
+# Render.com Configuration
+# For deploying to Render platform with production-ready settings
+
+services:
+  - type: web
+    name: infinite-backrooms
+    runtime: python
+    plan: starter
+    buildCommand: pip install -e . && pip install -r requirements.txt
+    startCommand: streamlit run streamlit_backroom.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.enableCORS=true --server.enableXsrfProtection=true
+    healthCheckPath: /_stcore/health
+    healthCheckTimeout: 30
+    healthCheckInterval: 30
+    healthCheckGracePeriod: 10
+    autoDeploy: false  # Deploy via webhook for better control
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: PYTHONPATH
+        value: /opt/render/project/src
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: STREAMLIT_SERVER_HEADLESS
+        value: true
+      - key: STREAMLIT_SERVER_PORT
+        value: $PORT
+      - key: STREAMLIT_SERVER_ADDRESS
+        value: 0.0.0.0
+      - key: STREAMLIT_SERVER_ENABLE_CORS
+        value: true
+      - key: STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION
+        value: true
+      - key: STREAMLIT_SERVER_MAX_UPLOAD_SIZE
+        value: 10
+      - key: STREAMLIT_SERVER_MAX_MESSAGE_SIZE
+        value: 200
+
+      # External service URLs (set these in Render dashboard)
+      - key: OLLAMA_BASE_URL
+        sync: false
+        description: "Ollama service URL"
+      - key: DATABASE_URL
+        sync: false
+        description: "Database connection string"
+      - key: REDIS_URL
+        sync: false
+        description: "Redis connection URL"
+
+      # Security and performance settings
+      - key: COOKIE_SECRET
+        generateValue: true
+        description: "Secret for session cookies"
+      - key: MAX_WORKERS
+        value: 1
+        description: "Number of worker processes"
+      - key: TIMEOUT
+        value: 60
+        description: "Request timeout in seconds"
+
+# Background worker for heavy processing (optional)
+  - type: worker
+    name: infinite-backrooms-worker
+    runtime: python
+    plan: starter
+    buildCommand: pip install -e . && pip install -r requirements.txt
+    startCommand: python scripts/background_worker.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: WORKER_TYPE
+        value: background
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false

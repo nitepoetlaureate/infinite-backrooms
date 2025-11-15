@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # Main Streamlit application
+  streamlit-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: infinite-backrooms-app
+    ports:
+      - "8501:8501"
+    environment:
+      - OLLAMA_URL=${OLLAMA_URL:-http://ollama:11434}
+      - OLLAMA_TIMEOUT=${OLLAMA_TIMEOUT:-120}
+      - OLLAMA_RESPONSE_TIMEOUT=${OLLAMA_RESPONSE_TIMEOUT:-300}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./conversations:/app/conversations
+      - ./static:/app/static:ro
+    depends_on:
+      - ollama
+    restart: unless-stopped
+    networks:
+      - backrooms-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Local Ollama service (optional - for local development)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: infinite-backrooms-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - backrooms-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    # Uncomment if you have GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+networks:
+  backrooms-network:
+    driver: bridge
+
+volumes:
+  ollama-data:
+    driver: local

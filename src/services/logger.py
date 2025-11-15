@@ -49,10 +49,22 @@ class ConversationLogger:
         cleaned = re.sub(r"\s+", " ", cleaned).strip()
         return cleaned
 
+    def get_daily_log_file_for_date(self, date: datetime) -> Path:
+        """Get the log file path for a specific date.
+
+        Args:
+            date: Date for the log file
+
+        Returns:
+            Path object for the specified date's log file
+        """
+        date_str = date.strftime("%Y-%m-%d")
+        return self.log_dir / f"{LOG_FILE_PREFIX}_{date_str}.txt"
+
     def log_message(
         self, persona: str, message: str, timestamp: datetime | None = None
     ) -> None:
-        """Log a message to today's file.
+        """Log a message to the appropriate file based on timestamp.
 
         Args:
             persona: Name of the persona sending the message
@@ -67,6 +79,40 @@ class ConversationLogger:
 
         # Only log if there's content after cleaning
         if cleaned_message:
-            log_file = self.get_daily_log_file()
+            # Get log file for the specific date (not just today)
+            log_file = self.get_daily_log_file_for_date(timestamp)
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(f"[{timestamp.strftime('%H:%M:%S')}] {persona}$ {cleaned_message}\n")
+
+    def parse_log_file(self, log_file_path: Path) -> list[dict[str, str]]:
+        """Parse a log file and return structured message data.
+
+        Args:
+            log_file_path: Path to the log file to parse
+
+        Returns:
+            List of dictionaries containing parsed message data with keys:
+            'timestamp', 'persona', 'content'
+        """
+        messages = []
+
+        if not log_file_path.exists():
+            return messages
+
+        content = log_file_path.read_text(encoding='utf-8')
+
+        # Parse log format: [HH:MM:SS] PersonaName$ Message content
+        pattern = r'\[(\d{2}:\d{2}:\d{2})\]\s+([^$]+)\$\s+(.+)'
+
+        for line in content.split('\n'):
+            if line.strip():
+                match = re.match(pattern, line)
+                if match:
+                    timestamp, persona, message_content = match.groups()
+                    messages.append({
+                        'timestamp': timestamp.strip(),
+                        'persona': persona.strip(),
+                        'content': message_content.strip()
+                    })
+
+        return messages

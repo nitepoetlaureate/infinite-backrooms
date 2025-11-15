@@ -3,7 +3,7 @@
 import pytest
 from pathlib import Path
 from datetime import datetime
-from streamlit_backroom import ConversationLogger
+from streamlit_backroom import SecureConversationLogger
 
 
 class TestConversationLogger:
@@ -11,7 +11,7 @@ class TestConversationLogger:
 
     def test_logger_initialization(self, temp_log_dir):
         """Test logger initialization creates directory."""
-        logger = ConversationLogger(log_dir=str(temp_log_dir))
+        logger = SecureConversationLogger(log_dir=str(temp_log_dir))
         assert logger.log_dir == temp_log_dir
         assert temp_log_dir.exists()
 
@@ -20,7 +20,7 @@ class TestConversationLogger:
         log_dir = tmp_path / "new_logs"
         assert not log_dir.exists()
 
-        logger = ConversationLogger(log_dir=str(log_dir))
+        logger = SecureConversationLogger(log_dir=str(log_dir))
         assert log_dir.exists()
 
     def test_get_daily_log_file(self, conversation_logger):
@@ -44,7 +44,8 @@ class TestConversationLogger:
         test_time = datetime(2024, 1, 1, 12, 30, 45)
         conversation_logger.log_message("TestBot", "Hello world", timestamp=test_time)
 
-        log_file = conversation_logger.get_daily_log_file()
+        # Get the log file for the specific test date
+        log_file = conversation_logger.get_daily_log_file_for_date(test_time)
         content = log_file.read_text()
 
         assert "TestBot" in content
@@ -157,8 +158,8 @@ class TestConversationLogger:
 
     def test_multiple_loggers_same_directory(self, temp_log_dir):
         """Test multiple logger instances can write to same directory."""
-        logger1 = ConversationLogger(log_dir=str(temp_log_dir))
-        logger2 = ConversationLogger(log_dir=str(temp_log_dir))
+        logger1 = SecureConversationLogger(log_dir=str(temp_log_dir))
+        logger2 = SecureConversationLogger(log_dir=str(temp_log_dir))
 
         logger1.log_message("Logger1", "Message from logger 1")
         logger2.log_message("Logger2", "Message from logger 2")

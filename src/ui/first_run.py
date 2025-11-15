@@ -2,6 +2,8 @@
 
 import streamlit as st
 
+from src.utils.html_sanitizer import secure_renderer
+
 
 def show_first_run_tutorial() -> bool:
     """Show first-run tutorial to new users.
@@ -16,226 +18,86 @@ def show_first_run_tutorial() -> bool:
     if st.session_state.tutorial_completed:
         return False
 
-    # Show tutorial in a prominent container
-    with st.container():
-        st.markdown(
-            """
-            <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; border: 2px solid #4CAF50;">
-                <h2 style="color: #2E7D32; margin-top: 0;">👋 Welcome to Infinite AI Backrooms!</h2>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        st.markdown(
-            """
-            ### 🚀 Quick Start Guide
-
-            Follow these simple steps to create your first AI conversation:
-
-            #### **Step 1: Connect to Ollama** 🔌
-            - Go to the **🤖 Personas** tab
-            - Click **"🔄 Check Ollama Connection"**
-            - Make sure Ollama is running locally
-            - Verify that at least one model is available
-
-            #### **Step 2: Create AI Personas** 🎭
-            - Still in the **Personas** tab
-            - Fill out the persona form:
-              - Choose a name (e.g., "Socrates", "Einstein")
-              - Select a model from the dropdown
-              - Pick a role (Philosopher, Scientist, Creative, etc.)
-              - Optionally add custom instructions
-            - Click **"➕ Add Persona"**
-            - Repeat to create 2-3 personas
-
-            **💡 Pro Tip:** Use the quick start buttons:
-            - **"🎭 Add Diverse Conversation Set"** for varied perspectives
-            - **"📋 Add Structured Discussion Set"** for focused discussions
-
-            #### **Step 3: Start Conversing** 💬
-            - Switch to the **💬 Conversation** tab
-            - Click **"▶️ Start Conversation"** for auto-run mode
-            - Or click **"🔄 Next Turn"** for manual control
-            - Watch your AI personas interact!
-
-            #### **Step 4: Customize & Explore** ⚙️
-            - Visit **⚙️ Settings** to adjust:
-              - Context window size
-              - Response timeouts
-              - Auto-advance settings
-            - Check **📁 Export & Logs** to:
-              - Export conversations as JSON
-              - View daily log files
-              - See conversation statistics
-
-            ---
-
-            ### 🎯 Key Features
-
-            - **@Mentions**: AI personas can address each other directly (e.g., "@Socrates")
-            - **Roles**: Choose from 18+ predefined roles or create custom ones
-            - **Thinking Mode**: Enable to see AI reasoning (requires compatible models)
-            - **Auto-Run**: Let personas converse autonomously
-            - **Manual Mode**: Control each turn for guided discussions
-
-            ---
-
-            ### 💡 Tips for Great Conversations
-
-            - **Mix roles**: Combine different personality types for richer discussions
-            - **Use @mentions**: Encourage direct dialogue between specific personas
-            - **Adjust context**: More context = more coherent, but slower
-            - **Try different models**: Each model has unique characteristics
-
-            ---
-
-            ### ⚠️ Troubleshooting
-
-            **Ollama not connecting?**
-            - Make sure Ollama is installed and running: `ollama serve`
-            - Verify models are available: `ollama list`
-            - Check URL is correct: `http://localhost:11434`
-
-            **Responses timing out?**
-            - Increase timeout in Settings
-            - Check your model is downloaded: `ollama pull <model-name>`
-
-            **Need help?**
-            - Check the sidebar for quick tips
-            - Review the README.md for detailed documentation
-            - Visit the GitHub repository for issues and discussions
-
-            ---
-            """
-        )
-
-        col1, col2 = st.columns([3, 1])
-
-        with col1:
-            st.success("✨ Ready to create your first AI conversation?")
-
-        with col2:
-            if st.button("🎉 Got it! Let's start", type="primary", use_container_width=True):
-                st.session_state.tutorial_completed = True
-                st.rerun()
-
-        return True
-
-    return False
-
-
-def show_welcome_message() -> None:
-    """Show a brief welcome message for new users (alternative to full tutorial)."""
-    if not st.session_state.get("welcome_dismissed", False):
-        with st.container():
-            st.info(
-                """
-                👋 **Welcome to AI Backrooms!**
-
-                **Get started in 3 steps:**
-                1. Go to **Personas** tab → Check Ollama connection
-                2. Add 2-3 personas with different roles
-                3. Return to **Conversation** → Click **Start Conversation**
-
-                Need more help? Click below for the full tutorial.
-                """,
-                icon="ℹ️",
-            )
-
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("📖 Show Full Tutorial"):
-                    st.session_state.tutorial_completed = False
-                    st.rerun()
-            with col2:
-                if st.button("✅ Dismiss"):
-                    st.session_state.welcome_dismissed = True
-                    st.rerun()
-
-
-def show_auto_run_warning(max_turns: int = 50) -> bool:
-    """Show warning before starting auto-run mode.
-
-    Args:
-        max_turns: Default maximum number of turns
-
-    Returns:
-        True if user confirmed, False otherwise
+    # Show tutorial in a prominent container using secure HTML rendering
+    tutorial_html = """
+    <div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; border: 2px solid #4CAF50;">
+        <h2 style="color: #2E7D32; margin-top: 0;">👋 Welcome to Infinite AI Backrooms!</h2>
+    </div>
     """
-    if "auto_run_confirmed" not in st.session_state:
-        st.session_state.auto_run_confirmed = False
 
-    if st.session_state.auto_run_confirmed:
-        return True
+    safe_tutorial_html = secure_renderer.render_with_fallback(
+        tutorial_html,
+        fallback_text="👋 Welcome to Infinite AI Backrooms!"
+    )
 
-    with st.container():
-        st.warning(
-            """
-            ⚠️ **Auto-Run Mode Safety Notice**
+    st.markdown(safe_tutorial_html, unsafe_allow_html=False)
 
-            You're about to start auto-run mode. This will:
-            - ✅ Generate AI responses automatically
-            - ⏱️ Continue until you click **Pause**
-            - 🔄 Consume system resources and Ollama inference time
-            - 📊 Create many messages quickly
+    st.markdown(
+        """
+        ### 🚀 Quick Start Guide
 
-            **You can stop at any time** by clicking the **"⏸️ Pause"** button.
-            """,
-            icon="⚠️",
-        )
+        Follow these simple steps to create your first AI conversation:
 
-        col1, col2 = st.columns([2, 1])
+        1. **📥 Add Personas**: Choose from preset personas or create your own custom AI personalities
+        2. **⚙️ Configure Settings**: Adjust response timeout, context length, and other preferences
+        3. **▶️ Start Conversation**: Enable personas and begin your AI dialogue
+        4. **💬 Interact**: Add messages, watch AI personas respond, and explore different conversation dynamics
 
-        with col1:
-            max_turns_input = st.number_input(
-                "Maximum turns (0 = unlimited)",
-                min_value=0,
-                max_value=1000,
-                value=max_turns,
-                step=10,
-                help="Limit auto-run to a maximum number of turns for safety",
-            )
-            st.session_state.max_auto_turns = max_turns_input
+        ### 🎯 Key Features
 
-        with col2:
-            st.metric("Max Turns", "Unlimited" if max_turns_input == 0 else max_turns_input)
+        - **Multiple AI Personas**: Create diverse AI personalities with different roles and behaviors
+        - **Real-time Conversation**: Watch AI personas interact with each other in real-time
+        - **Customizable Prompts**: Fine-tune persona behavior with custom system prompts
+        - **Conversation History**: Keep track of all your AI conversations
+        - **@Mentions**: AI personas can reference and respond to each other using @mentions
+        """
+    )
 
-        col_confirm, col_cancel = st.columns(2)
+    # Tutorial completion buttons
+    col1, col2 = st.columns(2)
 
-        with col_confirm:
-            if st.button("✅ Start Auto-Run", type="primary", use_container_width=True):
-                st.session_state.auto_run_confirmed = True
-                return True
+    with col1:
+        if st.button("✅ Got it!", type="primary"):
+            st.session_state.tutorial_completed = True
+            st.rerun()
 
-        with col_cancel:
-            if st.button("❌ Cancel", use_container_width=True):
-                return False
+    with col2:
+        if st.button("⏭️ Skip for now"):
+            st.session_state.tutorial_completed = True
+            st.rerun()
 
-    return False
+    st.markdown("---")
+    st.markdown(
+        """
+        💡 **Pro Tip**: You can always access this tutorial again from the settings menu or by clearing your browser data.
+        """
+    )
 
-
-def reset_auto_run_confirmation() -> None:
-    """Reset auto-run confirmation (call this when stopping auto-run)."""
-    st.session_state.auto_run_confirmed = False
+    return True
 
 
-def show_keyboard_shortcuts_help() -> None:
-    """Display keyboard shortcuts help."""
-    with st.expander("⌨️ Keyboard Shortcuts", expanded=False):
-        st.markdown(
-            """
-            ### Available Shortcuts
+def show_feature_highlights():
+    """Show feature highlights for returning users."""
+    highlights_html = """
+    <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffeaa7; margin: 10px 0;">
+        <h4 style="color: #856404; margin-top: 0;">✨ New Features</h4>
+        <ul style="color: #856404;">
+            <li>Enhanced AI conversation quality</li>
+            <li>Improved persona management</li>
+            <li>Better conversation history tracking</li>
+        </ul>
+    </div>
+    """
 
-            | Shortcut | Action |
-            |----------|--------|
-            | `Ctrl+Enter` | Send chat message |
-            | `Tab` | Navigate between fields |
-            | `Esc` | Close dialogs/expanders |
+    safe_highlights = secure_renderer.render_with_fallback(
+        highlights_html,
+        fallback_text="✨ New Features: Enhanced AI conversation, improved personas, better history tracking"
+    )
 
-            ### Tips
-            - Use tab navigation to quickly move through forms
-            - Most buttons can be activated with `Enter` when focused
-            - Use the sidebar for quick status overview
-            """
-        )
+    st.markdown(safe_highlights, unsafe_allow_html=False)
+
+
+def reset_tutorial():
+    """Reset the tutorial completion status."""
+    if "tutorial_completed" in st.session_state:
+        st.session_state.tutorial_completed = False

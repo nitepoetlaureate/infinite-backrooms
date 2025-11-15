@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Infinite AI Backroom - Streamlit Web App.
+"""Infinite AI Backroom - Streamlit Web App (Event Loop Safe Version).
 
 Interactive web interface for managing AI personas and running infinite conversations.
-This version has been refactored to use modular services and eliminate code duplication.
+This version uses thread-based async execution to avoid event loop conflicts.
 """
 
 from __future__ import annotations
@@ -13,15 +13,21 @@ import logging
 import random
 import time
 import uuid
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from datetime import datetime
-from typing import Any
+from typing import Any, Generator
 
 import streamlit as st
 
 from src.models.persona import AIPersona
 from src.services.logger import ConversationLogger
+from src.services.optimized_ollama_client import OptimizedOllamaClient
 from src.services.ollama_client import OllamaClient
+
+# Compatibility aliases
+OllamaClientOptimized = OptimizedOllamaClient
 from src.ui.components import (
     get_persona_avatar,
     highlight_mentions,
@@ -50,11 +56,39 @@ from src.utils.constants import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Thread pool for async operations
+async_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="ollama_async")
+
+
+def run_async_in_thread(coro):
+    """Run async coroutine in a separate thread to avoid event loop conflicts.
+
+    Args:
+        coro: Async coroutine to execute
+
+    Returns:
+        Result of the coroutine
+    """
+    def run_in_new_loop():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(coro)
+        finally:
+            loop.close()
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(run_in_new_loop)
+        return future.result()
+
 
 def inject_system_css() -> None:
     """Inject System.css styling into the Streamlit app for retro Mac OS aesthetic."""
-    with open("static/css/system.css", "r") as f:
-        system_css = f.read()
+    try:
+        with open("static/css/system.css", "r") as f:
+            system_css = f.read()
+    except FileNotFoundError:
+        system_css = ""  # Fallback if CSS file doesn't exist
 
     st.markdown(
         f"""
@@ -230,32 +264,6 @@ def inject_system_css() -> None:
             color: #000000 !important;
         }}
 
-        /* Scrollbars - System 7 style */
-        ::-webkit-scrollbar {{
-            width: 16px !important;
-            height: 16px !important;
-            background-color: #FFFFFF !important;
-        }}
-
-        ::-webkit-scrollbar-track {{
-            background: linear-gradient(45deg, #000000 25%, transparent 25%, transparent 75%, #000000 75%, #000000),
-                        linear-gradient(45deg, #000000 25%, transparent 25%, transparent 75%, #000000 75%, #000000) !important;
-            background-color: #FFFFFF !important;
-            background-size: 4px 4px !important;
-            background-position: 0 0, 2px 2px !important;
-            border-left: 2px solid #000000 !important;
-        }}
-
-        ::-webkit-scrollbar-thumb {{
-            background-color: #FFFFFF !important;
-            border: 2px solid #000000 !important;
-        }}
-
-        ::-webkit-scrollbar-button {{
-            background-color: #FFFFFF !important;
-            border: 2px solid #000000 !important;
-        }}
-
         /* Chat messages */
         .stChatMessage {{
             border: 2px solid #000000 !important;
@@ -284,8 +292,8 @@ def inject_system_css() -> None:
     )
 
 
-class StreamlitBackroomApp:
-    """Main Streamlit application for AI Backroom."""
+class StreamlitBackroomSafeApp:
+    """Main Streamlit application for AI Backroom with safe async handling."""
 
     def __init__(self) -> None:
         """Initialize the application."""
@@ -323,16 +331,24 @@ class StreamlitBackroomApp:
         if "pending_manual_turn" not in st.session_state:
             st.session_state.pending_manual_turn = False
 
-    async def check_ollama_connection(self) -> bool:
+    def check_ollama_connection(self) -> bool:
         """Check Ollama connection and update available models.
 
         Returns:
             True if connection successful
         """
-        async with OllamaClient(DEFAULT_OLLAMA_URL) as client:
-            connected, models = await client.test_connection()
+        async def _check_connection():
+            async with OptimizedOllamaClient(DEFAULT_OLLAMA_URL) as client:
+                connected, models = await client.test_connection()
+                return connected, models
+
+        try:
+            connected, models = run_async_in_thread(_check_connection())
             st.session_state.available_models = models
             return connected
+        except Exception as e:
+            logger.error(f"Connection check failed: {e}")
+            return False
 
     def get_next_speaker(self) -> AIPersona | None:
         """Get the next speaker in rotation.
@@ -400,9 +416,7 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
 
         return base_prompt
 
-    async def get_ai_response_stream(
-        self, persona: AIPersona, prompt: str
-    ) -> AsyncGenerator[dict[str, str], None]:
+    def get_ai_response_stream(self, persona: AIPersona, prompt: str) -> Generator[dict[str, str], None, None]:
         """Get streaming response from AI persona.
 
         Args:
@@ -414,22 +428,34 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
         """
         system_prompt = self.generate_system_prompt(persona)
         enable_thinking = st.session_state.settings.get("enable_thinking", ENABLE_THINKING)
-        timeout_seconds = st.session_state.settings.get(
-            "response_timeout", DEFAULT_RESPONSE_TIMEOUT
-        )
+        timeout_seconds = st.session_state.settings.get("response_timeout", DEFAULT_RESPONSE_TIMEOUT)
 
         # Check if model is known to not support thinking
         if persona.model in st.session_state.non_thinking_models:
             enable_thinking = False
 
-        async with OllamaClient(DEFAULT_OLLAMA_URL) as client:
-            async for chunk in client.generate_stream(
-                persona.model, prompt, system_prompt, think=enable_thinking, timeout=timeout_seconds
-            ):
+        async def _stream_response():
+            async with OptimizedOllamaClient(DEFAULT_OLLAMA_URL) as client:
+                async for chunk in client.generate_stream(
+                    persona.model, prompt, system_prompt, think=enable_thinking, timeout=timeout_seconds
+                ):
+                    yield chunk
+
+        try:
+            # Run the async generator in a thread and yield results
+            async_gen = run_async_in_thread(_stream_response())
+
+            # Convert async generator to sync by collecting all results
+            chunks = list(async_gen)
+            for chunk in chunks:
                 # Track non-thinking models
                 if chunk["type"] == "info" and "doesn't support thinking" in chunk["content"]:
                     st.session_state.non_thinking_models.add(persona.model)
                 yield chunk
+
+        except Exception as e:
+            logger.error(f"Stream response error: {e}")
+            yield {"type": "error", "content": f"Stream processing error: {str(e)}"}
 
     def persona_management_ui(self) -> None:
         """UI for managing AI personas."""
@@ -439,36 +465,17 @@ Be genuine, curious, and conversational. Keep your responses thoughtful but not 
         if st.button("🔄 Check Ollama Connection"):
             with st.status("Checking Ollama connection...", expanded=True) as status:
                 st.write("Connecting to Ollama API...")
-                try:
-                    connected = asyncio.run(self.check_ollama_connection())
-                    if connected:
-                        st.write(f"✅ Found {len(st.session_state.available_models)} models")
-                        for model in st.session_state.available_models:
-                            st.write(f"• {model}")
-                        status.update(
-                            label="Connection successful!", state="complete", expanded=False
-                        )
-                    else:
-                        st.write("❌ Connection failed")
-                        status.update(label="Connection failed", state="error", expanded=False)
-                except RuntimeError:
-                    # Handle "Event loop is closed" gracefully
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    try:
-                        connected = loop.run_until_complete(self.check_ollama_connection())
-                        if connected:
-                            st.write(f"✅ Found {len(st.session_state.available_models)} models")
-                            for model in st.session_state.available_models:
-                                st.write(f"• {model}")
-                            status.update(
-                                label="Connection successful!", state="complete", expanded=False
-                            )
-                        else:
-                            st.write("❌ Connection failed")
-                            status.update(label="Connection failed", state="error", expanded=False)
-                    finally:
-                        loop.close()
+                connected = self.check_ollama_connection()
+                if connected:
+                    st.write(f"✅ Found {len(st.session_state.available_models)} models")
+                    for model in st.session_state.available_models:
+                        st.write(f"• {model}")
+                    status.update(
+                        label="Connection successful!", state="complete", expanded=False
+                    )
+                else:
+                    st.write("❌ Connection failed")
+                    status.update(label="Connection failed", state="error", expanded=False)
 
         # Display current personas
         if st.session_state.personas:
@@ -965,118 +972,59 @@ Your response should be conversational and engaging."""
             # Show persona header
             render_persona_header(current_persona)
 
-            # Get streaming response using better event loop management
+            # Get streaming response
             thinking_content = ""
             response_content = ""
-            task = None
+            thinking_placeholder = None
+            response_placeholder = None
 
             try:
-                # Try using asyncio.run first
-                connected = asyncio.run(self._process_stream_response(
-                    current_persona,
-                    prompt,
-                    auto_mode,
-                    status_container,
-                ))
-                thinking_content, response_content = connected
-            except RuntimeError:
-                # Handle "Event loop is closed" gracefully
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
+                for chunk in self.get_ai_response_stream(current_persona, prompt):
+                    if chunk["type"] == "error":
+                        if thinking_placeholder:
+                            thinking_placeholder.empty()
+                        st.error(chunk["content"])
+                        break
 
-                async def process_stream() -> tuple[str, str]:
-                    nonlocal thinking_content, response_content
-                    thinking_placeholder = None
-                    thinking_stream_placeholder = None
-                    response_placeholder = None
-
-                    try:
-                        async for chunk in self.get_ai_response_stream(current_persona, prompt):
-                            if chunk["type"] == "error":
-                                if thinking_placeholder:
-                                    thinking_placeholder.empty()
-                                st.error(chunk["content"])
-                                return thinking_content, response_content
-
-                            elif chunk["type"] == "info":
-                                if auto_mode and status_container:
-                                    with status_container:
-                                        st.info(chunk["content"])
-                                else:
-                                    st.info(chunk["content"])
-
-                            elif chunk["type"] == "thinking":
-                                thinking_content += chunk["content"]
-
-                                if auto_mode and status_container:
-                                    if thinking_stream_placeholder is None:
-                                        with status_container:
-                                            st.write("🧠 **AI is thinking...**")
-                                            thinking_stream_placeholder = st.empty()
-
-                                    with thinking_stream_placeholder:
-                                        st.text(f"💭 {thinking_content}")
-
-                                elif not auto_mode:
-                                    if not thinking_placeholder:
-                                        st.write("🧠 **AI is thinking...**")
-                                        thinking_placeholder = st.empty()
-
-                                    with thinking_placeholder:
-                                        st.text(f"💭 {thinking_content}")
-
-                            elif chunk["type"] == "response":
-                                response_content += chunk["content"]
-
-                                if response_placeholder is None:
-                                    if not auto_mode:
-                                        st.write("💬 **AI is responding...**")
-                                    response_placeholder = st.empty()
-
-                                response_placeholder.write(response_content)
-
-                    except asyncio.CancelledError:
+                    elif chunk["type"] == "info":
                         if auto_mode and status_container:
                             with status_container:
-                                st.info("🛑 Response cancelled")
+                                st.info(chunk["content"])
                         else:
-                            st.info("🛑 Response cancelled")
-                        return thinking_content, response_content
-                    except Exception as e:
-                        st.error(f"Stream processing error: {str(e)}")
-                        return thinking_content, response_content
+                            st.info(chunk["content"])
 
-                    return thinking_content, response_content
+                    elif chunk["type"] == "thinking":
+                        thinking_content += chunk["content"]
 
-                try:
-                    task = loop.create_task(process_stream())
-                    thinking_content, response_content = loop.run_until_complete(task)
-                except KeyboardInterrupt:
-                    if task and not task.done():
-                        task.cancel()
-                        try:
-                            loop.run_until_complete(task)
-                        except asyncio.CancelledError:
-                            pass
-                except Exception as e:
-                    st.error(f"Processing error: {str(e)}")
-                finally:
-                    if task and not task.done():
-                        task.cancel()
-                        try:
-                            loop.run_until_complete(task)
-                        except asyncio.CancelledError:
-                            pass
+                        if auto_mode and status_container:
+                            if thinking_placeholder is None:
+                                with status_container:
+                                    st.write("🧠 **AI is thinking...**")
+                                    thinking_placeholder = st.empty()
 
-                    try:
-                        loop.run_until_complete(asyncio.sleep(0.1))
-                    except Exception:
-                        pass
+                            with thinking_placeholder:
+                                st.text(f"💭 {thinking_content}")
 
-                    try:
-                        loop.close()
-                    except RuntimeError:
-                        pass
+                        elif not auto_mode:
+                            if not thinking_placeholder:
+                                st.write("🧠 **AI is thinking...**")
+                                thinking_placeholder = st.empty()
+
+                            with thinking_placeholder:
+                                st.text(f"💭 {thinking_content}")
+
+                    elif chunk["type"] == "response":
+                        response_content += chunk["content"]
+
+                        if response_placeholder is None:
+                            if not auto_mode:
+                                st.write("💬 **AI is responding...**")
+                            response_placeholder = st.empty()
+
+                        response_placeholder.write(response_content)
+
+            except Exception as e:
+                st.error(f"Stream processing error: {str(e)}")
 
             # Show timestamp and model
             timestamp = datetime.now()
@@ -1107,88 +1055,6 @@ Your response should be conversational and engaging."""
         # Only rerun if not in auto mode
         if not auto_mode:
             st.rerun()
-
-    async def _process_stream_response(
-        self,
-        persona: AIPersona,
-        prompt: str,
-        auto_mode: bool,
-        status_container: Any | None,
-    ) -> tuple[str, str]:
-        """Process streaming response asynchronously.
-
-        Args:
-            persona: Persona to get response from
-            prompt: Prompt to send
-            auto_mode: Whether in auto mode
-            status_container: Optional status container
-
-        Returns:
-            Tuple of (thinking_content, response_content)
-        """
-        thinking_content = ""
-        response_content = ""
-        thinking_placeholder = None
-        thinking_stream_placeholder = None
-        response_placeholder = None
-
-        try:
-            async for chunk in self.get_ai_response_stream(persona, prompt):
-                if chunk["type"] == "error":
-                    if thinking_placeholder:
-                        thinking_placeholder.empty()
-                    st.error(chunk["content"])
-                    return thinking_content, response_content
-
-                elif chunk["type"] == "info":
-                    if auto_mode and status_container:
-                        with status_container:
-                            st.info(chunk["content"])
-                    else:
-                        st.info(chunk["content"])
-
-                elif chunk["type"] == "thinking":
-                    thinking_content += chunk["content"]
-
-                    if auto_mode and status_container:
-                        if thinking_stream_placeholder is None:
-                            with status_container:
-                                st.write("🧠 **AI is thinking...**")
-                                thinking_stream_placeholder = st.empty()
-
-                        with thinking_stream_placeholder:
-                            st.text(f"💭 {thinking_content}")
-
-                    elif not auto_mode:
-                        if not thinking_placeholder:
-                            st.write("🧠 **AI is thinking...**")
-                            thinking_placeholder = st.empty()
-
-                        with thinking_placeholder:
-                            st.text(f"💭 {thinking_content}")
-
-                elif chunk["type"] == "response":
-                    response_content += chunk["content"]
-
-                    if response_placeholder is None:
-                        if not auto_mode:
-                            st.write("💬 **AI is responding...**")
-                        response_placeholder = st.empty()
-
-                    response_placeholder.write(response_content)
-
-        except asyncio.CancelledError:
-            if auto_mode and status_container:
-                with status_container:
-                    st.info("🛑 Response cancelled")
-            else:
-                st.info("🛑 Response cancelled")
-            return thinking_content, response_content
-        except Exception as e:
-            st.error(f"Stream processing error: {str(e)}")
-            return thinking_content, response_content
-
-        return thinking_content, response_content
 
     def export_ui(self) -> None:
         """UI for exporting conversations."""
@@ -1268,31 +1134,14 @@ Your response should be conversational and engaging."""
                 st.error("❌ Ollama Disconnected")
                 if st.button("🔄 Retry Connection", type="secondary"):
                     with st.spinner("Connecting to Ollama..."):
-                        try:
-                            connected = asyncio.run(self.check_ollama_connection())
-                            if connected:
-                                st.success(
-                                    f"✅ Connected! Found {len(st.session_state.available_models)} models"
-                                )
-                                st.rerun()
-                            else:
-                                st.error("❌ Still unable to connect to Ollama")
-                        except RuntimeError:
-                            loop = asyncio.new_event_loop()
-                            asyncio.set_event_loop(loop)
-                            try:
-                                connected = loop.run_until_complete(
-                                    self.check_ollama_connection()
-                                )
-                                if connected:
-                                    st.success(
-                                        f"✅ Connected! Found {len(st.session_state.available_models)} models"
-                                    )
-                                    st.rerun()
-                                else:
-                                    st.error("❌ Still unable to connect to Ollama")
-                            finally:
-                                loop.close()
+                        connected = self.check_ollama_connection()
+                        if connected:
+                            st.success(
+                                f"✅ Connected! Found {len(st.session_state.available_models)} models"
+                            )
+                            st.rerun()
+                        else:
+                            st.error("❌ Still unable to connect to Ollama")
 
             st.divider()
             st.subheader("📊 Status")
@@ -1379,12 +1228,9 @@ def main() -> None:
     # Inject System.css for retro Mac OS aesthetic
     inject_system_css()
 
-    app = StreamlitBackroomApp()
+    app = StreamlitBackroomSafeApp()
     app.run()
 
-
-# Type imports for async generator
-from typing import AsyncGenerator  # noqa: E402, F401
 
 if __name__ == "__main__":
     main()

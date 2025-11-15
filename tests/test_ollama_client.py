@@ -42,19 +42,26 @@ class TestOllamaClient:
             # Create mock session
             mock_session = AsyncMock()
             mock_session.get = Mock(return_value=mock_response)
+            mock_session.closed = False
+            mock_session.close = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
 
-            mock_session_class.return_value = mock_session
+            # Create mock connector
+            mock_connector = AsyncMock()
+            mock_connector.close = AsyncMock()
 
-            client = OllamaClient()
-            success, models = await client.test_connection()
+            with patch('aiohttp.TCPConnector', return_value=mock_connector):
+                mock_session_class.return_value = mock_session
 
-            assert success is True
-            assert len(models) == 3
-            assert "llama2:latest" in models
-            assert "mistral:latest" in models
-            assert "granite3.3:8b" in models
+                async with OllamaClient() as client:
+                    success, models = await client.test_connection()
+
+                    assert success is True
+                    assert len(models) == 3
+                    assert "llama2:latest" in models
+                    assert "mistral:latest" in models
+                    assert "granite3.3:8b" in models
 
     @pytest.mark.asyncio
     async def test_connection_failure_network_error(self):
@@ -62,16 +69,22 @@ class TestOllamaClient:
         with patch('aiohttp.ClientSession') as mock_session_class:
             mock_session = AsyncMock()
             mock_session.get = Mock(side_effect=aiohttp.ClientError("Connection failed"))
+            mock_session.closed = False
+            mock_session.close = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
 
-            mock_session_class.return_value = mock_session
+            mock_connector = AsyncMock()
+            mock_connector.close = AsyncMock()
 
-            client = OllamaClient()
-            success, models = await client.test_connection()
+            with patch('aiohttp.TCPConnector', return_value=mock_connector):
+                mock_session_class.return_value = mock_session
 
-            assert success is False
-            assert models == []
+                async with OllamaClient() as client:
+                    success, models = await client.test_connection()
+
+                    assert success is False
+                    assert models == []
 
     @pytest.mark.asyncio
     async def test_connection_failure_timeout(self):
@@ -79,16 +92,22 @@ class TestOllamaClient:
         with patch('aiohttp.ClientSession') as mock_session_class:
             mock_session = AsyncMock()
             mock_session.get = Mock(side_effect=asyncio.TimeoutError())
+            mock_session.closed = False
+            mock_session.close = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
 
-            mock_session_class.return_value = mock_session
+            mock_connector = AsyncMock()
+            mock_connector.close = AsyncMock()
 
-            client = OllamaClient()
-            success, models = await client.test_connection()
+            with patch('aiohttp.TCPConnector', return_value=mock_connector):
+                mock_session_class.return_value = mock_session
 
-            assert success is False
-            assert models == []
+                async with OllamaClient() as client:
+                    success, models = await client.test_connection()
+
+                    assert success is False
+                    assert models == []
 
     @pytest.mark.asyncio
     async def test_connection_failure_http_error(self):
@@ -101,16 +120,22 @@ class TestOllamaClient:
 
             mock_session = AsyncMock()
             mock_session.get = Mock(return_value=mock_response)
+            mock_session.closed = False
+            mock_session.close = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
 
-            mock_session_class.return_value = mock_session
+            mock_connector = AsyncMock()
+            mock_connector.close = AsyncMock()
 
-            client = OllamaClient()
-            success, models = await client.test_connection()
+            with patch('aiohttp.TCPConnector', return_value=mock_connector):
+                mock_session_class.return_value = mock_session
 
-            assert success is False
-            assert models == []
+                async with OllamaClient() as client:
+                    success, models = await client.test_connection()
+
+                    assert success is False
+                    assert models == []
 
     @pytest.mark.asyncio
     async def test_connection_empty_models_list(self):
@@ -124,16 +149,22 @@ class TestOllamaClient:
 
             mock_session = AsyncMock()
             mock_session.get = Mock(return_value=mock_response)
+            mock_session.closed = False
+            mock_session.close = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
 
-            mock_session_class.return_value = mock_session
+            mock_connector = AsyncMock()
+            mock_connector.close = AsyncMock()
 
-            client = OllamaClient()
-            success, models = await client.test_connection()
+            with patch('aiohttp.TCPConnector', return_value=mock_connector):
+                mock_session_class.return_value = mock_session
 
-            assert success is True
-            assert models == []
+                async with OllamaClient() as client:
+                    success, models = await client.test_connection()
+
+                    assert success is True
+                    assert models == []
 
     @pytest.mark.asyncio
     async def test_generate_stream_basic(self):
@@ -240,19 +271,24 @@ class TestOllamaClient:
 
             mock_session = AsyncMock()
             mock_session.get = Mock(return_value=mock_response)
+            mock_session.closed = False
+            mock_session.close = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
 
-            mock_session_class.return_value = mock_session
+            mock_connector = AsyncMock()
+            mock_connector.close = AsyncMock()
 
-            client = OllamaClient()
+            with patch('aiohttp.TCPConnector', return_value=mock_connector):
+                mock_session_class.return_value = mock_session
 
-            # Test multiple concurrent calls
-            results = await asyncio.gather(
-                client.test_connection(),
-                client.test_connection(),
-                client.test_connection()
-            )
+                async with OllamaClient() as client:
+                    # Test multiple concurrent calls
+                    results = await asyncio.gather(
+                        client.test_connection(),
+                        client.test_connection(),
+                        client.test_connection()
+                    )
 
-            assert len(results) == 3
-            assert all(success for success, _ in results)
+                    assert len(results) == 3
+                    assert all(success for success, _ in results)
