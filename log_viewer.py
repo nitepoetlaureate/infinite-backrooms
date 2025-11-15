@@ -21,14 +21,14 @@ class LogParser:
         """Get all available log files"""
         if not self.log_dir.exists():
             return []
-        
-        log_files = []
+
+        log_files: list[Path] = []
         # Look for both old backroom format and new ai_conversation format
         patterns = ["backroom_*.txt", "ai_conversation_*.txt"]
-        
+
         for pattern in patterns:
             log_files.extend(self.log_dir.glob(pattern))
-        
+
         return sorted(log_files, reverse=True)  # Most recent first
     
     def parse_log_file(self, file_path: Path) -> List[Dict]:
@@ -88,7 +88,7 @@ class LogParser:
         # Convert timestamp to datetime for better sorting/filtering
         try:
             df['datetime'] = pd.to_datetime(df['full_timestamp'])
-        except:
+        except Exception:
             df['datetime'] = pd.NaT
         
         return df.sort_values('datetime', ascending=False).reset_index(drop=True)

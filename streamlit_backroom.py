@@ -11,6 +11,7 @@ import random
 import time
 import re
 import warnings
+from contextlib import suppress
 from datetime import datetime
 from typing import List, Dict, Any, Optional, AsyncGenerator
 import aiohttp
@@ -100,17 +101,19 @@ class OllamaClient:
     async def test_connection(self) -> tuple[bool, List[str]]:
         """Test if Ollama API is accessible and return available models"""
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
+            async with (
+                aiohttp.ClientSession() as session,
+                session.get(
                     f"{self.base_url}/api/tags",
                     timeout=aiohttp.ClientTimeout(total=10)
-                ) as response:
-                    if response.status == 200:
-                        result = await response.json()
-                        models = [model["name"] for model in result.get("models", [])]
-                        return True, models
-                    else:
-                        return False, []
+                ) as response,
+            ):
+                if response.status == 200:
+                    result = await response.json()
+                    models = [model["name"] for model in result.get("models", [])]
+                    return True, models
+                else:
+                    return False, []
         except Exception as e:
             st.error(f"Failed to connect to Ollama: {e}")
             return False, []
@@ -206,11 +209,8 @@ class OllamaClient:
         finally:
             # Ensure session is always closed
             if session and not session.closed:
-                try:
+                with suppress(Exception):
                     await session.close()
-                except Exception:
-                    # Ignore errors during cleanup
-                    pass
 
 
 class StreamlitBackroomApp:
@@ -337,7 +337,7 @@ class StreamlitBackroomApp:
         # Display current personas
         if st.session_state.personas:
             st.subheader("Current Personas")
-            for i, persona in enumerate(st.session_state.personas):
+            for persona in st.session_state.personas:
                 avatar = self.get_persona_avatar(persona)
                 role_display = f" - {persona.role}" if persona.role else ""
                 
@@ -579,17 +579,17 @@ class StreamlitBackroomApp:
                 st.success("Model compatibility cache cleared!")
                 st.rerun()
     
-    def get_next_speaker(self) -> Optional[AIPersona]:
+    def get_next_speaker(self) -> AIPersona | None:
         """Get the next speaker in rotation"""
         enabled_personas = [p for p in st.session_state.personas if p.enabled]
         if not enabled_personas:
             return None
-        
+
         if st.session_state.last_speaker_index is None:
             st.session_state.last_speaker_index = 0
         else:
             st.session_state.last_speaker_index = (st.session_state.last_speaker_index + 1) % len(enabled_personas)
-        
+
         return enabled_personas[st.session_state.last_speaker_index]
     
     def generate_system_prompt(self, persona: AIPersona) -> str:
@@ -983,10 +983,8 @@ Your response should be conversational and engaging."""
                 # Handle Ctrl+C or other interruptions
                 if task and not task.done():
                     task.cancel()
-                    try:
+                    with suppress(asyncio.CancelledError):
                         loop.run_until_complete(task)
-                    except asyncio.CancelledError:
-                        pass
             except Exception as e:
                 # Handle any other exceptions
                 st.error(f"Processing error: {str(e)}")
@@ -994,23 +992,17 @@ Your response should be conversational and engaging."""
                 # Clean up any remaining tasks
                 if task and not task.done():
                     task.cancel()
-                    try:
+                    with suppress(asyncio.CancelledError):
                         loop.run_until_complete(task)
-                    except asyncio.CancelledError:
-                        pass
-                
+
                 # Give a small moment for async cleanup to complete
-                try:
+                with suppress(Exception):
                     loop.run_until_complete(asyncio.sleep(0.1))
-                except Exception:
-                    pass
-                
+
                 # Properly close the event loop
-                try:
-                    loop.close()
-                except RuntimeError:
+                with suppress(RuntimeError):
                     # Loop may already be closed, ignore this error
-                    pass
+                    loop.close()
             
             # Show timestamp and model
             timestamp = datetime.now()
