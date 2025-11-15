@@ -23,7 +23,6 @@ import streamlit as st
 
 from src.models.persona import AIPersona
 from src.services.logger import ConversationLogger
-from src.services.ollama_client import OllamaClient
 from src.ui.components import (
     get_persona_avatar,
     highlight_mentions,

@@ -7,16 +7,17 @@ including cached OllamaClient instances for improved performance.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
+    from streamlit.runtime.state import SessionStateProxy
+
     from src.services.ollama_client import OllamaClient
-    import streamlit as st
 
 logger = logging.getLogger(__name__)
 
 
-async def get_ollama_client(session_state: "st.SessionStateProxy", base_url: str) -> "OllamaClient":
+async def get_ollama_client(session_state: SessionStateProxy, base_url: str) -> OllamaClient:
     """Get or create a cached OllamaClient instance.
 
     This function maintains a single OllamaClient instance in Streamlit session state,
@@ -59,10 +60,10 @@ async def get_ollama_client(session_state: "st.SessionStateProxy", base_url: str
         session_state._ollama_client_url = base_url
         logger.info(f"Created new cached OllamaClient for {base_url}")
 
-    return session_state._ollama_client
+    return cast("OllamaClient", session_state._ollama_client)
 
 
-async def cleanup_ollama_client(session_state: "st.SessionStateProxy") -> None:
+async def cleanup_ollama_client(session_state: SessionStateProxy) -> None:
     """Clean up cached OllamaClient instance.
 
     This should be called when changing Ollama URL or when explicitly

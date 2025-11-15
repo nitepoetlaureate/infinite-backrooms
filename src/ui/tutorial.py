@@ -9,10 +9,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import streamlit as st
+    from streamlit.runtime.state import SessionStateProxy
 
 
-def show_tutorial(session_state: "st.SessionStateProxy") -> None:
+def show_tutorial(session_state: SessionStateProxy) -> None:
     """Display first-run tutorial overlay.
 
     Args:
@@ -175,7 +175,7 @@ Once you have personas:
         st.markdown("---")
 
 
-def reset_tutorial(session_state: "st.SessionStateProxy") -> None:
+def reset_tutorial(session_state: SessionStateProxy) -> None:
     """Reset tutorial to beginning.
 
     Args:

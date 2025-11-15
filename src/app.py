@@ -17,6 +17,30 @@ from typing import Any, TypeVar
 
 import streamlit as st
 
+from src.models.persona import AIPersona
+from src.services.logger import ConversationLogger
+from src.services.ollama_client import OllamaClient
+from src.ui.components import (
+    get_persona_avatar,
+    render_persona_list_item,
+)
+from src.utils.constants import (
+    DEFAULT_AUTO_ADVANCE,
+    DEFAULT_CONTEXT_MESSAGES,
+    DEFAULT_ENABLE_THINKING,
+    DEFAULT_MAX_HISTORY,
+    DEFAULT_OLLAMA_URL,
+    DEFAULT_PERSONA_COLOR,
+    DEFAULT_RESPONSE_DELAY_MAX,
+    DEFAULT_RESPONSE_DELAY_MIN,
+    DEFAULT_RESPONSE_TIMEOUT,
+    MAX_CONTEXT_MESSAGES,
+    MIN_CONTEXT_MESSAGES,
+    PRESET_DIVERSE_PERSONAS,
+    PRESET_STRUCTURED_PERSONAS,
+    ROLE_TEMPLATES,
+)
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -50,31 +74,6 @@ def run_async(coro: Coroutine[Any, Any, T]) -> T:
                 loop.close()
             except Exception as close_error:
                 logger.debug(f"Error closing event loop: {close_error}")
-
-
-from src.models.persona import AIPersona
-from src.services.logger import ConversationLogger
-from src.services.ollama_client import OllamaClient
-from src.ui.components import (
-    get_persona_avatar,
-    render_persona_list_item,
-)
-from src.utils.constants import (
-    DEFAULT_AUTO_ADVANCE,
-    DEFAULT_CONTEXT_MESSAGES,
-    DEFAULT_ENABLE_THINKING,
-    DEFAULT_MAX_HISTORY,
-    DEFAULT_OLLAMA_URL,
-    DEFAULT_PERSONA_COLOR,
-    DEFAULT_RESPONSE_DELAY_MAX,
-    DEFAULT_RESPONSE_DELAY_MIN,
-    DEFAULT_RESPONSE_TIMEOUT,
-    MAX_CONTEXT_MESSAGES,
-    MIN_CONTEXT_MESSAGES,
-    PRESET_DIVERSE_PERSONAS,
-    PRESET_STRUCTURED_PERSONAS,
-    ROLE_TEMPLATES,
-)
 
 
 class StreamlitBackroomApp:
