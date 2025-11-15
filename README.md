@@ -214,4 +214,4 @@ Created by [guinacio](https://github.com/guinacio)
 
 ---
 
-**Note**: This application requires a local Ollama installation with downloaded models. The AI personas will only be as capable as the underlying models you provide. 
+**Note**: This application requires a local Ollama installation with downloaded models. The AI personas will only be as capable as the underlying models you provide.

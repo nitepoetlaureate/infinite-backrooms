@@ -1,13 +1,10 @@
 """Tests for ConversationLogger."""
 
+# Import from the main module - adjust if needed based on final structure
+import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
-
-import pytest
-
-# Import from the main module - adjust if needed based on final structure
-import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
