@@ -60,8 +60,8 @@ DEFAULT_ENABLE_THINKING = ENABLE_THINKING  # Alias for consistency
 # UI Assets & Paths
 # ======================
 
-# Path to System.css file
-SYSTEM_CSS_PATH = Path("static/css/system.css")
+# Path to System.css file (with embedded base64 fonts for Streamlit)
+SYSTEM_CSS_PATH = Path("static/css/system_embedded.css")
 
 # Path to logo image
 LOGO_IMAGE_PATH = Path("logo.png")

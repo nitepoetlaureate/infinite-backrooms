@@ -129,7 +129,7 @@ def inject_system_css() -> None:
 
         /* Main app background - System 7 grid pattern */
         .stApp {{
-            font-family: 'Courier New', 'Monaco', 'Menlo', monospace !important;
+            font-family: Chicago_12, Chicago, Monaco, monospace !important;
             background: linear-gradient(90deg, #FFFFFF 21px, transparent 1%) center,
                         linear-gradient(#FFFFFF 21px, transparent 1%) center, #000000 !important;
             background-size: 22px 22px !important;
@@ -143,12 +143,12 @@ def inject_system_css() -> None:
             border: 2px solid #000000 !important;
             box-shadow: 2px 2px #000000 !important;
             padding: 2rem !important;
-            font-family: 'Courier New', 'Monaco', 'Menlo', monospace !important;
+            font-family: Chicago_12, Chicago, Monaco, monospace !important;
         }}
 
         /* Headers - Chicago font */
         h1, h2, h3, h4, h5, h6 {{
-            font-family: 'Courier New', 'Monaco', 'Menlo', monospace !important;
+            font-family: Chicago, Chicago_12, monospace !important;
             color: #000000 !important;
         }}
 
