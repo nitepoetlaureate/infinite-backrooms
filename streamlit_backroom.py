@@ -125,6 +125,20 @@ def inject_system_css() -> None:
         <style>
         {system_css}
 
+        /* ===== System 7 CSS Variables ===== */
+        :root {{
+            --box-shadow: 2px 2px;
+            --element-spacing: 8px;
+            --primary: #FFFFFF;
+            --secondary: #000000;
+            --tertiary: #A5A5A5;
+            --disabled: #B6B7B8;
+            --border-field: inset -1px -1px #ffffff,
+                            inset 1px 1px #0c0c0c,
+                            inset -2px -2px #dfdfdf,
+                            inset 2px 2px #808080;
+        }}
+
         /* ===== Streamlit-specific System 7 Overrides ===== */
 
         /* CRITICAL: Universal text visibility rules */
@@ -149,7 +163,7 @@ def inject_system_css() -> None:
             font-family: Chicago_12, Monaco, monospace !important;
         }}
 
-        /* All button variations */
+        /* All button variations - Authentic System 7 beveled buttons */
         button,
         .stButton button,
         .stButton > button,
@@ -159,23 +173,36 @@ def inject_system_css() -> None:
         [data-testid="baseButton-primary"],
         [data-testid="baseButton-secondary"] {{
             font-family: Chicago_12, Chicago, monospace !important;
-            background: #FFFFFF !important;
-            color: #000000 !important;
-            border: 3px solid #000000 !important;
-            border-radius: 8px !important;
+            background: var(--primary) !important;
+            color: var(--secondary) !important;
+            min-width: 59px !important;
+            min-height: 20px !important;
             padding: 4px 20px !important;
             font-size: 16px !important;
+            border-style: solid !important;
+            border-width: 5.5px !important;
+            border-image: url("data:image/svg+xml,%3Csvg%20width%3D%2281%22%20height%3D%2281%22%20viewBox%3D%220%200%2081%2081%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M61%200H20V6H14H6V14V20H0V61H6V67V75H14H20V81H61V75H67H75V67V61H81V20H75V14V6H67H61V0ZM74%2021H67V14H60V7H21V14H14V21H7V60H14V67H21V74H60V67H67V60H74V21Z%22%20fill%3D%22black%22/%3E%0A%3C/svg%3E") 30 stretch !important;
+            border-radius: 0 !important;
+            text-align: center !important;
+            cursor: pointer !important;
         }}
 
         button:hover,
         .stButton button:hover {{
-            background: #F0F0F0 !important;
+            background: var(--tertiary) !important;
         }}
 
         button:active,
         .stButton button:active {{
-            background: #000000 !important;
-            color: #FFFFFF !important;
+            background: var(--secondary) !important;
+            color: var(--primary) !important;
+            border-image: url("data:image/svg+xml,%3Csvg%20width%3D%2281%22%20height%3D%2281%22%20viewBox%3D%220%200%2081%2081%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M61%200H20V6H14H6V14V20H0V61H6V67V75H14H20V81H61V75H67H75V67V61H81V20H75V14V6H67H61V0ZM74%2021H67V14H60V7H21V14H14V21H7V60H14V67H21V74H60V67H67V60H74V21Z%22%20fill%3D%22black%22/%3E%0A%3C/svg%3E") 30 stretch !important;
+        }}
+
+        button:disabled,
+        .stButton button:disabled {{
+            color: var(--disabled) !important;
+            cursor: not-allowed !important;
         }}
 
         /* Columns */
@@ -199,56 +226,65 @@ def inject_system_css() -> None:
         /* Main app background - System 7 grid pattern */
         .stApp {{
             font-family: Chicago_12, Chicago, Monaco, monospace !important;
-            background: linear-gradient(90deg, #FFFFFF 21px, transparent 1%) center,
-                        linear-gradient(#FFFFFF 21px, transparent 1%) center, #000000 !important;
+            background: linear-gradient(90deg, var(--primary) 21px, transparent 1%) center,
+                        linear-gradient(var(--primary) 21px, transparent 1%) center, var(--secondary) !important;
             background-size: 22px 22px !important;
             background-attachment: fixed !important;
-            color: #000000 !important;
+            color: var(--secondary) !important;
         }}
 
-        /* Main content area */
+        /* Main content area - System 7 window */
         .main .block-container {{
-            background-color: #FFFFFF !important;
-            border: 2px solid #000000 !important;
-            box-shadow: 2px 2px #000000 !important;
+            background-color: var(--primary) !important;
+            border: 2px solid var(--secondary) !important;
+            box-shadow: var(--box-shadow) var(--secondary) !important;
             padding: 2rem !important;
             font-family: Chicago_12, Chicago, Monaco, monospace !important;
         }}
 
-        /* Headers - Chicago font */
-        h1, h2, h3, h4, h5, h6 {{
+        /* Add outer border for window effect */
+        .main .block-container::before {{
+            content: "" !important;
+            position: absolute !important;
+            top: -2px !important;
+            left: -2px !important;
+            right: -2px !important;
+            bottom: -2px !important;
+            border: 2px solid var(--secondary) !important;
+            padding: 3px !important;
+            pointer-events: none !important;
+        }}
+
+        /* Headers - System 7 title bar style with stripes */
+        h1, h2, h3 {{
             font-family: Chicago, Chicago_12, monospace !important;
-            color: #000000 !important;
+            color: var(--secondary) !important;
+            background: linear-gradient(var(--secondary) 50%, transparent 50%) !important;
+            background-size: 6.67% 13.33% !important;
+            background-clip: content-box !important;
+            padding: 0.5rem !important;
+            margin: 0.5rem 0 !important;
+            position: relative !important;
         }}
 
-        /* Buttons - System 7 style */
-        .stButton > button {{
-            font-family: Chicago_12, Chicago, monospace !important;
-            font-size: 18px !important;
-            min-height: 20px !important;
-            min-width: 59px !important;
-            padding: 4px 20px !important;
-            background: #FFFFFF !important;
-            color: #000000 !important;
-            border: 3px solid #000000 !important;
-            border-radius: 8px !important;
-            box-shadow: none !important;
-            text-align: center !important;
-            cursor: pointer !important;
+        h1::before, h2::before, h3::before {{
+            content: "" !important;
+            position: absolute !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            background: var(--primary) !important;
+            padding: 0 0.5em !important;
+            z-index: 1 !important;
         }}
 
-        .stButton > button:hover {{
-            background: #F0F0F0 !important;
-            border: 3px solid #000000 !important;
+        h4, h5, h6 {{
+            font-family: Chicago, Chicago_12, monospace !important;
+            color: var(--secondary) !important;
         }}
 
-        .stButton > button:active {{
-            background: #000000 !important;
-            color: #FFFFFF !important;
-            border-radius: 8px !important;
-        }}
+        /* Legacy button selectors removed - using border-image buttons above */
 
-        /* Text inputs - Monaco font with simple border */
+        /* Text inputs - Authentic System 7 inset fields */
         input,
         textarea,
         .stTextInput > div > div > input,
@@ -259,12 +295,12 @@ def inject_system_css() -> None:
         [data-testid="stTextArea"] textarea {{
             font-family: Monaco, monospace !important;
             font-size: 14px !important;
-            border: 2px solid #000000 !important;
+            border: none !important;
             border-radius: 0 !important;
-            background: #FFFFFF !important;
-            color: #000000 !important;
+            background: var(--primary) !important;
+            color: var(--secondary) !important;
             padding: 4px 8px !important;
-            box-shadow: inset 1px 1px 0px #000000 !important;
+            box-shadow: var(--border-field) !important;
         }}
 
         /* Input placeholders */
