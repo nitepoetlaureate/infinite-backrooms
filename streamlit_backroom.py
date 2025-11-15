@@ -77,7 +77,7 @@ class ConversationLogger:
         cleaned = re.sub(r'\s+', ' ', cleaned).strip()
         return cleaned
     
-    def log_message(self, persona: str, message: str, timestamp: datetime = None):
+    def log_message(self, persona: str, message: str, timestamp: Optional[datetime] = None):
         """Log a message to today's file"""
         if timestamp is None:
             timestamp = datetime.now()
@@ -118,7 +118,7 @@ class OllamaClient:
             st.error(f"Failed to connect to Ollama: {e}")
             return False, []
     
-    async def generate_stream(self, model: str, prompt: str, system: str = None, think: bool = True, timeout: int = 300) -> AsyncGenerator[Dict[str, str], None]:
+    async def generate_stream(self, model: str, prompt: str, system: Optional[str] = None, think: bool = True, timeout: int = 300) -> AsyncGenerator[Dict[str, str], None]:
         """Generate streaming response from Ollama model with optional thinking"""
         payload = {
             "model": model,
