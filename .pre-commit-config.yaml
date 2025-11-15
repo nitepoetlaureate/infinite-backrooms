@@ -1,0 +1,51 @@
+# .pre-commit-config.yaml - Pre-commit hooks for Infinite Backrooms
+
+repos:
+  # Ruff linting and formatting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.15  # Use latest version
+    hooks:
+      # Run Ruff linter
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        name: Ruff Linter
+
+      # Run Ruff formatter
+      - id: ruff-format
+        name: Ruff Formatter
+
+  # Built-in pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+      - id: end-of-file-fixer
+        name: Fix end of files
+      - id: check-yaml
+        name: Check YAML syntax
+      - id: check-toml
+        name: Check TOML syntax
+      - id: check-json
+        name: Check JSON syntax
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+        name: Check for large files
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+      - id: detect-private-key
+        name: Detect private keys
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        name: Fix mixed line endings
+
+  # Custom UI standards validation
+  - repo: local
+    hooks:
+      - id: validate-ui-standards
+        name: Validate UI/UX Standards
+        entry: python scripts/validate_ui_standards.py
+        language: python
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
