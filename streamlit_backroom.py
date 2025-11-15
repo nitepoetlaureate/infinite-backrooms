@@ -127,6 +127,75 @@ def inject_system_css() -> None:
 
         /* ===== Streamlit-specific System 7 Overrides ===== */
 
+        /* CRITICAL: Universal text visibility rules */
+        p, span, div, label, a, li, td, th {{
+            color: #000000 !important;
+        }}
+
+        /* Streamlit markdown and text containers */
+        .stMarkdown,
+        [data-testid="stMarkdownContainer"],
+        [data-testid="stText"],
+        .element-container {{
+            color: #000000 !important;
+        }}
+
+        /* Widget labels and captions */
+        .stWidgetLabel,
+        [data-testid="stWidgetLabel"],
+        .stCaption,
+        label {{
+            color: #000000 !important;
+            font-family: Chicago_12, Monaco, monospace !important;
+        }}
+
+        /* All button variations */
+        button,
+        .stButton button,
+        .stButton > button,
+        button[kind="primary"],
+        button[kind="secondary"],
+        button[kind="tertiary"],
+        [data-testid="baseButton-primary"],
+        [data-testid="baseButton-secondary"] {{
+            font-family: Chicago_12, Chicago, monospace !important;
+            background: #FFFFFF !important;
+            color: #000000 !important;
+            border: 3px solid #000000 !important;
+            border-radius: 8px !important;
+            padding: 4px 20px !important;
+            font-size: 16px !important;
+        }}
+
+        button:hover,
+        .stButton button:hover {{
+            background: #F0F0F0 !important;
+        }}
+
+        button:active,
+        .stButton button:active {{
+            background: #000000 !important;
+            color: #FFFFFF !important;
+        }}
+
+        /* Columns */
+        [data-testid="column"] {{
+            background: transparent !important;
+        }}
+
+        [data-testid="column"] * {{
+            color: #000000 !important;
+        }}
+
+        /* Metrics */
+        [data-testid="stMetric"],
+        [data-testid="stMetricLabel"],
+        [data-testid="stMetricValue"],
+        [data-testid="stMetricDelta"] {{
+            color: #000000 !important;
+            font-family: Chicago_12, Monaco, monospace !important;
+        }}
+
         /* Main app background - System 7 grid pattern */
         .stApp {{
             font-family: Chicago_12, Chicago, Monaco, monospace !important;
@@ -180,8 +249,14 @@ def inject_system_css() -> None:
         }}
 
         /* Text inputs - Monaco font with simple border */
+        input,
+        textarea,
         .stTextInput > div > div > input,
-        .stTextArea > div > div > textarea {{
+        .stTextArea > div > div > textarea,
+        .stTextInput input,
+        .stTextArea textarea,
+        [data-testid="stTextInput"] input,
+        [data-testid="stTextArea"] textarea {{
             font-family: Monaco, monospace !important;
             font-size: 14px !important;
             border: 2px solid #000000 !important;
@@ -190,6 +265,13 @@ def inject_system_css() -> None:
             color: #000000 !important;
             padding: 4px 8px !important;
             box-shadow: inset 1px 1px 0px #000000 !important;
+        }}
+
+        /* Input placeholders */
+        input::placeholder,
+        textarea::placeholder {{
+            color: #666666 !important;
+            opacity: 1 !important;
         }}
 
         .stTextInput > div > div > input:focus,
@@ -201,12 +283,55 @@ def inject_system_css() -> None:
         }}
 
         /* Select boxes */
-        .stSelectbox > div > div {{
+        select,
+        .stSelectbox > div > div,
+        .stSelectbox div,
+        [data-testid="stSelectbox"] {{
             font-family: Chicago_12, Monaco, monospace !important;
             font-size: 14px !important;
             border: 2px solid #000000 !important;
             border-radius: 0 !important;
             background: #FFFFFF !important;
+            color: #000000 !important;
+        }}
+
+        /* Select dropdown options */
+        option {{
+            background: #FFFFFF !important;
+            color: #000000 !important;
+        }}
+
+        /* Number inputs */
+        input[type="number"],
+        .stNumberInput input {{
+            font-family: Monaco, monospace !important;
+            color: #000000 !important;
+            background: #FFFFFF !important;
+            border: 2px solid #000000 !important;
+        }}
+
+        /* Checkboxes and radio buttons */
+        .stCheckbox,
+        .stRadio,
+        input[type="checkbox"],
+        input[type="radio"] {{
+            accent-color: #000000 !important;
+        }}
+
+        .stCheckbox label,
+        .stRadio label {{
+            color: #000000 !important;
+            font-family: Monaco, monospace !important;
+        }}
+
+        /* Sliders */
+        .stSlider {{
+            color: #000000 !important;
+        }}
+
+        .stSlider [data-testid="stTickBarMin"],
+        .stSlider [data-testid="stTickBarMax"] {{
+            color: #000000 !important;
         }}
 
         /* Tabs - System 7 style */

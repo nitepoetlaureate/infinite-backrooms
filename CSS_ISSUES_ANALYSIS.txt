@@ -1,0 +1,36 @@
+"""
+CSS ISSUES FOUND:
+
+1. MISSING TEXT COLOR RULES
+   - No styling for: p, span, div, label elements
+   - Streamlit markdown text not explicitly styled
+   - Widget labels have no color rules
+   - Column content not styled
+
+2. BUTTON SELECTOR ISSUES
+   - Using .stButton > button which may not match actual Streamlit DOM
+   - Need button[kind="primary"], button[kind="secondary"] etc
+
+3. MISSING WIDGET STYLES
+   - st.metric not styled
+   - st.dataframe not styled
+   - st.columns text not styled
+   - st.markdown not explicitly styled
+   - st.write output not styled
+
+4. SPECIFICITY PROBLEMS
+   - Streamlit uses very specific data-testid selectors
+   - Need higher specificity to override Streamlit defaults
+
+5. POTENTIAL WHITE-ON-WHITE
+   - No defensive fallback for generic text
+   - Some elements may inherit wrong colors
+
+FIXES NEEDED:
+- Add universal text color: p, span, div, label { color: #000000 !important; }
+- Add Streamlit markdown: .stMarkdown, [data-testid="stMarkdownContainer"]
+- Add widget labels: label, .stWidgetLabel
+- Add buttons: button, [kind], [data-testid="baseButton-secondary"]
+- Add metrics: [data-testid="stMetric"]
+- Add defensive color rules for all interactive elements
+"""
