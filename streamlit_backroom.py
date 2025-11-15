@@ -21,16 +21,27 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 import uuid
 
-# Suppress async cleanup warnings
-warnings.filterwarnings("ignore", message="Task was destroyed but it is pending!")
-warnings.filterwarnings("ignore", message="Unclosed client session")  
-warnings.filterwarnings("ignore", message="Event loop is closed")
-warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*Event loop is closed.*")
-warnings.filterwarnings("ignore", category=ResourceWarning, message=".*unclosed.*client.*session.*")
-
-# Also suppress aiohttp specific warnings
+# Configure logging properly instead of suppressing all warnings
 import logging
-logging.getLogger('aiohttp.client').setLevel(logging.ERROR)
+
+# Set up proper logging configuration
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('app.log', mode='a')
+    ]
+)
+
+# Configure specific loggers with appropriate levels
+logging.getLogger('aiohttp.client').setLevel(logging.WARNING)
+logging.getLogger('asyncio').setLevel(logging.WARNING)
+
+# Only suppress specific known async cleanup warnings that are cosmetic
+# These occur during Streamlit's lifecycle and don't indicate real problems
+warnings.filterwarnings("ignore", message="Task was destroyed but it is pending!", category=RuntimeWarning)
+warnings.filterwarnings("ignore", message="Event loop is closed", category=RuntimeWarning)
 
 
 @dataclass

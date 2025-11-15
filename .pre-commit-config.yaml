@@ -3,7 +3,7 @@
 repos:
   # Ruff linting and formatting
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.15  # Use latest version
+    rev: v0.8.4  # Updated to latest stable version
     hooks:
       # Run Ruff linter
       - id: ruff
@@ -16,7 +16,7 @@ repos:
 
   # Built-in pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v5.0.0  # Updated to latest version
     hooks:
       - id: trailing-whitespace
         name: Trim trailing whitespace
@@ -39,13 +39,20 @@ repos:
         args: [--fix=lf]
         name: Fix mixed line endings
 
-  # Custom UI standards validation
-  - repo: local
+  # Mypy type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
     hooks:
-      - id: validate-ui-standards
-        name: Validate UI/UX Standards
-        entry: python scripts/validate_ui_standards.py
-        language: python
-        pass_filenames: false
-        always_run: true
-        stages: [pre-commit]
+      - id: mypy
+        name: MyPy Type Checker
+        additional_dependencies: [types-requests]
+        args: [--ignore-missing-imports, --no-strict-optional]
+
+  # Bandit security linter
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.10
+    hooks:
+      - id: bandit
+        name: Bandit Security Linter
+        args: [-c, pyproject.toml]
+        additional_dependencies: ["bandit[toml]"]

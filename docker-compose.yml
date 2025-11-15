@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  infinite-backrooms:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: infinite-backrooms
+    ports:
+      - "8501:8501"
+    environment:
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_TIMEOUT=${OLLAMA_TIMEOUT:-300}
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+    volumes:
+      - ./conversations:/app/conversations
+      - ./.env:/app/.env:ro
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - ai-network
+
+  log-viewer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: infinite-backrooms-log-viewer
+    ports:
+      - "8502:8501"
+    command: ["log_viewer.py", "--server.address", "0.0.0.0", "--server.port", "8501"]
+    environment:
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+    volumes:
+      - ./conversations:/app/conversations:ro
+    restart: unless-stopped
+    networks:
+      - ai-network
+
+networks:
+  ai-network:
+    driver: bridge
