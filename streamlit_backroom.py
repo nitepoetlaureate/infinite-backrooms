@@ -581,7 +581,7 @@ class StreamlitBackroomApp:
     
     def get_next_speaker(self) -> AIPersona | None:
         """Get the next speaker in rotation"""
-        enabled_personas = [p for p in st.session_state.personas if p.enabled]
+        enabled_personas: list[AIPersona] = [p for p in st.session_state.personas if p.enabled]
         if not enabled_personas:
             return None
 
