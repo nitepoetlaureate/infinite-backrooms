@@ -17,16 +17,15 @@ Exit Codes:
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple
 
 
 # Patterns to detect violations
 VIOLATIONS = {
-    "hardcoded_colors": r'(?:color|background-color|border-color):\s*#[0-9a-fA-F]{3,6}',
-    "hardcoded_padding": r'padding:\s*\d+px(?:\s+\d+px)*',
-    "hardcoded_margin": r'margin:\s*\d+px(?:\s+\d+px)*',
-    "hardcoded_border_radius": r'border-radius:\s*\d+px',
-    "random_spacing": r'(?:padding|margin):\s*(?:[3579]|1[1-9]|[2-9]\d+)px',  # Non-standard values
+    "hardcoded_colors": r"(?:color|background-color|border-color):\s*#[0-9a-fA-F]{3,6}",
+    "hardcoded_padding": r"padding:\s*\d+px(?:\s+\d+px)*",
+    "hardcoded_margin": r"margin:\s*\d+px(?:\s+\d+px)*",
+    "hardcoded_border_radius": r"border-radius:\s*\d+px",
+    "random_spacing": r"(?:padding|margin):\s*(?:[3579]|1[1-9]|[2-9]\d+)px",  # Non-standard values
 }
 
 # Files to check
@@ -41,7 +40,7 @@ EXCEPTIONS = {
 }
 
 
-def find_violations(file_path: Path) -> List[Tuple[int, str, str]]:
+def find_violations(file_path: Path) -> list[tuple[int, str, str]]:
     """
     Find UI standard violations in a Python file.
 
@@ -53,12 +52,12 @@ def find_violations(file_path: Path) -> List[Tuple[int, str, str]]:
     """
     violations = []
 
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, encoding="utf-8") as f:
         lines = f.readlines()
 
     for line_num, line in enumerate(lines, start=1):
         # Skip comments
-        if line.strip().startswith('#'):
+        if line.strip().startswith("#"):
             continue
 
         # Check for violations
@@ -82,10 +81,10 @@ def check_imports(file_path: Path) -> bool:
     Returns:
         True if imports ui_design_tokens, False otherwise
     """
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
-    return 'from ui_design_tokens import' in content or 'import ui_design_tokens' in content
+    return "from ui_design_tokens import" in content or "import ui_design_tokens" in content
 
 
 def main() -> int:
@@ -108,7 +107,7 @@ def main() -> int:
         # Check for design tokens import
         has_import = check_imports(file_path)
         if not has_import:
-            print(f"  ⚠️  Warning: No design tokens import found")
+            print("  ⚠️  Warning: No design tokens import found")
 
         # Find violations
         violations = find_violations(file_path)
@@ -121,21 +120,20 @@ def main() -> int:
                 print()
             total_violations += len(violations)
         else:
-            print(f"  ✅ No violations found\n")
+            print("  ✅ No violations found\n")
 
     # Summary
     print("=" * 60)
     if total_violations == 0:
         print(f"✅ All {files_checked} files passed validation!")
         return 0
-    else:
-        print(f"❌ Found {total_violations} violation(s) across {files_checked} file(s)")
-        print("\n💡 Fix these by:")
-        print("   1. Import design tokens: from ui_design_tokens import SYSTEM_COLORS, SPACING")
-        print("   2. Replace hardcoded values with tokens")
-        print("   3. Use style generator functions (persona_badge_style, etc.)")
-        print("\nSee ui_design_tokens.py and .claude/skills/ux-ui-standards.md for guidance")
-        return 1
+    print(f"❌ Found {total_violations} violation(s) across {files_checked} file(s)")
+    print("\n💡 Fix these by:")
+    print("   1. Import design tokens: from ui_design_tokens import SYSTEM_COLORS, SPACING")
+    print("   2. Replace hardcoded values with tokens")
+    print("   3. Use style generator functions (persona_badge_style, etc.)")
+    print("\nSee ui_design_tokens.py and .claude/skills/ux-ui-standards.md for guidance")
+    return 1
 
 
 if __name__ == "__main__":

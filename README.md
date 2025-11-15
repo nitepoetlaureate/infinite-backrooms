@@ -180,18 +180,82 @@ Knowledge sharing with historical context and future implications.
 ### File Structure
 ```
 infinite-backrooms/
-├── streamlit_backroom.py    # Main application
-├── log_viewer.py           # Standalone log analysis tool
-├── conversations/          # Daily conversation logs
-├── pyproject.toml         # UV dependencies
-├── uv.lock               # Locked dependencies
-└── README.md             # This file
+├── streamlit_backroom.py      # Main application
+├── log_viewer.py             # Standalone log analysis tool
+├── ui_design_tokens.py       # System.css design tokens
+├── conversations/            # Daily conversation logs
+├── scripts/
+│   └── validate_ui_standards.py  # UI/UX validation tool
+├── .claude/
+│   └── skills/
+│       └── ux-ui-standards.md    # UX/UI enforcement skill
+├── pyproject.toml           # UV dependencies
+├── ruff.toml               # Python linter config
+├── .pre-commit-config.yaml  # Pre-commit hooks
+├── LINTING_STANDARDS.md     # Linting guide
+├── REFACTORING_GUIDE.md     # UI refactoring examples
+└── README.md               # This file
 ```
 
 ### Dependencies
 - **Streamlit**: Web interface framework
 - **aiohttp**: Async HTTP client for Ollama API
 - **pandas**: Data analysis for log viewer (log_viewer.py only)
+- **ruff**: Fast Python linter and formatter
+- **pre-commit**: Git hook framework for code quality
+
+## UX/UI Standards
+
+This project follows **system.css** design standards (retro Apple System OS 1984-1991 aesthetic) with centralized design tokens for consistent, maintainable UI.
+
+### Design System
+
+- **Color palette**: Monochrome base with muted persona colors
+- **Spacing**: Precise tokens (1px, 2px, 4px, 8px, 16px)
+- **Typography**: Chicago 12pt (headings), Geneva 9pt (body)
+- **Border radius**: Minimal (0-3px maximum)
+- **Aesthetic**: Clean, retro Apple System OS visual language
+
+### Key Files
+
+- `ui_design_tokens.py` - Centralized design tokens and style generators
+- `scripts/validate_ui_standards.py` - Automated validation script
+- `.claude/skills/ux-ui-standards.md` - Comprehensive standards documentation
+- `REFACTORING_GUIDE.md` - Before/after refactoring examples
+- `LINTING_STANDARDS.md` - Code quality and linting guide
+
+### Validation
+
+Run UI standards validation:
+```bash
+python scripts/validate_ui_standards.py
+```
+
+Run code quality checks:
+```bash
+ruff check .        # Linting
+ruff format .       # Formatting
+```
+
+### Design Tokens Usage
+
+```python
+from ui_design_tokens import persona_badge_style, SYSTEM_COLORS, SPACING
+
+# Generate consistent persona badge
+badge = f'<span style="{persona_badge_style(name, color)}">{name}</span>'
+
+# Use color tokens
+bg_color = SYSTEM_COLORS["window_bg"]
+
+# Use spacing tokens
+padding = f"padding: {SPACING['md']} {SPACING['lg']}"
+```
+
+For detailed guidelines, see:
+- **Standards**: `.claude/skills/ux-ui-standards.md`
+- **Examples**: `REFACTORING_GUIDE.md`
+- **Linting**: `LINTING_STANDARDS.md`
 
 ## Contributing
 

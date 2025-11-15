@@ -30,10 +30,8 @@ SYSTEM_COLORS = {
     "gray_light": "#C0C0C0",
     "gray_medium": "#808080",
     "gray_dark": "#404040",
-
     # System accent (used sparingly)
     "system_blue": "#0000FF",  # Classic Mac blue
-
     # UI element colors
     "window_bg": "#FFFFFF",
     "window_border": "#000000",
@@ -43,7 +41,6 @@ SYSTEM_COLORS = {
     "button_border": "#000000",
     "input_bg": "#FFFFFF",
     "input_border": "#000000",
-
     # Text colors
     "text_primary": "#000000",
     "text_secondary": "#404040",
@@ -53,31 +50,31 @@ SYSTEM_COLORS = {
 
 # Persona colors (muted/desaturated to match system.css aesthetic)
 PERSONA_COLORS = {
-    "Moderator": "#2c3e50",      # Dark blue-gray
-    "Guide": "#2c3e50",          # Alias for Moderator
-    "Note-Taker": "#34495e",     # Dark gray
-    "Chronicle": "#34495e",      # Alias for Note-Taker
-    "Philosopher": "#7f8c8d",    # Medium gray
-    "Sage": "#7f8c8d",           # Alias for Philosopher
-    "Scientist": "#2980b9",      # Muted blue
-    "Eureka": "#2980b9",         # Alias for Scientist
-    "Creative Writer": "#c0392b", # Muted red
-    "Quill": "#c0392b",          # Alias for Creative Writer
-    "Debate Enthusiast": "#d68910", # Muted orange
-    "Socrates": "#d68910",       # Alias for Debate Enthusiast
-    "Optimist": "#f39c12",       # Muted yellow
-    "Bright": "#f39c12",         # Alias for Optimist
-    "Skeptic": "#95a5a6",        # Light gray
-    "Quest": "#95a5a6",          # Alias for Skeptic
-    "Historian": "#8e44ad",      # Muted purple
-    "Futurist": "#16a085",       # Muted teal
-    "Minimalist": "#ecf0f1",     # Very light gray
-    "Explorer": "#27ae60",       # Muted green
-    "Mentor": "#e67e22",         # Muted dark orange
-    "Comedian": "#f1c40f",       # Muted bright yellow
-    "Analyst": "#3498db",        # Muted bright blue
-    "Dreamer": "#9b59b6",        # Muted violet
-    "Pragmatist": "#7f8c8d",     # Medium gray
+    "Moderator": "#2c3e50",  # Dark blue-gray
+    "Guide": "#2c3e50",  # Alias for Moderator
+    "Note-Taker": "#34495e",  # Dark gray
+    "Chronicle": "#34495e",  # Alias for Note-Taker
+    "Philosopher": "#7f8c8d",  # Medium gray
+    "Sage": "#7f8c8d",  # Alias for Philosopher
+    "Scientist": "#2980b9",  # Muted blue
+    "Eureka": "#2980b9",  # Alias for Scientist
+    "Creative Writer": "#c0392b",  # Muted red
+    "Quill": "#c0392b",  # Alias for Creative Writer
+    "Debate Enthusiast": "#d68910",  # Muted orange
+    "Socrates": "#d68910",  # Alias for Debate Enthusiast
+    "Optimist": "#f39c12",  # Muted yellow
+    "Bright": "#f39c12",  # Alias for Optimist
+    "Skeptic": "#95a5a6",  # Light gray
+    "Quest": "#95a5a6",  # Alias for Skeptic
+    "Historian": "#8e44ad",  # Muted purple
+    "Futurist": "#16a085",  # Muted teal
+    "Minimalist": "#ecf0f1",  # Very light gray
+    "Explorer": "#27ae60",  # Muted green
+    "Mentor": "#e67e22",  # Muted dark orange
+    "Comedian": "#f1c40f",  # Muted bright yellow
+    "Analyst": "#3498db",  # Muted bright blue
+    "Dreamer": "#9b59b6",  # Muted violet
+    "Pragmatist": "#7f8c8d",  # Medium gray
 }
 
 # Default persona color (for unknown/new personas)
@@ -94,19 +91,16 @@ SPACING = {
     "md": "4px",
     "lg": "8px",
     "xl": "16px",
-
     # Margins (system.css standard)
     "margin_xs": "2px",
     "margin_sm": "4px",
     "margin_md": "8px",
     "margin_lg": "16px",
     "margin_xl": "32px",
-
     # Border radius (system.css uses minimal rounding - 0-3px max)
     "radius_none": "0px",
     "radius_sm": "2px",
     "radius_md": "3px",  # Maximum allowed by system.css standards
-
     # Border width
     "border_thin": "1px",
     "border_thick": "2px",
@@ -123,7 +117,7 @@ FONTS = {
 
 FONT_SIZES = {
     "heading": "12pt",  # Chicago 12pt standard
-    "body": "9pt",      # Geneva 9pt standard
+    "body": "9pt",  # Geneva 9pt standard
     "small": "8pt",
 }
 
@@ -136,11 +130,12 @@ FONT_WEIGHTS = {
 # STYLE GENERATOR FUNCTIONS
 # ==============================================================================
 
+
 def system_button_style(
-    text_color: str = None,
-    bg_color: str = None,
-    border_color: str = None,
-    disabled: bool = False
+    text_color: str | None = None,
+    bg_color: str | None = None,
+    border_color: str | None = None,
+    disabled: bool = False,
 ) -> str:
     """
     Generate system.css compliant button styling for Streamlit.
@@ -170,20 +165,18 @@ def system_button_style(
     return f"""
         background-color: {bg_color};
         color: {text_color};
-        border: {SPACING['border_thin']} solid {border_color};
-        border-radius: {SPACING['radius_sm']};
-        padding: {SPACING['md']} {SPACING['lg']};
-        font-weight: {FONT_WEIGHTS['bold']};
-        font-family: {FONTS['primary']};
+        border: {SPACING["border_thin"]} solid {border_color};
+        border-radius: {SPACING["radius_sm"]};
+        padding: {SPACING["md"]} {SPACING["lg"]};
+        font-weight: {FONT_WEIGHTS["bold"]};
+        font-family: {FONTS["primary"]};
         text-align: center;
-        cursor: {'not-allowed' if disabled else 'pointer'};
+        cursor: {"not-allowed" if disabled else "pointer"};
     """.strip()
 
 
 def system_container_style(
-    bg_color: str = None,
-    border_color: str = None,
-    border_width: str = None
+    bg_color: str | None = None, border_color: str | None = None, border_width: str | None = None
 ) -> str:
     """
     Apply system.css window aesthetic to Streamlit containers.
@@ -209,8 +202,8 @@ def system_container_style(
     return f"""
         border: {border_width} solid {border_color};
         background-color: {bg_color};
-        padding: {SPACING['lg']};
-        border-radius: {SPACING['radius_none']};
+        padding: {SPACING["lg"]};
+        border-radius: {SPACING["radius_none"]};
     """.strip()
 
 
@@ -232,24 +225,23 @@ def system_title_bar_style(active: bool = True) -> str:
     """
     if active:
         return f"""
-            background-color: {SYSTEM_COLORS['title_bar_active']};
-            color: {SYSTEM_COLORS['text_inverse']};
-            padding: {SPACING['md']} {SPACING['lg']};
-            font-weight: {FONT_WEIGHTS['bold']};
-            border-radius: {SPACING['radius_none']};
+            background-color: {SYSTEM_COLORS["title_bar_active"]};
+            color: {SYSTEM_COLORS["text_inverse"]};
+            padding: {SPACING["md"]} {SPACING["lg"]};
+            font-weight: {FONT_WEIGHTS["bold"]};
+            border-radius: {SPACING["radius_none"]};
             min-height: 19px;
-            font-family: {FONTS['primary']};
+            font-family: {FONTS["primary"]};
         """.strip()
-    else:
-        return f"""
-            background-color: {SYSTEM_COLORS['title_bar_inactive']};
-            color: {SYSTEM_COLORS['text_primary']};
-            border: {SPACING['border_thin']} solid {SYSTEM_COLORS['window_border']};
-            padding: {SPACING['md']} {SPACING['lg']};
-            font-weight: {FONT_WEIGHTS['bold']};
-            border-radius: {SPACING['radius_none']};
+    return f"""
+            background-color: {SYSTEM_COLORS["title_bar_inactive"]};
+            color: {SYSTEM_COLORS["text_primary"]};
+            border: {SPACING["border_thin"]} solid {SYSTEM_COLORS["window_border"]};
+            padding: {SPACING["md"]} {SPACING["lg"]};
+            font-weight: {FONT_WEIGHTS["bold"]};
+            border-radius: {SPACING["radius_none"]};
             min-height: 19px;
-            font-family: {FONTS['primary']};
+            font-family: {FONTS["primary"]};
         """.strip()
 
 
@@ -267,12 +259,12 @@ def system_input_style() -> str:
         )
     """
     return f"""
-        background-color: {SYSTEM_COLORS['input_bg']};
-        color: {SYSTEM_COLORS['text_primary']};
-        border: {SPACING['border_thin']} solid {SYSTEM_COLORS['input_border']};
-        border-radius: {SPACING['radius_none']};
-        padding: {SPACING['md']};
-        font-family: {FONTS['primary']};
+        background-color: {SYSTEM_COLORS["input_bg"]};
+        color: {SYSTEM_COLORS["text_primary"]};
+        border: {SPACING["border_thin"]} solid {SYSTEM_COLORS["input_border"]};
+        border-radius: {SPACING["radius_none"]};
+        padding: {SPACING["md"]};
+        font-family: {FONTS["primary"]};
     """.strip()
 
 
@@ -295,17 +287,17 @@ def persona_badge_style(persona_name: str, persona_color: str) -> str:
     """
     return f"""
         background-color: {persona_color};
-        color: {SYSTEM_COLORS['text_inverse']};
-        padding: {SPACING['sm']} {SPACING['lg']};
-        border: {SPACING['border_thin']} solid {SYSTEM_COLORS['window_border']};
-        border-radius: {SPACING['radius_sm']};
-        font-weight: {FONT_WEIGHTS['bold']};
-        font-family: {FONTS['primary']};
-        font-size: {FONT_SIZES['body']};
+        color: {SYSTEM_COLORS["text_inverse"]};
+        padding: {SPACING["sm"]} {SPACING["lg"]};
+        border: {SPACING["border_thin"]} solid {SYSTEM_COLORS["window_border"]};
+        border-radius: {SPACING["radius_sm"]};
+        font-weight: {FONT_WEIGHTS["bold"]};
+        font-family: {FONTS["primary"]};
+        font-size: {FONT_SIZES["body"]};
     """.strip()
 
 
-def mention_highlight_style(persona_color: str, text_color: str = None) -> str:
+def mention_highlight_style(persona_color: str, text_color: str | None = None) -> str:
     """
     Generate @mention highlighting style.
 
@@ -327,11 +319,11 @@ def mention_highlight_style(persona_color: str, text_color: str = None) -> str:
     return f"""
         background-color: {persona_color};
         color: {text_color};
-        padding: {SPACING['xs']} {SPACING['md']};
-        border-radius: {SPACING['radius_md']};
-        font-weight: {FONT_WEIGHTS['bold']};
-        font-family: {FONTS['secondary']};
-        font-size: {FONT_SIZES['small']};
+        padding: {SPACING["xs"]} {SPACING["md"]};
+        border-radius: {SPACING["radius_md"]};
+        font-weight: {FONT_WEIGHTS["bold"]};
+        font-family: {FONTS["secondary"]};
+        font-size: {FONT_SIZES["small"]};
     """.strip()
 
 
@@ -352,12 +344,12 @@ def current_speaker_style(persona_color: str) -> str:
     """
     return f"""
         background-color: {persona_color};
-        color: {SYSTEM_COLORS['text_inverse']};
-        padding: {SPACING['md']} {SPACING['lg']};
-        border: {SPACING['border_thin']} solid {SYSTEM_COLORS['window_border']};
-        border-radius: {SPACING['radius_sm']};
-        font-weight: {FONT_WEIGHTS['bold']};
-        font-family: {FONTS['primary']};
+        color: {SYSTEM_COLORS["text_inverse"]};
+        padding: {SPACING["md"]} {SPACING["lg"]};
+        border: {SPACING["border_thin"]} solid {SYSTEM_COLORS["window_border"]};
+        border-radius: {SPACING["radius_sm"]};
+        font-weight: {FONT_WEIGHTS["bold"]};
+        font-family: {FONTS["primary"]};
         text-align: center;
     """.strip()
 
@@ -386,6 +378,7 @@ def get_persona_color(persona_name: str) -> str:
 # VALIDATION HELPERS
 # ==============================================================================
 
+
 def validate_color(color: str) -> bool:
     """
     Validate that a color is from approved palettes.
@@ -396,7 +389,9 @@ def validate_color(color: str) -> bool:
     Returns:
         True if color is in SYSTEM_COLORS or PERSONA_COLORS, False otherwise
     """
-    approved_colors = set(SYSTEM_COLORS.values()) | set(PERSONA_COLORS.values()) | {DEFAULT_PERSONA_COLOR}
+    approved_colors = (
+        set(SYSTEM_COLORS.values()) | set(PERSONA_COLORS.values()) | {DEFAULT_PERSONA_COLOR}
+    )
     return color in approved_colors
 
 
@@ -418,7 +413,8 @@ def validate_spacing(value: str) -> bool:
 # ACCESSIBILITY HELPERS
 # ==============================================================================
 
-def make_accessible_button(label: str, style: str, onclick: str = None) -> str:
+
+def make_accessible_button(label: str, style: str, onclick: str | None = None) -> str:
     """
     Create an accessible button with proper ARIA attributes.
 
@@ -445,11 +441,7 @@ def make_accessible_button(label: str, style: str, onclick: str = None) -> str:
 
 
 def make_accessible_input(
-    input_type: str,
-    label: str,
-    style: str,
-    name: str = None,
-    value: str = None
+    input_type: str, label: str, style: str, name: str | None = None, value: str | None = None
 ) -> str:
     """
     Create an accessible input field with proper ARIA attributes.
