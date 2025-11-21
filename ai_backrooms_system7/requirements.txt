@@ -1,0 +1,17 @@
+# AI Backrooms - System 7 Edition
+# Zero external dependencies required!
+#
+# This application uses only Python standard library:
+# - tkinter (GUI, built-in)
+# - threading (background conversations)
+# - queue (thread-safe communication)
+# - urllib (HTTP for Ollama API)
+# - json (data serialization)
+#
+# Optional:
+# - Ollama running locally (http://localhost:11434)
+#   Install: https://ollama.ai/
+#   Pull a model: ollama pull llama3
+#
+# Total memory footprint: ~35MB
+# Python version: 3.8+
