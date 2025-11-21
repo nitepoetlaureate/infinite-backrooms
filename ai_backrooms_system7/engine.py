@@ -45,7 +45,29 @@ class OllamaBridge:
 
     def __init__(self, url="http://localhost:11434"):
         self.url = url
-        self.model = "llama3"  # Default, can be changed
+        self.model = self._detect_model()  # Auto-detect available model
+
+    def _detect_model(self):
+        """
+        Auto-detect available Ollama model.
+
+        Returns:
+            str: First available model name, or "llama3" as fallback
+        """
+        try:
+            req = urllib.request.Request(f"{self.url}/api/tags")
+            with urllib.request.urlopen(req, timeout=3) as response:
+                data = json.loads(response.read().decode('utf-8'))
+                models = data.get('models', [])
+                if models:
+                    model_name = models[0]['name']
+                    print(f"🤖 Using Ollama model: {model_name}")
+                    return model_name
+        except Exception as e:
+            print(f"⚠️  Could not detect Ollama models: {e}")
+
+        # Fallback to common model names
+        return "llama3"
 
     def generate(self, system_prompt, context_msgs):
         """
@@ -65,8 +87,20 @@ class OllamaBridge:
         payload = {
             "model": self.model,
             "prompt": full_prompt,
-            "stream": False
+            "stream": False,
+            "options": {
+                "temperature": 0.7,
+                "num_predict": 100  # Limit response length for faster replies
+            }
         }
+
+        # Debug: Print first request
+        if not hasattr(self, '_debug_printed'):
+            print(f"\n🔍 DEBUG: First Ollama Request")
+            print(f"   Model: {self.model}")
+            print(f"   URL: {self.url}/api/generate")
+            print(f"   Prompt length: {len(full_prompt)} chars")
+            self._debug_printed = True
 
         try:
             data = json.dumps(payload).encode('utf-8')
@@ -75,12 +109,23 @@ class OllamaBridge:
                 data=data,
                 headers={'Content-Type': 'application/json'}
             )
-            with urllib.request.urlopen(req, timeout=5) as response:
+            with urllib.request.urlopen(req, timeout=60) as response:
                 result = json.loads(response.read().decode('utf-8'))
-                return result.get('response', '...').strip()
+                generated_text = result.get('response', '')
+                if generated_text:
+                    return generated_text.strip()
+                else:
+                    return "..."
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode('utf-8') if e.fp else ''
+            print(f"❌ Ollama HTTP {e.code} Error: {error_body}")
+            return f"[HTTP {e.code}] Hmm, let me think..."
+        except urllib.error.URLError as e:
+            print(f"❌ Ollama Connection Error: {e.reason}")
+            return "[Connection failed] Deep thoughts require connection..."
         except Exception as e:
-            # Fallback if Ollama is down
-            return f"[Ollama Error: {str(e)}] I ponder, therefore I am."
+            print(f"❌ Ollama Error: {type(e).__name__}: {str(e)}")
+            return f"[Error] I ponder, therefore I am."
 
 
 class BackroomsEngine:
