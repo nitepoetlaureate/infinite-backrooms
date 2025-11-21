@@ -348,13 +348,18 @@ def get_roles():
 
 @app.route("/api/models")
 def get_models():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    """Get available Ollama models - synchronous version"""
     try:
-        connected, models = loop.run_until_complete(ollama_client.test_connection())
-        return jsonify({"connected": connected, "models": models})
-    finally:
-        loop.close()
+        import requests
+        response = requests.get(f"{ollama_client.base_url}/api/tags", timeout=10)
+        if response.status_code == 200:
+            result = response.json()
+            models = [model["name"] for model in result.get("models", [])]
+            return jsonify({"connected": True, "models": models})
+        return jsonify({"connected": False, "models": []})
+    except Exception as e:
+        logging.error(f"Failed to connect to Ollama: {e}")
+        return jsonify({"connected": False, "models": []})
 
 
 @app.route("/api/export")
