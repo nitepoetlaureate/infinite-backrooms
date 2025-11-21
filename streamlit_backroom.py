@@ -1303,6 +1303,139 @@ Your response should be conversational and engaging."""
             initial_sidebar_state="expanded",
         )
 
+        # Inject system.css styling to override Streamlit's theme
+        st.markdown(
+            """
+            <style>
+            /* Import system.css from CDN */
+            @import url('https://unpkg.com/@sakun/system.css');
+
+            /* Force system.css aesthetics on all Streamlit elements */
+            * {
+                font-family: Chicago, Geneva, -apple-system, sans-serif !important;
+            }
+
+            /* Override Streamlit's rounded corners */
+            .stButton button,
+            .stChatMessage,
+            div[data-testid="stChatMessageContent"],
+            .stExpander,
+            .stAlert,
+            .element-container {
+                border-radius: 2px !important;
+                border: 1px solid #000000 !important;
+            }
+
+            /* Persona badges - force system.css styling */
+            span[style*="background-color"] {
+                border: 1px solid #000000 !important;
+                border-radius: 2px !important;
+                padding: 2px 8px !important;
+                font-weight: bold !important;
+                font-family: Chicago, monospace !important;
+                font-size: 9pt !important;
+            }
+
+            /* Chat messages - sharper corners and black borders */
+            .stChatMessage {
+                border: 1px solid #808080 !important;
+                border-radius: 3px !important;
+                background-color: #FFFFFF !important;
+                box-shadow: 1px 1px 0 rgba(0,0,0,0.2) !important;
+            }
+
+            /* Buttons - classic System OS style */
+            .stButton button {
+                background-color: #FFFFFF !important;
+                color: #000000 !important;
+                border: 1px solid #000000 !important;
+                border-radius: 2px !important;
+                padding: 2px 8px !important;
+                font-family: Chicago, monospace !important;
+                box-shadow: 1px 1px 0 rgba(0,0,0,0.3) !important;
+            }
+
+            .stButton button:hover {
+                background-color: #F0F0F0 !important;
+            }
+
+            .stButton button:active {
+                background-color: #000000 !important;
+                color: #FFFFFF !important;
+            }
+
+            /* Expanders - minimal radius */
+            .stExpander {
+                border-radius: 2px !important;
+                border: 1px solid #808080 !important;
+            }
+
+            /* Tabs - system.css style */
+            .stTabs [data-baseweb="tab-list"] {
+                gap: 2px !important;
+            }
+
+            .stTabs [data-baseweb="tab"] {
+                border-radius: 2px !important;
+                border: 1px solid #808080 !important;
+                background-color: #E0E0E0 !important;
+                padding: 2px 8px !important;
+                font-family: Chicago, monospace !important;
+            }
+
+            .stTabs [aria-selected="true"] {
+                background-color: #FFFFFF !important;
+                border-bottom: 1px solid #FFFFFF !important;
+            }
+
+            /* Sidebar - classic window */
+            section[data-testid="stSidebar"] {
+                background-color: #F0F0F0 !important;
+                border-right: 1px solid #000000 !important;
+            }
+
+            /* Remove excessive padding */
+            .block-container {
+                padding-top: 2rem !important;
+            }
+
+            /* Status indicators */
+            .stAlert {
+                border-radius: 2px !important;
+                border: 1px solid #000000 !important;
+            }
+
+            /* Metrics - minimal style */
+            [data-testid="stMetricValue"] {
+                font-family: Chicago, monospace !important;
+                font-size: 1.5rem !important;
+            }
+
+            /* Input fields - sharp corners */
+            .stTextInput input,
+            .stTextArea textarea,
+            .stSelectbox select {
+                border-radius: 2px !important;
+                border: 1px solid #000000 !important;
+                font-family: Geneva, sans-serif !important;
+            }
+
+            /* Chat input - system.css style */
+            .stChatInputContainer {
+                border-radius: 2px !important;
+                border: 1px solid #000000 !important;
+            }
+
+            /* Dividers - simple black line */
+            hr {
+                border-top: 1px solid #000000 !important;
+                margin: 8px 0 !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+
         self.sidebar_ui()
 
         # Show a welcome message for new users
