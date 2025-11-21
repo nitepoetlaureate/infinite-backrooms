@@ -32,6 +32,7 @@ VIOLATIONS = {
 TARGET_FILES = [
     "streamlit_backroom.py",
     "log_viewer.py",
+    "src/ui/app.py",
 ]
 
 # Allowed exceptions (specific lines that are grandfathered in)
@@ -95,7 +96,11 @@ def main() -> int:
     files_checked = 0
 
     for filename in TARGET_FILES:
+        # Support both root and relative paths
         file_path = Path(filename)
+        if not file_path.exists():
+            # Try from script directory's parent
+            file_path = Path(__file__).parent.parent / filename
 
         if not file_path.exists():
             print(f"⚠️  Warning: {filename} not found")
