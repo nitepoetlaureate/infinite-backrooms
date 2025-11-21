@@ -217,6 +217,51 @@ time.sleep(random.uniform(2, 8))
 
 ## 🐛 Troubleshooting
 
+### Tkinter Not Found (macOS)
+
+**Symptoms:** `ModuleNotFoundError: No module named '_tkinter'`
+
+**Solutions:**
+
+**Option 1: Install python-tk via Homebrew**
+```bash
+# For Python 3.12
+brew install python-tk@3.12
+
+# Or for Python 3.11
+brew install python-tk@3.11
+
+# Then run the app
+./run.sh
+```
+
+**Option 2: Install Python from python.org**
+Download from [python.org](https://www.python.org/downloads/macos/) - includes Tkinter by default.
+
+**Option 3: Use pyenv**
+```bash
+brew install pyenv
+pyenv install 3.12.7
+pyenv local 3.12.7
+python3 -m venv .venv
+source .venv/bin/activate
+python3 main.py
+```
+
+**Note:** The `run.sh` script automatically detects Python with Tkinter support!
+
+### Tkinter Not Found (Linux)
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get install python3-tk
+```
+
+**Fedora:**
+```bash
+sudo dnf install python3-tkinter
+```
+
 ### Ollama Connection Errors
 
 **Solution:**

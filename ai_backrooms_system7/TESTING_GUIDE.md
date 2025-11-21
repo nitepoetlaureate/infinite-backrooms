@@ -509,19 +509,55 @@ chmod +x validate.sh
 
 ## 🐛 Troubleshooting
 
-### Issue: Application won't start
+### Issue: Application won't start (Tkinter not found)
 
-**Symptoms:** Python import errors or Tkinter errors
-
-**Solutions:**
-```bash
-# Linux: Install Tkinter
-sudo apt-get install python3-tk  # Ubuntu/Debian
-sudo dnf install python3-tkinter  # Fedora
-
-# macOS: Usually pre-installed with Python
-# Windows: Usually pre-installed with Python
+**Symptoms:**
 ```
+ModuleNotFoundError: No module named '_tkinter'
+ModuleNotFoundError: No module named 'tkinter'
+```
+
+**Solutions for macOS:**
+
+The `run.sh` script automatically searches for Python with Tkinter. If it fails:
+
+```bash
+# Option 1: Install python-tk via Homebrew (RECOMMENDED)
+brew install python-tk@3.12   # For Python 3.12
+brew install python-tk@3.11   # For Python 3.11
+
+# Then run
+./run.sh
+
+# Option 2: Install Python from python.org
+# Download from: https://www.python.org/downloads/macos/
+# This version includes Tkinter by default
+
+# Option 3: Use pyenv
+brew install pyenv
+pyenv install 3.12.7
+pyenv local 3.12.7
+python3 main.py
+```
+
+**Solutions for Linux:**
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install python3-tk
+
+# Fedora
+sudo dnf install python3-tkinter
+
+# Arch Linux
+sudo pacman -S tk
+```
+
+**Solutions for Windows:**
+- Tkinter is usually included with Python from python.org
+- If missing, reinstall Python with "tcl/tk and IDLE" option checked
+
+**Note:** The updated `run.sh` automatically detects Python installations with Tkinter support and uses the first one found!
 
 ---
 
