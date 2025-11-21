@@ -171,6 +171,7 @@ class IRCClient:
                 menu_frame,
                 text=menu_name,
                 bg=c_WHITE,
+                fg=c_BLACK,
                 font=S7Font.chicago(10),
                 cursor="hand2"
             )
@@ -192,7 +193,8 @@ class IRCClient:
             left_panel,
             text="📡 Servers",
             font=S7Font.chicago(),
-            bg=c_PLATINUM
+            bg=c_PLATINUM,
+            fg=c_BLACK
         ).pack(anchor="w")
 
         tk.Label(
@@ -207,12 +209,14 @@ class IRCClient:
             left_panel,
             text="📚 Rooms",
             font=S7Font.chicago(),
-            bg=c_PLATINUM
+            bg=c_PLATINUM,
+            fg=c_BLACK
         ).pack(anchor="w", pady=(10, 0))
 
         self.room_list = tk.Listbox(
             left_panel,
             bg=c_WHITE,
+            fg=c_BLACK,
             font=S7Font.geneva(),
             bd=1,
             relief="sunken",
@@ -234,7 +238,8 @@ class IRCClient:
             center_panel,
             text=f"# {self.current_room} [Loading...]",
             font=S7Font.chicago(),
-            bg=c_PLATINUM
+            bg=c_PLATINUM,
+            fg=c_BLACK
         )
         self.header_label.pack(fill="x", pady=2)
 
@@ -245,10 +250,12 @@ class IRCClient:
         self.chat_text = tk.Text(
             chat_frame,
             bg=c_WHITE,
+            fg=c_BLACK,
             font=S7Font.monaco(),
             state="disabled",
             wrap="word",
-            bd=0
+            bd=0,
+            insertbackground=c_BLACK
         )
         scrollbar = tk.Scrollbar(chat_frame, command=self.chat_text.yview)
         self.chat_text.configure(yscrollcommand=scrollbar.set)
@@ -268,7 +275,15 @@ class IRCClient:
         input_frame = S7Frame(center_panel, height=40)
         input_frame.pack(fill="x", pady=4)
 
-        self.msg_entry = tk.Entry(input_frame, font=S7Font.monaco(), bd=1, relief="sunken")
+        self.msg_entry = tk.Entry(
+            input_frame,
+            font=S7Font.monaco(),
+            bg=c_WHITE,
+            fg=c_BLACK,
+            insertbackground=c_BLACK,
+            bd=1,
+            relief="sunken"
+        )
         self.msg_entry.pack(side="left", fill="x", expand=True, padx=(0, 5))
         self.msg_entry.bind("<Return>", self.send_message)
 
@@ -289,15 +304,19 @@ class IRCClient:
             right_panel,
             text="👥 Users",
             font=S7Font.chicago(),
-            bg=c_PLATINUM
+            bg=c_PLATINUM,
+            fg=c_BLACK
         ).pack(anchor="w")
 
         self.user_list = tk.Listbox(
             right_panel,
             bg=c_WHITE,
+            fg=c_BLACK,
             font=S7Font.geneva(),
             bd=1,
-            relief="sunken"
+            relief="sunken",
+            selectbackground="black",
+            selectforeground="white"
         )
         self.user_list.pack(fill="both", expand=True)
         self.refresh_user_list()
