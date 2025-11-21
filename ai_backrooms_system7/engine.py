@@ -93,17 +93,22 @@ class BackroomsEngine:
     - Persona selection and rotation
     - User message injection
     - Callback to UI thread
+    - @mention detection and targeted responses
+    - Message logging
     """
 
-    def __init__(self, message_callback):
+    def __init__(self, message_callback, log_callback=None):
         """
         Initialize engine.
 
         Args:
             message_callback: Function to call when new message arrives
                              Signature: callback(msg_dict)
+            log_callback: Optional function to log messages
+                         Signature: log_callback(room_name, msg_dict)
         """
         self.callback = message_callback  # Function to call when new msg arrives
+        self.log_callback = log_callback  # Optional logging function
         self.personas = DEFAULT_PERSONAS
         self.rooms = {r['name']: [] for r in DEFAULT_ROOMS}  # Room history
         self.running = True
@@ -156,24 +161,29 @@ class BackroomsEngine:
             self.rooms[room_name].append(msg_obj)
             self.callback(msg_obj)
 
+            # Log message
+            if self.log_callback:
+                self.log_callback(room_name, msg_obj)
+
             # Keep history clean (memory management)
             if len(self.rooms[room_name]) > 50:
                 self.rooms[room_name].pop(0)
 
-    def user_post(self, room_name, text):
+    def user_post(self, room_name, text, username="You"):
         """
         Post a user message to a room.
 
         Args:
             room_name: Target room
             text: Message text
+            username: Username to display
 
         This adds the user message to history and triggers
         potential AI responses.
         """
         msg_obj = {
             "timestamp": datetime.now().strftime("%H:%M"),
-            "user": "You",
+            "user": username,
             "text": text,
             "room": room_name,
             "is_ai": False
@@ -181,9 +191,20 @@ class BackroomsEngine:
         self.rooms[room_name].append(msg_obj)
         self.callback(msg_obj)
 
-        # Chance for immediate reply
-        if random.random() > 0.5:
-            # Trigger a quick response in a separate thread
+        # Log message
+        if self.log_callback:
+            self.log_callback(room_name, msg_obj)
+
+        # Check for @mentions - respond immediately if mentioned
+        mentioned_personas = self._detect_mentions(text)
+        if mentioned_personas:
+            # Trigger immediate response from mentioned persona
+            threading.Thread(
+                target=self._trigger_mention_reply,
+                args=(room_name, mentioned_personas[0])
+            ).start()
+        elif random.random() > 0.5:
+            # Otherwise, 50% chance for general immediate reply
             threading.Thread(target=self._trigger_reply, args=(room_name,)).start()
 
     def _trigger_reply(self, room_name):
@@ -197,6 +218,52 @@ class BackroomsEngine:
         # The room loop will naturally pick this up
         # In a more complex system we'd use threading.Event
         pass
+
+    def _detect_mentions(self, text):
+        """
+        Detect @mentions in text.
+
+        Args:
+            text: Message text
+
+        Returns:
+            list: List of mentioned persona dicts
+        """
+        mentioned = []
+        for persona in self.personas:
+            if f"@{persona['name']}" in text:
+                mentioned.append(persona)
+        return mentioned
+
+    def _trigger_mention_reply(self, room_name, persona):
+        """
+        Force immediate reply from mentioned persona.
+
+        Args:
+            room_name: Target room
+            persona: Persona dict that was mentioned
+        """
+        time.sleep(2)  # Brief thinking delay
+
+        history = self.rooms[room_name]
+        context = history[-5:]
+
+        # Generate response addressing the mention
+        text = self.ollama.generate(persona['prompt'], context)
+
+        msg_obj = {
+            "timestamp": datetime.now().strftime("%H:%M"),
+            "user": persona['name'],
+            "text": text,
+            "room": room_name,
+            "is_ai": True
+        }
+        self.rooms[room_name].append(msg_obj)
+        self.callback(msg_obj)
+
+        # Log message
+        if self.log_callback:
+            self.log_callback(room_name, msg_obj)
 
     def stop(self):
         """Stop all background threads."""
