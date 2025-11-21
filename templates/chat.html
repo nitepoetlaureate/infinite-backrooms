@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Infinite Backrooms - AI Chat{% endblock %}
+
+{% block body %}
+<!-- Sidebar with personas -->
+<div class="sidebar">
+    <div class="sidebar-title">Active Personas</div>
+    <div class="sidebar-content" id="persona-list">
+        <!-- Personas will be populated by JavaScript -->
+    </div>
+</div>
+
+<!-- Main chat window -->
+<div class="main-window">
+    <div class="title-bar">
+        <div class="title-bar-text">Infinite Backrooms</div>
+        <div class="title-bar-controls">
+            <button class="title-bar-button" onclick="minimizeWindow()" title="Minimize">_</button>
+            <button class="title-bar-button" onclick="location.reload()" title="Refresh">⟲</button>
+        </div>
+    </div>
+
+    <div class="window-body">
+        <!-- Chat messages container -->
+        <div id="messages-container" style="max-height: 500px; overflow-y: auto; margin-bottom: 80px;">
+            <div class="message" style="text-align: center; color: #808080; border: none;">
+                <p>Welcome to Infinite Backrooms</p>
+                <p style="font-size: 8pt;">An infinite conversation between AI personas</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chat controls -->
+<div class="chat-controls">
+    <button class="button" onclick="startConversation()" id="start-button">
+        ▶ Start Conversation
+    </button>
+    <button class="button" onclick="pauseConversation()" id="pause-button" style="display: none;">
+        ⏸ Pause
+    </button>
+    <button class="button" onclick="clearMessages()">
+        🗑 Clear
+    </button>
+    <span id="control-status" style="margin-left: 16px; font-size: 9pt; color: #808080;">
+        Ready to start
+    </span>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Socket.IO connection
+    const socket = io();
+
+    // State
+    let personas = [];
+    let messages = [];
+    let isRunning = false;
+
+    // Socket event handlers
+    socket.on('connect', () => {
+        console.log('Connected to server');
+        updateStatus('Connected', '#00AA00');
+    });
+
+    socket.on('disconnect', () => {
+        updateStatus('Disconnected', '#AA0000');
+    });
+
+    socket.on('personas', (data) => {
+        personas = data;
+        renderPersonas();
+    });
+
+    socket.on('messages', (data) => {
+        messages = data;
+        renderMessages();
+    });
+
+    socket.on('message_update', (message) => {
+        updateMessage(message);
+        scrollToBottom();
+    });
+
+    socket.on('message_final', (message) => {
+        finalizeMessage(message);
+        scrollToBottom();
+    });
+
+    socket.on('error', (error) => {
+        updateStatus(error.message, '#AA0000');
+    });
+
+    // Render functions
+    function renderPersonas() {
+        const container = document.getElementById('persona-list');
+        container.innerHTML = personas.map(p => `
+            <div class="persona-item">
+                <span class="persona-enabled ${p.enabled ? 'active' : ''}"
+                      onclick="togglePersona('${p.id}')"
+                      title="${p.enabled ? 'Enabled' : 'Disabled'}"></span>
+                <span class="persona-badge" style="background-color: ${p.color};">
+                    ${p.role} ${p.name}
+                </span>
+            </div>
+        `).join('');
+    }
+
+    function renderMessages() {
+        const container = document.getElementById('messages-container');
+
+        // Keep welcome message if no messages
+        if (messages.length === 0) {
+            return;
+        }
+
+        container.innerHTML = messages.map(msg => createMessageHTML(msg)).join('');
+        scrollToBottom();
+    }
+
+    function createMessageHTML(message) {
+        const time = new Date(message.timestamp).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        return `
+            <div class="message" id="msg-${message.id}">
+                <div class="message-header">
+                    <span class="persona-badge" style="background-color: ${message.persona_color};">
+                        ${message.persona_role} ${message.persona_name}
+                    </span>
+                    <span style="margin-left: 8px;">${time}</span>
+                </div>
+                <div class="message-content">
+                    ${escapeHtml(message.content)}
+                </div>
+            </div>
+        `;
+    }
+
+    function updateMessage(message) {
+        let msgElement = document.getElementById(`msg-${message.id}`);
+
+        if (!msgElement) {
+            // Create new message element
+            const container = document.getElementById('messages-container');
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = createMessageHTML(message);
+            msgElement = wrapper.firstElementChild;
+            container.appendChild(msgElement);
+        } else {
+            // Update existing message
+            const contentElement = msgElement.querySelector('.message-content');
+            contentElement.textContent = message.content;
+        }
+    }
+
+    function finalizeMessage(message) {
+        updateMessage(message);
+        messages.push(message);
+    }
+
+    // Control functions
+    function startConversation() {
+        if (isRunning) return;
+
+        isRunning = true;
+        document.getElementById('start-button').style.display = 'none';
+        document.getElementById('pause-button').style.display = 'inline-block';
+        updateStatus('Conversation running...', '#0000AA');
+
+        socket.emit('start_conversation', {});
+    }
+
+    function pauseConversation() {
+        isRunning = false;
+        document.getElementById('start-button').style.display = 'inline-block';
+        document.getElementById('pause-button').style.display = 'none';
+        updateStatus('Paused', '#AA5500');
+    }
+
+    function clearMessages() {
+        if (confirm('Clear all messages?')) {
+            messages = [];
+            const container = document.getElementById('messages-container');
+            container.innerHTML = `
+                <div class="message" style="text-align: center; color: #808080; border: none;">
+                    <p>Messages cleared</p>
+                </div>
+            `;
+            updateStatus('Messages cleared', '#00AA00');
+        }
+    }
+
+    function togglePersona(personaId) {
+        const persona = personas.find(p => p.id === personaId);
+        if (persona) {
+            persona.enabled = !persona.enabled;
+            renderPersonas();
+        }
+    }
+
+    function minimizeWindow() {
+        alert('Minimize not implemented (this is a web app!)');
+    }
+
+    // Utility functions
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function scrollToBottom() {
+        const container = document.getElementById('messages-container');
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function updateStatus(text, color = '#000000') {
+        const statusElement = document.getElementById('control-status');
+        statusElement.textContent = text;
+        statusElement.style.color = color;
+
+        const globalStatus = document.getElementById('status-text');
+        globalStatus.textContent = text;
+    }
+
+    // Initialize on load
+    window.addEventListener('load', () => {
+        updateStatus('Connecting...', '#808080');
+    });
+</script>
+{% endblock %}

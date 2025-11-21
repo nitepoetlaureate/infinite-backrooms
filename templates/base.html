@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Infinite Backrooms{% endblock %}</title>
+
+    <!-- System.css CDN - Retro Apple System OS Aesthetic -->
+    <link rel="stylesheet" href="https://unpkg.com/@sakun/system.css" />
+
+    <!-- Socket.IO for real-time communication -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+    <!-- Custom styles -->
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #c0c0c0;
+            font-family: Chicago, Geneva, sans-serif;
+        }
+
+        .main-window {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border: 1px solid black;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+        }
+
+        .title-bar {
+            background: white;
+            border-bottom: 1px solid black;
+            padding: 4px 8px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title-bar-text {
+            font-size: 12px;
+            font-family: Chicago, monospace;
+        }
+
+        .title-bar-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .title-bar-button {
+            width: 16px;
+            height: 16px;
+            border: 1px solid black;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .window-body {
+            padding: 16px;
+            min-height: 400px;
+        }
+
+        /* Persona badge styling using design tokens */
+        .persona-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border: 1px solid #000000;
+            border-radius: 2px;
+            font-weight: bold;
+            font-family: Chicago, monospace;
+            font-size: 9pt;
+            color: #FFFFFF;
+        }
+
+        /* Message container */
+        .message {
+            margin-bottom: 8px;
+            padding: 4px 8px;
+            border: 1px solid #808080;
+            background: #FFFFFF;
+        }
+
+        .message-header {
+            margin-bottom: 4px;
+            font-size: 10px;
+            color: #808080;
+        }
+
+        .message-content {
+            font-family: Geneva, sans-serif;
+            font-size: 9pt;
+            line-height: 1.4;
+        }
+
+        /* Chat input area */
+        .chat-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            max-width: 1168px;
+            margin: 0 auto;
+            padding: 8px;
+            background: white;
+            border: 1px solid black;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+        }
+
+        .button {
+            padding: 2px 8px;
+            border: 1px solid black;
+            background: white;
+            cursor: pointer;
+            font-family: Chicago, monospace;
+            font-size: 9pt;
+        }
+
+        .button:hover {
+            background: #f0f0f0;
+        }
+
+        .button:active {
+            background: #000000;
+            color: #FFFFFF;
+        }
+
+        /* Sidebar for personas */
+        .sidebar {
+            position: fixed;
+            right: 20px;
+            top: 80px;
+            width: 200px;
+            background: white;
+            border: 1px solid black;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+        }
+
+        .sidebar-title {
+            padding: 4px 8px;
+            border-bottom: 1px solid black;
+            font-family: Chicago, monospace;
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        .sidebar-content {
+            padding: 8px;
+        }
+
+        .persona-item {
+            margin-bottom: 4px;
+            padding: 2px 4px;
+            font-size: 9px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .persona-enabled {
+            width: 12px;
+            height: 12px;
+            border: 1px solid black;
+            background: white;
+            display: inline-block;
+        }
+
+        .persona-enabled.active {
+            background: black;
+        }
+
+        /* Status bar */
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: white;
+            border-top: 1px solid black;
+            padding: 2px 8px;
+            font-family: Chicago, monospace;
+            font-size: 9px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% block body %}{% endblock %}
+
+    <!-- Status bar -->
+    <div class="status-bar">
+        <span id="status-text">Ready</span>
+        <span id="status-time">{{ now }}</span>
+    </div>
+
+    <script>
+        // Update status time every second
+        setInterval(() => {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('status-time').textContent = timeStr;
+        }, 1000);
+    </script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
