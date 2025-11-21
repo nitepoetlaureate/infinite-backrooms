@@ -122,8 +122,11 @@ class ControlPanel(S7Window):
         self.persona_listbox = tk.Listbox(
             list_frame,
             bg=c_WHITE,
+            fg=c_BLACK,
             font=S7Font.geneva(9),
-            selectmode="single"
+            selectmode="single",
+            selectbackground="black",
+            selectforeground="white"
         )
         scrollbar = tk.Scrollbar(list_frame, command=self.persona_listbox.yview)
         self.persona_listbox.configure(yscrollcommand=scrollbar.set)
@@ -157,9 +160,11 @@ class ControlPanel(S7Window):
         self.details_text = tk.Text(
             details_frame,
             bg=c_WHITE,
+            fg=c_BLACK,
             font=S7Font.geneva(9),
             state="disabled",
-            wrap="word"
+            wrap="word",
+            insertbackground=c_BLACK
         )
         self.details_text.pack(fill="both", expand=True)
 
@@ -232,7 +237,14 @@ class ControlPanel(S7Window):
         list_frame = S7InsetFrame(self.content_frame)
         list_frame.pack(fill="both", expand=True, pady=5)
 
-        room_listbox = tk.Listbox(list_frame, bg=c_WHITE, font=S7Font.geneva(9))
+        room_listbox = tk.Listbox(
+            list_frame,
+            bg=c_WHITE,
+            fg=c_BLACK,
+            font=S7Font.geneva(9),
+            selectbackground="black",
+            selectforeground="white"
+        )
         scrollbar = tk.Scrollbar(list_frame, command=room_listbox.yview)
         room_listbox.configure(yscrollcommand=scrollbar.set)
 
@@ -373,7 +385,14 @@ class ControlPanel(S7Window):
             anchor="w"
         ).pack(side="left")
 
-        url_entry = tk.Entry(url_frame, font=S7Font.monaco(9), width=40)
+        url_entry = tk.Entry(
+            url_frame,
+            font=S7Font.monaco(9),
+            bg=c_WHITE,
+            fg=c_BLACK,
+            insertbackground=c_BLACK,
+            width=40
+        )
         url_entry.insert(0, self.engine.ollama.url)
         url_entry.pack(side="left", padx=5)
 
@@ -410,8 +429,10 @@ class ControlPanel(S7Window):
         self.models_text = tk.Text(
             models_frame,
             bg=c_WHITE,
+            fg=c_BLACK,
             font=S7Font.monaco(9),
-            state="disabled"
+            state="disabled",
+            insertbackground=c_BLACK
         )
         self.models_text.pack(fill="both", expand=True)
 
